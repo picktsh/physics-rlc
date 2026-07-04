@@ -59,8 +59,8 @@
       <button @click="acquireData" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
         📌 采集当前点
       </button>
-      <button @click="autoSweep" :disabled="isSweeping" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-all disabled:opacity-50">
-        🔄 自动扫描{{ isSweeping ? '中...' : '' }}
+      <button @click="toggleSweep" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="isSweeping ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
+        {{ isSweeping ? '⏹ 停止扫描' : '🔄 自动扫描' }}
       </button>
       <button @click="exportCSV" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-all">
         📊 导出CSV
@@ -125,6 +125,7 @@ const canvasHeight = ref(420)
 // 状态
 const acquiredData = ref([])
 const isSweeping = ref(false)
+const stopRequested = ref(false)
 const freqMin = ref(null)
 const freqMax = ref(null)
 const fixedRange = ref(null)
@@ -564,6 +565,16 @@ function acquireData() {
   }
 }
 
+// 切换扫描/停止
+function toggleSweep() {
+  if (isSweeping.value) {
+    // 请求停止
+    stopRequested.value = true
+  } else {
+    autoSweep()
+  }
+}
+
 // 自动扫描
 async function autoSweep() {
   if (props.params.L <= 0 || props.params.C <= 0 || props.params.R <= 0) {
@@ -575,21 +586,12 @@ async function autoSweep() {
     alert('电路参数异常，请检查 R、L、C 元件参数')
     return
   }
-  const fStart = Math.max(50, f0 * 0.15)
-  const fEnd = f0 * 4
+  const fStart = 1400
+  const fEnd = 3200
   const freqs = []
   const N = 50
   for (let i = 0; i <= N; i++) {
-    const t = i / N
-    let f
-    if (t < 0.35) {
-      f = fStart + (f0 * 0.7 - fStart) * (t / 0.35)
-    } else if (t < 0.65) {
-      const lt = (t - 0.35) / 0.3
-      f = f0 * 0.7 + (f0 * 1.3 - f0 * 0.7) * lt
-    } else {
-      f = f0 * 1.3 + (fEnd - f0 * 1.3) * ((t - 0.65) / 0.35)
-    }
+    const f = fStart + (fEnd - fStart) * (i / N)
     freqs.push(Math.round(f))
   }
   const unique = [freqs[0]]
@@ -598,11 +600,18 @@ async function autoSweep() {
   }
   acquiredData.value = []
   isSweeping.value = true
-  fixedRange.value = { fMin: 1100, fMax: 3200 }
+  stopRequested.value = false
+  fixedRange.value = { fMin: 1300, fMax: 3300 }
   for (let idx = 0; idx < unique.length; idx++) {
+    // 检查是否请求停止
+    if (stopRequested.value) break
+
     const f = unique[idx]
-    // 更新params需要通过emit，这里简化处理
     await new Promise(resolve => setTimeout(resolve, 500))
+
+    // 再次检查（await 后可能已请求停止）
+    if (stopRequested.value) break
+
     const z = impedance(props.params.R, props.params.L, props.params.C, f)
     const I = current(props.params.V, z.Z)
     const Ur = (I / 1000) * props.params.R
@@ -614,8 +623,12 @@ async function autoSweep() {
       impedance: z.Z,
       phase: z.phi,
     })
+
+    // 实时更新幅频图
+    drawAmpChart()
   }
   isSweeping.value = false
+  stopRequested.value = false
 }
 
 // 导出CSV

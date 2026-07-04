@@ -58,8 +58,10 @@
           <div class="flex gap-1 items-center mt-1">
             <input
               type="number"
-              :value="comp.value"
-              @input="updateComponentValue(idx, $event.target.value)"
+              step="any"
+              :value="getCompDisplay(idx)"
+              @input="onCompInput(idx, $event)"
+              @blur="onCompBlur(idx)"
               class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
             />
             <span class="text-xs text-gray-500 whitespace-nowrap">{{ getComponentUnit(comp.type) }}</span>
@@ -95,6 +97,31 @@ const circuitMode = ref(props.mode)
 const selectedEndpoint = ref(null)
 const wireIntermediatePoints = ref([])
 const selectedComponentIndex = ref(null)
+
+// 元件输入编辑状态（解决输入小数时 parseFloat 吞掉中间状态的问题）
+const compInputValues = ref({})
+
+function getCompDisplay(idx) {
+  if (idx in compInputValues.value) return compInputValues.value[idx]
+  return props.components[idx]?.value ?? ''
+}
+
+function onCompInput(idx, event) {
+  compInputValues.value[idx] = event.target.value
+}
+
+function onCompBlur(idx) {
+  const raw = compInputValues.value[idx]
+  if (raw !== undefined) {
+    const num = parseFloat(raw)
+    if (!isNaN(num)) {
+      const newComponents = [...props.components]
+      newComponents[idx].value = num
+      emit('update:components', newComponents)
+    }
+    delete compInputValues.value[idx]
+  }
+}
 
 const componentTypes = [
   { type: 'R', label: 'R', name: '电阻', colorClass: 'bg-green-500' },
