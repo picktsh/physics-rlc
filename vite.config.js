@@ -6,4 +6,13 @@ import UnoCSS from 'unocss/vite'
 export default defineConfig({
   base: './',
   plugins: [vue(), UnoCSS()],
+  server: {
+    proxy: {
+      '/api/doubao': {
+        target: 'https://ark.cn-beijing.volces.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/doubao/, '/api/v3'),
+      },
+    },
+  },
 })

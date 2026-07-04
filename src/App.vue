@@ -12,6 +12,7 @@ import LissajousScope from './components/LissajousScope.vue'
 import FrequencySweep from './components/FrequencySweep.vue'
 import SimulationHistory from './components/SimulationHistory.vue'
 import FormulaPrinciple from './components/FormulaPrinciple.vue'
+import DoubaoChat from './components/DoubaoChat.vue'
 
 const calcStore = useRLCCalculatorStore()
 const historyStore = useHistoryStore()
@@ -210,5 +211,7 @@ async function handleImportMeasHistory(file) {
         <FormulaPrinciple />
       </template>
     </div>
+
+    <DoubaoChat  />
   </div>
 </template>
