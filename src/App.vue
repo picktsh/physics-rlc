@@ -23,10 +23,10 @@ const activeTab = ref(sessionStorage.getItem('activeTab') || 'circuit')
 watch(activeTab, (val) => { sessionStorage.setItem('activeTab', val) })
 
 const tabs = [
+  { key: 'formula', label: '📖 公式原理' },
   { key: 'circuit', label: '🧩 电路搭建' },
   { key: 'analysis', label: '📊 仿真分析' },
   { key: 'measure', label: '📋 实测数据' },
-  { key: 'formula', label: '📖 公式原理' },
 ]
 
 const chartPanelRef = ref(null)
