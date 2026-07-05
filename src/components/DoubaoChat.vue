@@ -1,127 +1,3 @@
-<script setup>
-import { ref, nextTick, onMounted } from 'vue'
-
-const API_KEY = import.meta.env.VITE_DOUBAO_API_KEY
-const MODEL = import.meta.env.VITE_DOUBAO_MODEL
-
-const isOpen = ref(false)
-const messages = ref([])
-const inputText = ref('')
-const loading = ref(false)
-const chatContainer = ref(null)
-
-const savedMessages = localStorage.getItem('doubao_chat_messages')
-if (savedMessages) {
-  try {
-    messages.value = JSON.parse(savedMessages)
-  } catch {
-    messages.value = []
-  }
-}
-
-function saveMessages() {
-  localStorage.setItem('doubao_chat_messages', JSON.stringify(messages.value.slice(-50)))
-}
-
-function scrollToBottom() {
-  nextTick(() => {
-    if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-  })
-}
-
-function clearChat() {
-  messages.value = []
-  localStorage.removeItem('doubao_chat_messages')
-}
-
-async function sendMessage() {
-  const text = inputText.value.trim()
-  if (!text || loading.value) return
-  if (!API_KEY || !MODEL) {
-    messages.value.push({
-      role: 'assistant',
-      content: '⚠️ 请在 vite.config.js 中配置 __DOUBAO_API_KEY__ 和 __DOUBAO_MODEL__',
-    })
-    return
-  }
-
-  messages.value.push({ role: 'user', content: text })
-  inputText.value = ''
-  loading.value = true
-  scrollToBottom()
-
-  messages.value.push({ role: 'assistant', content: '' })
-  const assistantMsg = messages.value[messages.value.length - 1]
-
-  try {
-    const res = await fetch('/api/doubao/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: messages.value.slice(0, -1).map((m) => ({ role: m.role, content: m.content })),
-        stream: true,
-      }),
-    })
-
-    if (!res.ok) {
-      const err = await res.text()
-      assistantMsg.content = `❌ 请求失败: ${res.status} ${err}`
-      loading.value = false
-      return
-    }
-
-    const reader = res.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed || !trimmed.startsWith('data: ')) continue
-        const data = trimmed.slice(6)
-        if (data === '[DONE]') break
-        try {
-          const json = JSON.parse(data)
-          const delta = json.choices?.[0]?.delta?.content || ''
-          assistantMsg.content += delta
-          scrollToBottom()
-        } catch {
-          /* skip */
-        }
-      }
-    }
-  } catch (err) {
-    assistantMsg.content = `❌ 网络错误: ${err.message}`
-  } finally {
-    loading.value = false
-    saveMessages()
-  }
-}
-
-function handleKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    sendMessage()
-  }
-}
-
-onMounted(() => {
-  if (!API_KEY || !MODEL) {
-    messages.value = [{ role: 'assistant', content: '⚠️ 请在 vite.config.js 中配置 API Key 和 Model' }]
-  }
-})
-</script>
-
 <template>
   <div class="fixed bottom-5 right-5 z-9999 flex flex-col items-end gap-3">
     <!-- 聊天窗口 -->
@@ -196,24 +72,23 @@ onMounted(() => {
         </div>
 
         <!-- 输入区 -->
-        <div class="px-3 py-2 border-t border-gray-200 bg-white shrink-0">
+        <form class="px-3 py-2 border-t border-gray-200 bg-white shrink-0" @submit.prevent="sendMessage">
           <div class="flex gap-2 items-end">
-            <textarea
+            <input
               v-model="inputText"
+              type="text"
               placeholder="输入问题... (Enter 发送)"
-              rows="1"
-              class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 max-h-20"
-              @keydown="handleKeydown"
+              class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
             <button
+              type="submit"
               :disabled="loading || !inputText.trim()"
               class="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center hover:bg-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
-              @click="sendMessage"
             >
               ➤
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </Transition>
 
@@ -227,6 +102,131 @@ onMounted(() => {
     </button>
   </div>
 </template>
+
+<script setup>
+import { ref, nextTick, onMounted, watch } from 'vue'
+
+const API_KEY = import.meta.env.VITE_DOUBAO_API_KEY
+const MODEL = import.meta.env.VITE_DOUBAO_MODEL
+
+const isOpen = ref(false)
+const messages = ref([])
+const inputText = ref('')
+const loading = ref(false)
+const chatContainer = ref(null)
+
+const savedMessages = localStorage.getItem('doubao_chat_messages')
+if (savedMessages) {
+  try {
+    messages.value = JSON.parse(savedMessages)
+  } catch {
+    messages.value = []
+  }
+}
+
+function saveMessages() {
+  localStorage.setItem('doubao_chat_messages', JSON.stringify(messages.value.slice(-50)))
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+  })
+}
+
+function clearChat() {
+  messages.value = []
+  localStorage.removeItem('doubao_chat_messages')
+}
+
+async function sendMessage() {
+  const text = inputText.value.trim()
+  if (!text || loading.value) return
+  if (!API_KEY || !MODEL) {
+    messages.value.push({
+      role: 'assistant',
+      content: '⚠️ 请在 vite.config.js 中配置 __DOUBAO_API_KEY__ 和 __DOUBAO_MODEL__',
+    })
+    return
+  }
+
+  messages.value.push({ role: 'user', content: text })
+  inputText.value = ''
+  loading.value = true
+  scrollToBottom()
+
+  messages.value.push({ role: 'assistant', content: '' })
+  const assistantMsg = messages.value[messages.value.length - 1]
+
+  try {
+    const apiUrl = import.meta.env.DEV
+      ? '/api/doubao/chat/completions'
+      : 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
+
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: messages.value.slice(0, -1).map((m) => ({ role: m.role, content: m.content })),
+        stream: true,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.text()
+      assistantMsg.content = `❌ 请求失败: ${res.status} ${err}`
+      loading.value = false
+      return
+    }
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed || !trimmed.startsWith('data: ')) continue
+        const data = trimmed.slice(6)
+        if (data === '[DONE]') break
+        try {
+          const json = JSON.parse(data)
+          const delta = json.choices?.[0]?.delta?.content || ''
+          assistantMsg.content += delta
+          scrollToBottom()
+        } catch {
+          /* skip */
+        }
+      }
+    }
+  } catch (err) {
+    assistantMsg.content = `❌ 网络错误: ${err.message}`
+  } finally {
+    loading.value = false
+    saveMessages()
+  }
+}
+
+watch(isOpen, (val) => {
+  if (val) scrollToBottom()
+})
+
+onMounted(() => {
+  if (!API_KEY || !MODEL) {
+    messages.value = [{ role: 'assistant', content: '⚠️ 请在 vite.config.js 中配置 API Key 和 Model' }]
+  }
+})
+</script>
 
 <style scoped>
 .chat-pop-enter-active,
