@@ -46,7 +46,7 @@
     />
 
     <div class="text-xs text-gray-500 text-center mt-2">
-      拖拽元件到画布上搭建RLC电路 | 点击元件可编辑参数 | 接线模式: 点击端点→点击添加拐点→点击目标端点完成折线 | 删除模式: 点击元件/导线删除
+      拖拽元件到画布上搭建RLC电路 | 点击元件可编辑参数 | 接线模式: 点击端点→点击添加拐点→点击目标端点完成折线 | 💡 点击导线中间可创建节点实现并联 | 删除模式: 点击元件/导线删除
     </div>
 
     <!-- 元件参数编辑器 -->
@@ -84,17 +84,21 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  junctions: {
+    type: Array,
+    default: () => [],
+  },
   mode: {
     type: String,
     default: 'wire',
   },
 })
 
-const emit = defineEmits(['update:components', 'update:wires', 'update:mode', 'simulate', 'reset'])
+const emit = defineEmits(['update:components', 'update:wires', 'update:junctions', 'update:mode', 'simulate', 'reset'])
 
 const canvasRef = ref(null)
 const circuitMode = ref(props.mode)
-const selectedEndpoint = ref(null)
+const selectedEndpoint = ref(null) // { compIndex, epIndex } or { junctionIndex }
 const wireIntermediatePoints = ref([])
 const selectedComponentIndex = ref(null)
 
@@ -190,17 +194,38 @@ function handleCanvasClick(event) {
       if (clickedEp) break
     }
 
-    if (clickedEp) {
+    // 检测junction节点点击
+    let clickedJunction = null
+    if (!clickedEp) {
+      for (let ji = 0; ji < props.junctions.length; ji++) {
+        const j = props.junctions[ji]
+        if (Math.sqrt((x - j.x) ** 2 + (y - j.y) ** 2) < 12) {
+          clickedJunction = { junctionIndex: ji }
+          break
+        }
+      }
+    }
+
+    if (clickedEp || clickedJunction) {
+      const clicked = clickedEp || clickedJunction
       if (selectedEndpoint.value === null) {
-        selectedEndpoint.value = clickedEp
+        selectedEndpoint.value = clicked
         wireIntermediatePoints.value = []
-      } else if (selectedEndpoint.value.compIndex !== clickedEp.compIndex || selectedEndpoint.value.epIndex !== clickedEp.epIndex) {
-        const ep1 = props.components[selectedEndpoint.value.compIndex].endpoints[selectedEndpoint.value.epIndex]
-        const ep2 = props.components[clickedEp.compIndex].endpoints[clickedEp.epIndex]
-        const pts = [ep1, ...wireIntermediatePoints.value, ep2]
+      } else if (!isSameEndpoint(selectedEndpoint.value, clicked)) {
+        // 创建导线
+        const pt1 = getEndpointPos(selectedEndpoint.value)
+        const pt2 = getEndpointPos(clicked)
+        const pts = [pt1, ...wireIntermediatePoints.value, pt2]
         const newWires = [
           ...props.wires,
-          { x1: ep1.x, y1: ep1.y, x2: ep2.x, y2: ep2.y, points: pts, comp1: selectedEndpoint.value.compIndex, comp2: clickedEp.compIndex },
+          {
+            x1: pt1.x, y1: pt1.y, x2: pt2.x, y2: pt2.y,
+            points: pts,
+            comp1: selectedEndpoint.value.compIndex ?? -1,
+            comp2: clicked.compIndex ?? -1,
+            junc1: selectedEndpoint.value.junctionIndex ?? -1,
+            junc2: clicked.junctionIndex ?? -1,
+          },
         ]
         emit('update:wires', newWires)
         selectedEndpoint.value = null
@@ -211,6 +236,30 @@ function handleCanvasClick(event) {
       }
       drawCircuit()
       return
+    }
+
+    // 检测点击导线中间 → 创建junction节点
+    if (selectedEndpoint.value === null) {
+      const hitWire = findNearestWire(x, y)
+      if (hitWire !== null) {
+        // 在点击位置创建junction
+        const projPt = projectPointOnWire(x, y, hitWire)
+        const newJunction = { x: projPt.x, y: projPt.y, id: Date.now() + Math.random() }
+        const newJunctions = [...props.junctions, newJunction]
+        emit('update:junctions', newJunctions)
+
+        // 拆分原导线为两段：原起点→junction, junction→原终点
+        const wire = props.wires[hitWire]
+        const newWires = props.wires.filter((_, idx) => idx !== hitWire)
+        const jIdx = newJunctions.length - 1
+        newWires.push(
+          { x1: wire.x1, y1: wire.y1, x2: projPt.x, y2: projPt.y, points: [getWireStart(wire), projPt], comp1: wire.comp1, comp2: -1, junc1: wire.junc1 ?? -1, junc2: jIdx },
+          { x1: projPt.x, y1: projPt.y, x2: wire.x2, y2: wire.y2, points: [projPt, getWireEnd(wire)], comp1: -1, comp2: wire.comp2, junc1: jIdx, junc2: wire.junc2 ?? -1 },
+        )
+        emit('update:wires', newWires)
+        drawCircuit()
+        return
+      }
     }
 
     // 添加折线拐点
@@ -278,7 +327,7 @@ function handleMouseMove(event) {
     const rect = canvasRef.value.getBoundingClientRect()
     const x = event.clientX - rect.left
     const y = event.clientY - rect.top
-    const ep = props.components[selectedEndpoint.value.compIndex].endpoints[selectedEndpoint.value.epIndex]
+    const ep = getEndpointPos(selectedEndpoint.value)
 
     ctx.strokeStyle = 'rgba(102, 126, 234, 0.5)'
     ctx.lineWidth = 2
@@ -320,6 +369,81 @@ function pointToLineDistance(px, py, x1, y1, x2, y2) {
     yy = y1 + param * D
   }
   return Math.sqrt((px - xx) ** 2 + (py - yy) ** 2)
+}
+
+// === Junction 辅助函数 ===
+function isSameEndpoint(a, b) {
+  if (a.junctionIndex !== undefined && b.junctionIndex !== undefined) return a.junctionIndex === b.junctionIndex
+  if (a.compIndex !== undefined && b.compIndex !== undefined) return a.compIndex === b.compIndex && a.epIndex === b.epIndex
+  return false
+}
+
+function getEndpointPos(ep) {
+  if (ep.junctionIndex !== undefined && ep.junctionIndex >= 0) {
+    return props.junctions[ep.junctionIndex]
+  }
+  return props.components[ep.compIndex].endpoints[ep.epIndex]
+}
+
+function findNearestWire(x, y) {
+  let bestIdx = null, bestDist = 10 // 10px threshold
+  for (let i = 0; i < props.wires.length; i++) {
+    const wire = props.wires[i]
+    let minD = Infinity
+    if (wire.points && wire.points.length > 1) {
+      for (let k = 0; k < wire.points.length - 1; k++) {
+        const d = pointToLineDistance(x, y, wire.points[k].x, wire.points[k].y, wire.points[k + 1].x, wire.points[k + 1].y)
+        if (d < minD) minD = d
+      }
+    } else {
+      minD = pointToLineDistance(x, y, wire.x1, wire.y1, wire.x2, wire.y2)
+    }
+    if (minD < bestDist) {
+      bestDist = minD
+      bestIdx = i
+    }
+  }
+  return bestIdx
+}
+
+function projectPointOnWire(px, py, wireIdx) {
+  const wire = props.wires[wireIdx]
+  let bestX, bestY, bestDist = Infinity
+  const segments = []
+  if (wire.points && wire.points.length > 1) {
+    for (let k = 0; k < wire.points.length - 1; k++) {
+      segments.push([wire.points[k], wire.points[k + 1]])
+    }
+  } else {
+    segments.push([{ x: wire.x1, y: wire.y1 }, { x: wire.x2, y: wire.y2 }])
+  }
+  for (const [p1, p2] of segments) {
+    const A = px - p1.x, B = py - p1.y
+    const C = p2.x - p1.x, D = p2.y - p1.y
+    const dot = A * C + B * D
+    const len_sq = C * C + D * D
+    let param = len_sq !== 0 ? dot / len_sq : 0
+    param = Math.max(0, Math.min(1, param))
+    const xx = p1.x + param * C
+    const yy = p1.y + param * D
+    const d = Math.sqrt((px - xx) ** 2 + (py - yy) ** 2)
+    if (d < bestDist) {
+      bestDist = d
+      bestX = xx
+      bestY = yy
+    }
+  }
+  return { x: bestX, y: bestY }
+}
+
+function getWireStart(wire) {
+  if (wire.points && wire.points.length > 0) return wire.points[0]
+  return { x: wire.x1, y: wire.y1 }
+}
+
+function getWireEnd(wire) {
+  if (wire.points && wire.points.length > 0) return wire.points[wire.points.length - 1]
+  return { x: wire.x2, y: wire.y2 }
 }
 
 function drawCircuit() {
@@ -439,6 +563,20 @@ function drawCircuit() {
       ctx.fillStyle = '#fff'
       ctx.beginPath()
       ctx.arc(ep.x, ep.y, 4, 0, 2 * Math.PI)
+      ctx.fill()
+    }
+
+    // 绘制junction节点
+    for (let ji = 0; ji < props.junctions.length; ji++) {
+      const j = props.junctions[ji]
+      const isSelected = selectedEndpoint.value && selectedEndpoint.value.junctionIndex === ji
+      ctx.fillStyle = isSelected ? '#28a745' : '#e91e63'
+      ctx.beginPath()
+      ctx.arc(j.x, j.y, 7, 0, 2 * Math.PI)
+      ctx.fill()
+      ctx.fillStyle = '#fff'
+      ctx.beginPath()
+      ctx.arc(j.x, j.y, 3, 0, 2 * Math.PI)
       ctx.fill()
     }
 

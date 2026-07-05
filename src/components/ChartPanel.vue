@@ -116,8 +116,8 @@ function drawChart() {
   const width = W - pad.left - pad.right
   const height = H - pad.top - pad.bottom
 
-  // 未搭建电路时显示占位图
-  if (!props.simulated) {
+  // 未搭建电路且无实测数据时显示占位图
+  if (!props.simulated && props.measuredData.length === 0) {
     drawPlaceholder(ctx, W, H, pad)
     return
   }
@@ -308,7 +308,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   if (props.measuredData.length > 0) {
     if (props.measuredData.length >= 2) {
       const mPts = props.measuredData.map(md => ({
-        x: pad.left + ((md.freq - fStart) / (fEnd - fStart)) * width,
+        x: pad.left + ((md.freq * 1000 - fStart) / (fEnd - fStart)) * width,
         y: pad.top + height * (1 - md.current / maxI),
       }))
       ctx.strokeStyle = '#28a745'
@@ -329,7 +329,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
       ctx.stroke()
     }
     for (const md of props.measuredData) {
-      const mx = pad.left + ((md.freq - fStart) / (fEnd - fStart)) * width
+      const mx = pad.left + ((md.freq * 1000 - fStart) / (fEnd - fStart)) * width
       const my = pad.top + height * (1 - md.current / maxI)
       ctx.fillStyle = '#28a745'
       ctx.beginPath()
@@ -594,19 +594,20 @@ function handleChartClick(event) {
     maxZ *= 1.1
 
     for (const md of props.measuredData) {
-      const mdX = pad.left + ((md.freq - fStart) / (fEnd - fStart)) * width
+      const mdFreqHz = md.freq * 1000
+      const mdX = pad.left + ((mdFreqHz - fStart) / (fEnd - fStart)) * width
       let mdY
       if (currentChart.value === 'amp') {
         mdY = pad.top + height * (1 - md.current / maxI)
       } else if (currentChart.value === 'phase') {
-        const mdPhase = Math.atan2(2 * Math.PI * md.freq * L - 1 / (2 * Math.PI * md.freq * C), R) * (180 / Math.PI)
+        const mdPhase = Math.atan2(2 * Math.PI * mdFreqHz * L - 1 / (2 * Math.PI * mdFreqHz * C), R) * (180 / Math.PI)
         mdY = pad.top + height * (1 - (mdPhase + 90) / 180)
       } else {
-        const mdZ = Math.sqrt(R * R + (2 * Math.PI * md.freq * L - 1 / (2 * Math.PI * md.freq * C)) ** 2)
+        const mdZ = Math.sqrt(R * R + (2 * Math.PI * mdFreqHz * L - 1 / (2 * Math.PI * mdFreqHz * C)) ** 2)
         mdY = pad.top + height * (1 - mdZ / maxZ)
       }
       if (Math.sqrt((clickX - mdX) ** 2 + (clickY - mdY) ** 2) < 12) {
-        tooltip.value = { show: true, x: mdX + 10, y: mdY - 10, content: `📗 实测数据<br>频率: ${md.freq.toFixed(4)} Hz<br>电流: ${md.current.toFixed(4)} mA` }
+        tooltip.value = { show: true, x: mdX + 10, y: mdY - 10, content: `📗 实测数据<br>频率: ${md.freq.toFixed(4)} kHz<br>电流: ${md.current.toFixed(4)} mA` }
         return
       }
     }
@@ -705,6 +706,8 @@ onMounted(() => {
     drawChart()
   })
 })
+
+defineExpose({ drawChart })
 </script>
 
 <style scoped>

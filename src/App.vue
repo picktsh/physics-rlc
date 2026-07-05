@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRLCCalculatorStore } from './stores/rlcCalculator'
 import { useHistoryStore } from './stores/historyDB'
@@ -37,6 +37,24 @@ const chartPanelRef = ref(null)
 // 实测数据绘制
 function handlePlotMeasured() {
   historyStore.saveMeasuredRecord(calcStore.measuredData)
+  // 保存后触发图表重绘
+  nextTick(() => {
+    chartPanelRef.value?.drawChart?.()
+  })
+}
+
+// 仿真并自动保存历史
+function handleSimulate() {
+  const result = calcStore.simulate()
+  if (!result.success) {
+    alert(result.message || '请先拖拽元件搭建RLC电路，至少需要一个信号源V')
+    return
+  }
+  // 仿真成功后自动保存仿真记录
+  historyStore.saveSimulationRecord({
+    params: { ...calcStore.params },
+    results: { ...calcStore.results },
+  })
 }
 
 // 频率扫描完成
@@ -121,8 +139,9 @@ async function handleImportMeasHistory(file) {
           <CircuitBoard
             v-model:components="calcStore.components"
             v-model:wires="calcStore.wires"
+            v-model:junctions="calcStore.junctions"
             v-model:mode="calcStore.circuitMode"
-            @simulate="calcStore.simulate() || alert('请先拖拽元件搭建RLC电路，至少需要一个信号源V')"
+            @simulate="handleSimulate"
             @reset="calcStore.resetCircuit()"
           />
         </section>

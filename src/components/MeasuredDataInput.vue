@@ -18,7 +18,7 @@
       <thead>
         <tr class="bg-gray-50">
           <th class="border border-gray-200 px-2 py-1.5">序号</th>
-          <th class="border border-gray-200 px-2 py-1.5">频率 (Hz)</th>
+          <th class="border border-gray-200 px-2 py-1.5">频率 (kHz)</th>
           <th class="border border-gray-200 px-2 py-1.5">电流 (mA)</th>
           <th class="border border-gray-200 px-2 py-1.5">操作</th>
         </tr>
@@ -27,10 +27,10 @@
         <tr v-for="(d, idx) in localData" :key="idx">
           <td class="border border-gray-200 px-2 py-1.5 text-center">{{ idx + 1 }}</td>
           <td class="border border-gray-200 px-2 py-1.5">
-            <input type="number" v-model.number="localData[idx].freq" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
+            <input type="text" :value="toFixed4(localData[idx].freq)" @change="localData[idx].freq = parseFloat($event.target.value) || 0" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
           </td>
           <td class="border border-gray-200 px-2 py-1.5">
-            <input type="number" v-model.number="localData[idx].current" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
+            <input type="text" :value="toFixed4(localData[idx].current)" @change="localData[idx].current = parseFloat($event.target.value) || 0" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
           </td>
           <td class="border border-gray-200 px-2 py-1.5 text-center">
             <button @click="deleteRow(idx)" class="text-red-500 hover:text-red-700">删除</button>
@@ -105,20 +105,35 @@ const emit = defineEmits(['update:data', 'plot', 'export-history', 'import-histo
 const pasteText = ref('')
 const localData = ref([...props.data])
 
+// 仅在外部数据引用变化时同步（避免与内部编辑形成死循环）
 watch(
   () => props.data,
   newVal => {
-    localData.value = [...newVal]
+    // 只有当外部传入的是不同数组时才同步，防止自身 emit 触发的回写
+    if (newVal !== localData.value) {
+      localData.value = [...newVal]
+    }
   }
 )
+
+// 使用 nextTick + flag 防止 emit 后立即被 prop watch 覆盖
+let isInternalUpdate = false
 
 watch(
   localData,
   newVal => {
-    emit('update:data', newVal)
+    if (isInternalUpdate) return
+    isInternalUpdate = true
+    emit('update:data', [...newVal])
+    // 等待父组件可能的响应后再重置标记
+    setTimeout(() => { isInternalUpdate = false }, 0)
   },
   { deep: true }
 )
+
+function toFixed4(val) {
+  return (typeof val === 'number' && !isNaN(val)) ? val.toFixed(4) : '0.0000'
+}
 
 function parsePasteData() {
   const lines = pasteText.value.split('\n')
@@ -126,7 +141,7 @@ function parsePasteData() {
   for (const line of lines) {
     const parts = line.trim().split(/\s+/)
     if (parts.length >= 2) {
-      const freq = parseFloat(parts[0]) * 1000
+      const freq = parseFloat(parts[0])
       const current = parseFloat(parts[1])
       if (!isNaN(freq) && !isNaN(current)) {
         newData.push({ freq, current })

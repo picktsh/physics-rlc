@@ -51,7 +51,7 @@ export const useHistoryStore = defineStore('history', () => {
       time: now,
       data: JSON.parse(JSON.stringify(data)),
       count: data.length,
-      freqRange: `${(minFreq / 1000).toFixed(4)}~${(maxFreq / 1000).toFixed(4)}kHz`,
+      freqRange: `${minFreq.toFixed(4)}~${maxFreq.toFixed(4)}kHz`,
     }
     measuredHistory.value.unshift(newRecord)
     if (measuredHistory.value.length > MAX_HISTORY) {
