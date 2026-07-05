@@ -21,7 +21,7 @@ const historyStore = useHistoryStore()
 const { params, results, ampCurveData, phaseCurveData, impedanceCurveData } = storeToRefs(calcStore)
 const { simulationHistory, measuredHistory } = storeToRefs(historyStore)
 
-const activeTab = ref(sessionStorage.getItem('activeTab') || 'circuit')
+const activeTab = ref(sessionStorage.getItem('activeTab') || 'formula')
 watch(activeTab, (val) => { sessionStorage.setItem('activeTab', val) })
 
 const tabs = [
