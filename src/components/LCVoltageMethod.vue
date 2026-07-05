@@ -34,15 +34,15 @@
       </div>
     </section>
 
-    <!-- 图表区 -->
+    <!-- 图表区：2列布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <!-- 左侧: UL/UC 波形 -->
-      <div class="card">
+      <!-- ===== 行1列1: UL/UC 波形 ===== -->
+      <div class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
           <span class="text-sm font-semibold text-gray-800">📊 UL / UC 双通道时域波形</span>
           <span class="text-xs text-gray-500">谐振时两波形峰值相等·相位相反</span>
         </div>
-        <div class="p-3 space-y-3">
+        <div class="p-3 space-y-3 flex-1 flex flex-col">
           <div>
             <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1">
               <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#e8633a"></span>电感电压 U<sub>L</sub>
@@ -55,47 +55,63 @@
             </div>
             <canvas ref="ucCanvasRef" class="w-full border border-gray-100 rounded" style="height:130px"></canvas>
           </div>
-          <div ref="resGainRef" class="text-xs font-semibold text-center text-green-700 bg-green-50 rounded p-2"></div>
-          <div class="flex items-center gap-2">
-            <button @click="toggleNoiseScan" :class="['flex-1 py-2 rounded-lg text-sm font-semibold transition-all', isNoiseScanning ? 'bg-red-500 text-white hover:bg-red-600' : noiseEnabled ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300']">
-              {{ isNoiseScanning ? '⏹ 停止噪声扫描' : noiseEnabled ? '📊 噪声模式已开启' : '🔊 开启噪声' }}
-            </button>
-            <span v-if="noiseEnabled" class="text-xs text-amber-600 font-semibold whitespace-nowrap">±0.5% 随机误差</span>
+          <div class="mt-auto space-y-3">
+            <div ref="resGainRef" class="text-xs font-semibold text-center text-green-700 bg-green-50 rounded p-2"></div>
+            <div class="flex items-center gap-2">
+              <button @click="toggleNoiseScan" :class="['flex-1 py-2 rounded-lg text-sm font-semibold transition-all', isNoiseScanning ? 'bg-red-500 text-white hover:bg-red-600' : noiseEnabled ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300']">
+                {{ isNoiseScanning ? '⏹ 停止噪声扫描' : noiseEnabled ? '📊 噪声模式已开启' : '🔊 开启噪声' }}
+              </button>
+              <span v-if="noiseEnabled" class="text-xs text-amber-600 font-semibold whitespace-nowrap">±0.5% 随机误差</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 右侧: 李萨如图 -->
-      <div class="card">
+      <!-- ===== 行1列2: 李萨如图 (UL vs UC) ===== -->
+      <section class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">🔵 李萨如图 (XY 轨迹)</span>
+          <span class="text-sm font-semibold text-gray-800">🟢 李萨如图 (UL–UC XY 轨迹)</span>
+        </div>
+        <div class="text-xs text-gray-600 px-4 pt-3 pb-1 bg-gray-50 border-b border-gray-200">
+          示波器·李萨如图 ( X轴：<strong>U<sub>L</sub></strong> 电感电压 | Y轴：<strong>U<sub>C</sub></strong> 电容电压 )
+        </div>
+        <div class="flex justify-center p-3 bg-gray-50 flex-1 flex items-center">
+          <canvas ref="xyULUCCanvasRef" class="w-full max-w-[360px] aspect-square border border-gray-200 rounded" style="height:360px"></canvas>
+        </div>
+        <div ref="ulucLissajousStatusRef" class="text-sm font-semibold text-center py-2 transition-all">UL / UC 振幅比 = —</div>
+      </section>
+
+      <!-- ===== 行2列1: 幅频特性曲线 ===== -->
+      <section class="card flex flex-col h-full">
+        <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+          <span class="text-sm font-semibold text-gray-800">📈 辅助 · 幅频特性曲线 ( f–I )</span>
+          <span class="text-xs text-gray-500">峰值点对应 UL=UC 谐振频率</span>
+        </div>
+        <div class="p-3 bg-gray-50 flex-1 flex items-center">
+          <canvas ref="ampCanvasRef" class="w-full border border-gray-200 rounded" style="height:380px" @click="handleAmpClick"></canvas>
+        </div>
+        <div class="flex justify-center gap-6 px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs flex-wrap">
+          <span><span class="text-gray-500">f₀ = </span><span ref="mF0Ref" class="font-semibold text-gray-800">—</span></span>
+          <span><span class="text-gray-500">Δf = </span><span ref="mDfRef" class="font-semibold text-gray-800">—</span></span>
+          <span><span class="text-gray-500">Q = </span><span ref="mQRef" class="font-semibold text-gray-800">—</span><span ref="mQLabelRef" class="ml-1 font-semibold text-green-600"></span></span>
+        </div>
+      </section>
+
+      <!-- ===== 行2列2: 李萨如图 (Us vs Ur) ===== -->
+      <div class="card flex flex-col h-full">
+        <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+          <span class="text-sm font-semibold text-gray-800">🔵 李萨如图 (Us-Ur XY 轨迹)</span>
         </div>
         <div class="text-xs text-gray-600 px-4 pt-3 pb-1 bg-gray-50 border-b border-gray-200">
           示波器·李萨如图 ( X轴：<strong>Us</strong> 回路激励总电压 | Y轴：<strong>Ur</strong> 电阻分压，等效表征回路电流 )
         </div>
-        <div class="flex justify-center p-3 bg-gray-50">
+        <div class="flex justify-center p-3 bg-gray-50 flex-1 flex items-center">
           <canvas ref="xyCanvasRef" class="w-full max-w-[360px] aspect-square border border-gray-200 rounded" style="height:360px"></canvas>
         </div>
         <div ref="phaseStatusRef" class="text-sm font-semibold text-center py-2 transition-all">相位差 φ = 0.0° | 待计算</div>
         <div ref="qHintRef" class="hidden text-xs text-gray-600 text-center px-4 pb-2 leading-relaxed"></div>
       </div>
     </div>
-
-    <!-- 幅频特性曲线 -->
-    <section class="card mb-4">
-      <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-        <span class="text-sm font-semibold text-gray-800">📈 辅助 · 幅频特性曲线 ( f–I )</span>
-        <span class="text-xs text-gray-500">峰值点对应 UL=UC 谐振频率</span>
-      </div>
-      <div class="p-3 bg-gray-50">
-        <canvas ref="ampCanvasRef" class="w-full border border-gray-200 rounded" style="height:380px" @click="handleAmpClick"></canvas>
-      </div>
-      <div class="flex justify-center gap-6 px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs flex-wrap">
-        <span><span class="text-gray-500">f₀ = </span><span ref="mF0Ref" class="font-semibold text-gray-800">—</span></span>
-        <span><span class="text-gray-500">Δf = </span><span ref="mDfRef" class="font-semibold text-gray-800">—</span></span>
-        <span><span class="text-gray-500">Q = </span><span ref="mQRef" class="font-semibold text-gray-800">—</span><span ref="mQLabelRef" class="ml-1 font-semibold text-green-600"></span></span>
-      </div>
-    </section>
 
     <!-- 操作控制 -->
     <section class="card mb-4">
@@ -305,10 +321,12 @@ let animId = null
 const ulCanvasRef = ref(null)
 const ucCanvasRef = ref(null)
 const xyCanvasRef = ref(null)
+const xyULUCCanvasRef = ref(null)
 const ampCanvasRef = ref(null)
 const resGainRef = ref(null)
 const phaseStatusRef = ref(null)
 const qHintRef = ref(null)
+const ulucLissajousStatusRef = ref(null)
 const mF0Ref = ref(null)
 const mDfRef = ref(null)
 const mQRef = ref(null)
@@ -382,7 +400,7 @@ function calcAll() {
 // ---- 波形绘制 ----
 function drawWaveform(ctx, w, h, amp, phaseOffset, color) {
   ctx.clearRect(0, 0, w, h)
-  const mL = 44, pw = w - mL - 12, ph = h - 34
+  const mL = 70, pw = w - mL - 12, ph = h - 34
   const sc = ph * 0.45 / Math.max(UL_peak.value, UC_peak.value, 0.001)
   const mid = 22 + ph / 2
 
@@ -543,6 +561,126 @@ function drawLissajous() {
   ctx.arc(gx, gy, 4, 0, 2 * Math.PI)
   ctx.fill()
   ctx.shadowBlur = 0
+}
+
+// ---- 李萨如图 (UL vs UC) ----
+function drawLissajousULUC() {
+  const canvas = xyULUCCanvasRef.value
+  if (!canvas) return
+  const dpr = window.devicePixelRatio || 1
+  const rect = canvas.getBoundingClientRect()
+  const size = Math.min(rect.width, rect.height)
+  canvas.width = size * dpr
+  canvas.height = size * dpr
+  canvas.style.width = size + 'px'
+  canvas.style.height = size + 'px'
+  const ctx = canvas.getContext('2d')
+  ctx.scale(dpr, dpr)
+
+  const cx = size / 2, cy = size / 2
+  const ds = size / 2 - 44
+  const ma = Math.max(UL_peak.value, UC_peak.value, 0.001)
+  const s = ds / ma
+
+  ctx.fillStyle = '#1a1f2e'
+  ctx.fillRect(0, 0, size, size)
+
+  ctx.strokeStyle = '#252d3d'
+  ctx.lineWidth = 0.5
+  ctx.strokeRect(cx - ds, cy - ds, ds * 2, ds * 2)
+  for (let i = 0; i <= 10; i++) {
+    const x = cx - ds + ds * 2 * i / 10
+    ctx.beginPath()
+    ctx.moveTo(x, cy - ds)
+    ctx.lineTo(x, cy + ds)
+    ctx.stroke()
+    const y = cy - ds + ds * 2 * i / 10
+    ctx.beginPath()
+    ctx.moveTo(cx - ds, y)
+    ctx.lineTo(cx + ds, y)
+    ctx.stroke()
+  }
+
+  ctx.strokeStyle = '#354055'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(cx, cy - ds)
+  ctx.lineTo(cx, cy + ds)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(cx - ds, cy)
+  ctx.lineTo(cx + ds, cy)
+  ctx.stroke()
+
+  // X轴标签：UL
+  ctx.fillStyle = '#6a7a8a'
+  ctx.font = '11px system-ui'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillText('X：Uₗ 电感电压', cx, cy + ds + 6)
+  ctx.save()
+  ctx.fillStyle = '#6a7a8a'
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'middle'
+  ctx.translate(cx - ds - 8, cy)
+  ctx.rotate(-Math.PI / 2)
+  ctx.fillText('Y：Uᴄ 电容电压', 0, 0)
+  ctx.restore()
+
+  ctx.fillStyle = '#5a6a7a'
+  ctx.font = '10px system-ui'
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'top'
+  ctx.fillText('O', cx - 3, cy + 3)
+
+  // Lissajous curve: UL vs UC
+  // UL = UL_peak * sin(θ + π/2) = UL_peak * cos(θ)
+  // UC = UC_peak * sin(θ - π/2) = -UC_peak * cos(θ)
+  // UL与UC相位差180°，canvas Y轴翻转后显示为正斜率
+  ctx.beginPath()
+  for (let i = 0; i <= 300; i++) {
+    const th = i / 300 * 2 * Math.PI
+    const px = cx + Math.sin(th + Math.PI / 2) * s * UL_peak.value
+    const py = cy - Math.sin(th - Math.PI / 2) * s * UC_peak.value
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+  }
+  ctx.strokeStyle = '#36d1dc'
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+
+  // cursor dot
+  const gx = cx + Math.sin(cursorAngle + Math.PI / 2) * s * UL_peak.value
+  const gy = cy - Math.sin(cursorAngle - Math.PI / 2) * s * UC_peak.value
+  ctx.fillStyle = '#76ffd8'
+  ctx.shadowColor = '#76ffd8'
+  ctx.shadowBlur = 14
+  ctx.beginPath()
+  ctx.arc(gx, gy, 4, 0, 2 * Math.PI)
+  ctx.fill()
+  ctx.shadowBlur = 0
+
+  // 更新UL/UC振幅比状态
+  if (ulucLissajousStatusRef.value) {
+    const ratio = UC_peak.value > 0.001
+      ? (UL_peak.value / UC_peak.value)
+      : 0
+    const pd = phi.value * 180 / Math.PI
+    const diff = Math.abs(UL_peak.value - UC_peak.value)
+    let t, c, b
+    if (diff < 0.001 || Math.abs(pd) < 3) {
+      t = 'UL / UC = -' + t4(ratio) + ' ✅ 谐振状态（UL≈UC）'
+      c = '#10b981'; b = '#ecfdf5'
+    } else if (ratio > 1) {
+      t = 'UL / UC = -' + t4(ratio) + ' ⚡ 感性失谐（UL与UC反相，|UL|>|UC|）'
+      c = '#f59e0b'; b = '#fffbeb'
+    } else {
+      t = 'UL / UC = -' + t4(ratio) + ' 🔵 容性失谐（UL与UC反相，|UC|>|UL|）'
+      c = '#3b82f6'; b = '#eff6ff'
+    }
+    ulucLissajousStatusRef.value.textContent = t
+    ulucLissajousStatusRef.value.style.color = c
+    ulucLissajousStatusRef.value.style.background = b
+  }
 }
 
 // ---- 状态更新 ----
@@ -1008,6 +1146,7 @@ function refreshAll() {
   nextTick(() => {
     drawULUC()
     drawLissajous()
+    drawLissajousULUC()
     drawAmpChart()
     updatePhaseStatus()
     updateResGain()
@@ -1074,6 +1213,7 @@ function animate() {
   cursorAngle += 0.025
   if (cursorAngle > 2 * Math.PI) cursorAngle -= 2 * Math.PI
   drawLissajous()
+  drawLissajousULUC()
   animId = requestAnimationFrame(animate)
 }
 
