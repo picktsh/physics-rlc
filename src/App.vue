@@ -12,6 +12,7 @@ import LissajousScope from './components/LissajousScope.vue'
 import FrequencySweep from './components/FrequencySweep.vue'
 import SimulationHistory from './components/SimulationHistory.vue'
 import FormulaPrinciple from './components/FormulaPrinciple.vue'
+import LCVoltageMethod from './components/LCVoltageMethod.vue'
 import DoubaoChat from './components/DoubaoChat.vue'
 
 const calcStore = useRLCCalculatorStore()
@@ -27,7 +28,8 @@ const tabs = [
   { key: 'formula', label: '📖 公式原理' },
   { key: 'circuit', label: '🧩 电路搭建' },
   { key: 'analysis', label: '📊 仿真分析' },
-  { key: 'measure', label: '📋 实测数据' },
+  { key: 'measure', label: '📋 相位差判别法' },
+  { key: 'lc-voltage', label: '📋 LC电压幅值法' },
 ]
 
 const chartPanelRef = ref(null)
@@ -133,7 +135,7 @@ async function handleImportMeasHistory(file) {
             <span>📊</span>
             <span>计算结果</span>
           </div>
-          <ResultCards :results="results" />
+          <ResultCards :results="results" :simulated="calcStore.simulated" />
           <SimulationHistory
             :history="simulationHistory"
             @export="historyStore.exportSimulationHistory()"
@@ -156,6 +158,7 @@ async function handleImportMeasHistory(file) {
             :phase-curve-data="phaseCurveData"
             :impedance-curve-data="impedanceCurveData"
             :measured-data="calcStore.measuredData"
+            :simulated="calcStore.simulated"
             @update-fstart="val => calcStore.updateParams({ fStart: val })"
             @update-fend="val => calcStore.updateParams({ fEnd: val })"
           />
@@ -187,7 +190,7 @@ async function handleImportMeasHistory(file) {
         </section>
       </template>
 
-      <!-- Tab 内容: 实测数据 -->
+      <!-- Tab 内容: 相位差判别法 -->
       <template v-if="activeTab === 'measure'">
         <section class="card mb-4">
           <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -209,6 +212,11 @@ async function handleImportMeasHistory(file) {
       <!-- Tab 内容: 公式原理 -->
       <template v-if="activeTab === 'formula'">
         <FormulaPrinciple />
+      </template>
+
+      <!-- Tab 内容: LC电压幅值法 -->
+      <template v-if="activeTab === 'lc-voltage'">
+        <LCVoltageMethod />
       </template>
     </div>
 

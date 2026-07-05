@@ -57,6 +57,7 @@ const props = defineProps({
   phaseCurveData: { type: Array, default: () => [] },
   impedanceCurveData: { type: Array, default: () => [] },
   measuredData: { type: Array, default: () => [] },
+  simulated: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update-fstart', 'update-fend'])
@@ -114,6 +115,13 @@ function drawChart() {
   const pad = { top: 40, right: 40, bottom: 50, left: 60 }
   const width = W - pad.left - pad.right
   const height = H - pad.top - pad.bottom
+
+  // 未搭建电路时显示占位图
+  if (!props.simulated) {
+    drawPlaceholder(ctx, W, H, pad)
+    return
+  }
+
   const { R, L, C, V, usingDefaults } = getPlotParams()
   const fStart = localFStart.value
   const fEnd = localFEnd.value
@@ -142,6 +150,63 @@ function drawChart() {
   } else {
     drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   }
+}
+
+// 未仿真时的占位图
+function drawPlaceholder(ctx, W, H, pad) {
+  const cx = W / 2
+  const cy = H / 2
+
+  // 浅色网格
+  ctx.strokeStyle = '#ececec'
+  ctx.lineWidth = 1
+  const gH = H - pad.top - pad.bottom
+  const gW = W - pad.left - pad.right
+  for (let i = 0; i <= 5; i++) {
+    ctx.beginPath(); ctx.moveTo(pad.left, pad.top + (gH / 5) * i); ctx.lineTo(W - pad.right, pad.top + (gH / 5) * i); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(pad.left + (gW / 5) * i, pad.top); ctx.lineTo(pad.left + (gW / 5) * i, H - pad.bottom); ctx.stroke()
+  }
+
+  // 坐标轴装饰线
+  ctx.strokeStyle = '#d0d0d0'
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.moveTo(pad.left, pad.top)
+  ctx.lineTo(pad.left, H - pad.bottom)
+  ctx.lineTo(W - pad.right, H - pad.bottom)
+  ctx.stroke()
+
+  // 占位主图标 —— 三条虚线示意曲线
+  ctx.strokeStyle = '#dcdcdc'
+  ctx.lineWidth = 2
+  ctx.setLineDash([6, 6])
+  // 示意幅频曲线
+  ctx.beginPath()
+  ctx.moveTo(pad.left + gW * 0.1, H - pad.bottom - gH * 0.5)
+  ctx.quadraticCurveTo(pad.left + gW * 0.35, H - pad.bottom - gH * 0.85, cx, H - pad.bottom - gH * 0.75)
+  ctx.quadraticCurveTo(pad.left + gW * 0.65, H - pad.bottom - gH * 0.6, W - pad.right - gW * 0.1, H - pad.bottom - gH * 0.4)
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  // 中央提示文字
+  ctx.fillStyle = '#b0b0b0'
+  ctx.font = 'bold 16px system-ui'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('请搭建 RLC 电路并点击「开始仿真」', cx, cy - 24)
+
+  ctx.fillStyle = '#c5c5c5'
+  ctx.font = '13px system-ui'
+  ctx.fillText('以查看幅频 / 相频 / 阻抗特性曲线', cx, cy + 12)
+
+  // 小箭头提示
+  ctx.fillStyle = '#d5d5d5'
+  ctx.font = '20px system-ui'
+  ctx.fillText('👆', cx, cy + 58)
+  ctx.font = '12px system-ui'
+  ctx.fillText('切换到「电路搭建」标签页', cx, cy + 88)
+
+  ctx.textBaseline = 'alphabetic'
 }
 
 // 幅频特性

@@ -145,7 +145,7 @@ function handleDrop(event) {
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
 
-  const defaultValues = { R: 100, L: 10, C: 1, V: 5 }
+  const defaultValues = { R: 100, L: 100, C: 0.05, V: 0.9 }
   const newComp = {
     type,
     x,

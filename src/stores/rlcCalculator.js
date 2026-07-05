@@ -37,6 +37,9 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
   const wires = ref([])
   const circuitMode = ref('wire')
 
+  // 标记是否已通过电路搭建执行仿真（初始默认不显示曲线）
+  const simulated = ref(false)
+
   // 实测数据
   const measuredData = ref([])
 
@@ -86,6 +89,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     if (!hasV) return false
     const ep = extractCircuitParams()
     updateParams(ep)
+    simulated.value = true
     return true
   }
 
@@ -94,6 +98,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     wires.value = []
     circuitMode.value = 'wire'
     measuredData.value = []
+    simulated.value = false
     resetParams()
   }
 
@@ -110,6 +115,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     wires,
     circuitMode,
     measuredData,
+    simulated,
     calculate,
     updateParams,
     resetParams,

@@ -194,6 +194,30 @@ function formatAxisNum(v) {
   return v.toFixed(3)
 }
 
+// 绘制红色五角星
+function drawStar(ctx, x, y, r, color) {
+  ctx.save()
+  ctx.fillStyle = color
+  ctx.shadowColor = color
+  ctx.shadowBlur = 12
+  ctx.beginPath()
+  for (let i = 0; i < 5; i++) {
+    const outerAngle = -Math.PI / 2 + (i * 2 * Math.PI) / 5
+    const innerAngle = outerAngle + Math.PI / 5
+    const ox = x + r * Math.cos(outerAngle)
+    const oy = y + r * Math.sin(outerAngle)
+    const ix = x + r * 0.4 * Math.cos(innerAngle)
+    const iy = y + r * 0.4 * Math.sin(innerAngle)
+    if (i === 0) ctx.moveTo(ox, oy)
+    else ctx.lineTo(ox, oy)
+    ctx.lineTo(ix, iy)
+  }
+  ctx.closePath()
+  ctx.fill()
+  ctx.shadowBlur = 0
+  ctx.restore()
+}
+
 // HiDPI Canvas 设置
 function setupHiDPICanvas(canvas, height) {
   const dpr = window.devicePixelRatio || 1
@@ -586,8 +610,10 @@ async function autoSweep() {
     alert('电路参数异常，请检查 R、L、C 元件参数')
     return
   }
-  const fStart = 1400
-  const fEnd = 3200
+  // 以谐振频率 f0 为中心动态生成扫频范围，保证必定经过谐振点
+  const sweepHalfRange = Math.max(f0 * 0.5, 100)
+  const fStart = Math.max(100, Math.round(f0 - sweepHalfRange))
+  const fEnd = Math.round(f0 + sweepHalfRange)
   const freqs = []
   const N = 50
   for (let i = 0; i <= N; i++) {
@@ -601,7 +627,7 @@ async function autoSweep() {
   acquiredData.value = []
   isSweeping.value = true
   stopRequested.value = false
-  fixedRange.value = { fMin: 1300, fMax: 3300 }
+  fixedRange.value = { fMin: Math.max(50, fStart * 0.9), fMax: fEnd * 1.1 }
   for (let idx = 0; idx < unique.length; idx++) {
     // 检查是否请求停止
     if (stopRequested.value) break
@@ -624,7 +650,9 @@ async function autoSweep() {
       phase: z.phi,
     })
 
-    // 实时更新幅频图
+    // 更新当前频率，触发李萨如图与幅频图实时变化
+    emit('update-freq', f)
+    await nextTick()
     drawAmpChart()
   }
   isSweeping.value = false

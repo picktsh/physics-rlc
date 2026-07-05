@@ -8,9 +8,9 @@ export function useRLCCalculator() {
   // 电路参数
   const params = ref({
     R: 100,
-    L: 10,
-    C: 1,
-    V: 5,
+    L: 100,
+    C: 0.05,
+    V: 0.9,
     fStart: 100,
     fEnd: 2000,
   })
