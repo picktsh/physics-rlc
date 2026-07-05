@@ -217,13 +217,13 @@
         <div class="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-4 border border-rose-200 hover:shadow-md transition-shadow">
           <div class="text-xs text-rose-700 font-semibold mb-2 uppercase tracking-wide">半功率点电流</div>
           <div class="flex items-center justify-center text-lg font-mono font-bold text-gray-800 text-center py-2 bg-white/60 rounded-lg">
-            <span>I<sub>0.707</sub> = </span>
+            <span>I<sub>max/√2</sub> = </span>
             <div class="flex flex-col items-center mx-0.5">
               <span class="border-0 border-b-2 border-solid border-gray-800 px-1.5 pb-0.5 leading-none">I<sub>max</sub></span>
               <span class="pt-0.5 leading-none">&#x221A;2</span>
             </div>
           </div>
-          <div class="text-xs text-gray-500 mt-2">I = 0.707 I<sub>max</sub>，功率为最大值一半</div>
+          <div class="text-xs text-gray-500 mt-2">I = I<sub>max</sub>/√2，功率为最大值一半</div>
         </div>
       </div>
 

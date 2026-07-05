@@ -41,7 +41,7 @@
       </div>
       <div class="flex items-center gap-1">
         <div class="w-4 h-0 border-t-2 border-dashed border-gray-400"></div>
-        <span>0.707倍截止电流</span>
+        <span>Imax/√2 截止电流</span>
       </div>
     </div>
   </div>
@@ -239,7 +239,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   // 理论计算
   const theory = calcTheory(R, L, C, V)
 
-  // 0.707截止线
+  // Imax/√2截止线
   const halfPowerY = pad.top + height * (1 - theory.halfPower / maxI)
   ctx.strokeStyle = '#888'
   ctx.lineWidth = 1
@@ -261,10 +261,10 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.font = 'bold 11px system-ui'
   ctx.fillText('Imax=' + theory.Imax.toFixed(4) + 'mA', resX - 35, resY - 10)
 
-  // 0.707标注
+  // Imax/√2标注
   ctx.fillStyle = '#ff6b6b'
   ctx.font = '10px system-ui'
-  ctx.fillText('0.707×Imax=' + theory.halfPower.toFixed(4) + 'mA', pad.left + 5, halfPowerY - 5)
+  ctx.fillText('Imax/√2=' + theory.halfPower.toFixed(4) + 'mA', pad.left + 5, halfPowerY - 5)
 
   // f1/f2截止频率
   const f1x = pad.left + ((theory.f1 - fStart) / (fEnd - fStart)) * width
@@ -529,7 +529,7 @@ function calcTheory(R, L, C, V) {
   const Q = (omega0 * L) / R
   const BW = fr / Q
   const Imax = (V / R) * 1000
-  const halfPower = Imax * 0.707
+  const halfPower = Imax / Math.sqrt(2)
   const f1 = fr - BW / 2
   const f2 = fr + BW / 2
   return { fr, Q, BW, Imax, halfPower, f1, f2 }

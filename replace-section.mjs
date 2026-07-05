@@ -45,7 +45,7 @@ const newSection = `      <!-- 方法一：利用谐振曲线 -->
           <div class="text-sm text-gray-700 leading-relaxed">
             <strong>第二步：</strong>半功率点条件
             <div class="mt-2 bg-white/70 px-3 py-2 rounded-lg border border-indigo-100">
-              <p class="font-mono text-xs text-indigo-700">当 I = 0.707I<sub>max</sub> 时，对应的两个频率为 f<sub>1</sub> 和 f<sub>2</sub></p>
+              <p class="font-mono text-xs text-indigo-700">当 I = I<sub>max</sub>/√2 时，对应的两个频率为 f<sub>1</sub> 和 f<sub>2</sub></p>
               <p class="font-mono text-xs text-indigo-700 mt-1">此时 |X<sub>L</sub> &#x2212; X<sub>C</sub>| = R，即 &#x3C9;L &#x2212; 1/(&#x3C9;C) = &#xB1;R</p>
             </div>
           </div>
@@ -104,7 +104,7 @@ const newSection = `      <!-- 方法一：利用谐振曲线 -->
             <strong>第二步：</strong>确定特征相位点
             <div class="mt-2 bg-white/70 px-3 py-2 rounded-lg border border-purple-100">
               <p class="font-mono text-xs text-purple-700">当 &#x3C6; = &#xB1;&#x3C0;/2 时，|X<sub>L</sub> &#x2212; X<sub>C</sub>| = R</p>
-              <p class="text-xs text-gray-600 mt-1">此时电流为最大值的 0.707 倍，对应半功率点</p>
+              <p class="text-xs text-gray-600 mt-1">此时电流为最大值的 1/√2 倍，对应半功率点</p>
             </div>
           </div>
           

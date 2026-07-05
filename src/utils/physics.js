@@ -82,7 +82,7 @@ export function calculateRLC(R, L_mH, C_uF, V) {
   const Q = (omega0 * L) / R
   const BW = fr / Q
   const Imax = (V / R) * 1000
-  const halfPower = Imax * 0.707
+  const halfPower = Imax / Math.sqrt(2)
   const f1 = fr - BW / 2
   const f2 = fr + BW / 2
 
