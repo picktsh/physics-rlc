@@ -56,9 +56,6 @@
 
     <!-- 操作按钮 -->
     <div class="flex gap-3 flex-wrap mb-4">
-      <button @click="acquireData" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
-        📌 采集当前点
-      </button>
       <button @click="toggleSweep" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="isSweeping ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
         {{ isSweeping ? '⏹ 停止扫描' : '🔄 自动扫描' }}
       </button>
@@ -567,27 +564,7 @@ function animate() {
   requestAnimationFrame(animate)
 }
 
-// 采集数据
-function acquireData() {
-  const m = measures.value
-  const f = props.params.fStart || 1000
-  acquiredData.value.push({
-    freq: f,
-    current: m.I,
-    urpp: m.Urpp,
-    impedance: m.Z,
-    phase: m.phi,
-  })
-  if (!fixedRange.value) {
-    const f0 = m.f0
-    fixedRange.value = { fMin: Math.max(50, f0 * 0.2), fMax: f0 * 3 }
-    if (f > fixedRange.value.fMax) fixedRange.value.fMax = f * 1.5
-    if (f < fixedRange.value.fMin) fixedRange.value.fMin = f * 0.5
-  } else {
-    if (f > fixedRange.value.fMax) fixedRange.value.fMax = f * 1.3
-    if (f < fixedRange.value.fMin) fixedRange.value.fMin = f * 0.7
-  }
-}
+
 
 // 切换扫描/停止
 function toggleSweep() {
