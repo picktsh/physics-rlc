@@ -6,7 +6,8 @@
         :key="comp.type"
         draggable="true"
         @dragstart="handleDragStart($event, comp.type)"
-        class="component-item flex flex-col items-center p-2 bg-gray-100 rounded-lg cursor-grab text-xs text-gray-600 hover:bg-gray-200 transition-all"
+        @click="selectPaletteComponent(comp.type)"
+        :class="['component-item flex flex-col items-center p-2 rounded-lg cursor-pointer text-xs text-gray-600 transition-all', pendingPlaceType === comp.type ? 'bg-indigo-100 ring-2 ring-indigo-400' : 'bg-gray-100 hover:bg-gray-200']"
       >
         <div :class="['comp-icon w-10 h-10 rounded-full flex items-center justify-center font-bold text-white', comp.colorClass]">
           {{ comp.label }}
@@ -38,11 +39,14 @@
 
     <canvas
       ref="canvasRef"
-      class="w-full h-[280px] border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair"
+      class="w-full h-[280px] border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
       @drop="handleDrop"
       @dragover="allowDrop"
-      @click="handleCanvasClick"
-      @mousemove="handleMouseMove"
+      @mousedown="handlePointerDown"
+      @mousemove="handlePointerMove"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
     />
 
     <div class="text-xs text-gray-500 text-center mt-2">
@@ -101,6 +105,7 @@ const circuitMode = ref(props.mode)
 const selectedEndpoint = ref(null) // { compIndex, epIndex } or { junctionIndex }
 const wireIntermediatePoints = ref([])
 const selectedComponentIndex = ref(null)
+const pendingPlaceType = ref(null) // 移动端：点击元件面板后等待放置的类型
 
 // 元件输入编辑状态（解决输入小数时 parseFloat 吞掉中间状态的问题）
 const compInputValues = ref({})
@@ -136,6 +141,36 @@ const componentTypes = [
 
 function handleDragStart(event, type) {
   event.dataTransfer.setData('componentType', type)
+}
+
+// 移动端：点击元件面板选中，再点击画布放置
+function selectPaletteComponent(type) {
+  if (pendingPlaceType.value === type) {
+    pendingPlaceType.value = null // 取消选中
+  } else {
+    pendingPlaceType.value = type
+  }
+}
+
+function placeComponentAt(x, y) {
+  const type = pendingPlaceType.value
+  if (!type) return false
+  const defaultValues = { R: 100, L: 100, C: 0.05, V: 0.9 }
+  const newComp = {
+    type,
+    x,
+    y,
+    id: Date.now() + Math.random(),
+    value: defaultValues[type] || 0,
+    endpoints: [
+      { x: x - 30, y, id: Date.now() + Math.random(), side: 'left' },
+      { x: x + 30, y, id: Date.now() + Math.random() + 1, side: 'right' },
+    ],
+  }
+  emit('update:components', [...props.components, newComp])
+  pendingPlaceType.value = null
+  drawCircuit()
+  return true
 }
 
 function allowDrop(event) {
@@ -320,13 +355,28 @@ function handleCanvasClick(event) {
   }
 }
 
-function handleMouseMove(event) {
+// === 统一指针事件处理（兼容 PC 鼠标和移动端触摸）===
+function getCanvasCoords(event) {
+  const rect = canvasRef.value.getBoundingClientRect()
+  const clientX = event.touches ? event.touches[0].clientX : event.clientX
+  const clientY = event.touches ? event.touches[0].clientY : event.clientY
+  return { x: clientX - rect.left, y: clientY - rect.top }
+}
+
+function handlePointerDown(event) {
+  // PC端：如果有待放置的元件，先放置
+  if (pendingPlaceType.value) {
+    const { x, y } = getCanvasCoords(event)
+    if (placeComponentAt(x, y)) return
+  }
+  handleCanvasClick(event)
+}
+
+function handlePointerMove(event) {
   if (circuitMode.value === 'wire' && selectedEndpoint.value !== null) {
     drawCircuit()
     const ctx = canvasRef.value.getContext('2d')
-    const rect = canvasRef.value.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    const { x, y } = getCanvasCoords(event)
     const ep = getEndpointPos(selectedEndpoint.value)
 
     ctx.strokeStyle = 'rgba(102, 126, 234, 0.5)'
@@ -344,6 +394,48 @@ function handleMouseMove(event) {
       ctx.beginPath()
       ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI)
       ctx.fill()
+    }
+  }
+}
+
+// === 触摸事件桥接 ===
+let touchStartTime = 0
+let touchMoved = false
+
+function handleTouchStart(event) {
+  touchStartTime = Date.now()
+  touchMoved = false
+  // 如果有待放置元件，在 touchend 时处理
+  if (pendingPlaceType.value) return
+  // 接线模式下预览线跟随手指
+  if (circuitMode.value === 'wire' && selectedEndpoint.value !== null) {
+    event.preventDefault()
+  }
+}
+
+function handleTouchMove(event) {
+  touchMoved = true
+  if (circuitMode.value === 'wire' && selectedEndpoint.value !== null) {
+    event.preventDefault() // 防止页面滚动
+    handlePointerMove(event)
+  }
+}
+
+function handleTouchEnd(event) {
+  // 模拟 click：短按且未移动
+  const elapsed = Date.now() - touchStartTime
+  if (elapsed < 300 && !touchMoved) {
+    // 使用 changedTouches 获取最终坐标
+    const rect = canvasRef.value.getBoundingClientRect()
+    const touch = event.changedTouches[0]
+    const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY }
+
+    if (pendingPlaceType.value) {
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+      placeComponentAt(x, y)
+    } else {
+      handleCanvasClick(fakeEvent)
     }
   }
 }
