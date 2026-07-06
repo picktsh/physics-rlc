@@ -117,7 +117,7 @@ const emit = defineEmits(['update-freq'])
 
 const scopeCanvasRef = ref(null)
 const ampCanvasRef = ref(null)
-const canvasHeight = ref(420)
+const canvasHeight = ref(typeof window !== 'undefined' && window.innerWidth < 640 ? 280 : 420)
 
 // 状态
 const acquiredData = ref([])
@@ -684,6 +684,27 @@ onMounted(() => {
       dragging = true
     }
   })
+  // 触摸事件 - 示波器游标
+  scopeCanvas.addEventListener('touchstart', e => {
+    e.preventDefault()
+    const rect = scopeCanvas.getBoundingClientRect()
+    const touch = e.touches[0]
+    scopeCursor.value.x = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width))
+    scopeCursor.value.y = Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height))
+    dragging = true
+  }, { passive: false })
+  scopeCanvas.addEventListener('touchmove', e => {
+    e.preventDefault()
+    if (!dragging) return
+    const rect = scopeCanvas.getBoundingClientRect()
+    const touch = e.touches[0]
+    scopeCursor.value.x = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width))
+    scopeCursor.value.y = Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height))
+  }, { passive: false })
+  scopeCanvas.addEventListener('touchend', e => {
+    e.preventDefault()
+    dragging = false
+  }, { passive: false })
   scopeCanvas.addEventListener('mousemove', e => {
     if (!dragging) return
     const rect = scopeCanvas.getBoundingClientRect()
@@ -700,10 +721,20 @@ onMounted(() => {
   // 幅频图点击事件 - 更新频率
   const ampCanvas = ampCanvasRef.value
   ampCanvas.addEventListener('click', e => {
+    handleAmpCanvasClick(e)
+  })
+  // 触摸事件 - 幅频图
+  ampCanvas.addEventListener('touchstart', e => {
+    e.preventDefault()
+    handleAmpCanvasClick(e)
+  }, { passive: false })
+
+  function handleAmpCanvasClick(e) {
     const pi = ampCanvas._plotInfo
     if (!pi) return
     const rect = ampCanvas.getBoundingClientRect()
-    const mx = e.clientX - rect.left
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const mx = clientX - rect.left
     const ratio = (mx - pi.pad.l) / pi.gW
     if (ratio < 0 || ratio > 1) return
     const newF = Math.round(pi.fMin + pi.fRange * ratio)
@@ -713,7 +744,7 @@ onMounted(() => {
     if (!freqMin.value || !freqMax.value) {
       fixedRange.value = null
     }
-  })
+  }
 
   // 启动动画
   nextTick(() => {

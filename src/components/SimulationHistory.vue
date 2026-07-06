@@ -13,19 +13,19 @@
     </div>
 
     <!-- 历史表格 -->
-    <div class="max-h-72 overflow-y-auto">
-      <table v-if="history.length > 0" class="w-full text-xs border-collapse">
+    <div class="max-h-72 overflow-y-auto overflow-x-auto table-responsive">
+      <table v-if="history.length > 0" class="text-xs border-collapse">
         <thead>
           <tr class="bg-gray-50">
             <th class="border border-gray-200 px-2 py-1.5">时间</th>
             <th class="border border-gray-200 px-2 py-1.5">R(Ω)</th>
-            <th class="border border-gray-200 px-2 py-1.5">L(mH)</th>
-            <th class="border border-gray-200 px-2 py-1.5">C(μF)</th>
-            <th class="border border-gray-200 px-2 py-1.5">V(V)</th>
+            <th class="border border-gray-200 px-2 py-1.5 hide-on-mobile">L(mH)</th>
+            <th class="border border-gray-200 px-2 py-1.5 hide-on-mobile">C(μF)</th>
+            <th class="border border-gray-200 px-2 py-1.5 hide-on-mobile">V(V)</th>
             <th class="border border-gray-200 px-2 py-1.5">f₀(Hz)</th>
-            <th class="border border-gray-200 px-2 py-1.5">Q</th>
-            <th class="border border-gray-200 px-2 py-1.5">BW(Hz)</th>
-            <th class="border border-gray-200 px-2 py-1.5">Imax(mA)</th>
+            <th class="border border-gray-200 px-2 py-1.5 hide-on-mobile">Q</th>
+            <th class="border border-gray-200 px-2 py-1.5 hide-on-mobile">BW(Hz)</th>
+            <th class="border border-gray-200 px-2 py-1.5 hide-on-mobile">Imax(mA)</th>
             <th class="border border-gray-200 px-2 py-1.5">操作</th>
           </tr>
         </thead>
@@ -33,16 +33,16 @@
           <tr v-for="(r, idx) in history" :key="r.id" class="hover:bg-blue-50">
             <td class="border border-gray-200 px-2 py-1.5 whitespace-nowrap text-xs">{{ r.time }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.params.R }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.params.L }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.params.C }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.params.V }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.params.L }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.params.C }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.params.V }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center text-indigo-600 font-semibold">{{ r.results.fr.toFixed(4) }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.results.Q.toFixed(4) }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.results.BW.toFixed(4) }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.results.Imax.toFixed(4) }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.results.Q.toFixed(4) }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.results.BW.toFixed(4) }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.results.Imax.toFixed(4) }}</td>
             <td class="border border-gray-200 px-2 py-1.5 whitespace-nowrap text-center">
-              <button @click="$emit('load', idx)" class="text-indigo-600 border border-indigo-600 bg-white rounded px-2 py-0.5 text-xs mr-1 hover:bg-indigo-50">加载</button>
-              <button @click="$emit('delete', idx)" class="text-red-600 border border-red-600 bg-white rounded px-2 py-0.5 text-xs hover:bg-red-50">删除</button>
+              <button @click="$emit('load', idx)" class="text-indigo-600 border border-indigo-600 bg-white rounded px-1.5 sm:px-2 py-0.5 text-xs mr-1 hover:bg-indigo-50">加载</button>
+              <button @click="$emit('delete', idx)" class="text-red-600 border border-red-600 bg-white rounded px-1.5 sm:px-2 py-0.5 text-xs hover:bg-red-50">删除</button>
             </td>
           </tr>
         </tbody>

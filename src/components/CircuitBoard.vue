@@ -18,28 +18,28 @@
 
     <div class="circuit-controls flex gap-2 mb-2 flex-wrap">
       <button
-        :class="['px-3 py-2 border-2 border-gray-300 rounded-lg text-sm cursor-pointer transition-all', circuitMode === 'wire' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white']"
+        :class="['px-2.5 md:px-3 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm cursor-pointer transition-all', circuitMode === 'wire' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white']"
         @click="setCircuitMode('wire')"
       >
-        🔗 接线模式
+        🔗 接线
       </button>
       <button
-        :class="['px-3 py-2 border-2 border-gray-300 rounded-lg text-sm cursor-pointer transition-all', circuitMode === 'delete' ? 'bg-red-500 text-white border-red-500' : 'bg-white']"
+        :class="['px-2.5 md:px-3 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm cursor-pointer transition-all', circuitMode === 'delete' ? 'bg-red-500 text-white border-red-500' : 'bg-white']"
         @click="setCircuitMode('delete')"
       >
-        🗑️ 删除模式
+        🗑️ 删除
       </button>
-      <button class="ml-auto px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all" @click="$emit('simulate')">
-        🚀 开始仿真
+      <button class="ml-auto px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs md:text-sm font-semibold hover:shadow-lg transition-all" @click="$emit('simulate')">
+        🚀 仿真
       </button>
-      <button class="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-300 transition-all" @click="$emit('reset')">
-        🔄 清空电路
+      <button class="px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-600 rounded-lg text-xs md:text-sm hover:bg-gray-300 transition-all" @click="$emit('reset')">
+        🔄 清空
       </button>
     </div>
 
     <canvas
       ref="canvasRef"
-      class="w-full h-[280px] border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
+      class="w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
       @drop="handleDrop"
       @dragover="allowDrop"
       @mousedown="handlePointerDown"
@@ -55,7 +55,7 @@
 
     <!-- 元件参数编辑器 -->
     <div v-if="components.length > 0" class="mt-3">
-      <div class="text-sm font-semibold text-gray-700 mb-2">📝 元件参数编辑</div>
+      <div class="text-xs sm:text-sm font-semibold text-gray-700 mb-2">📝 元件参数编辑</div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div v-for="(comp, idx) in components" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-indigo-500' : '']">
           <label class="text-xs text-gray-600">{{ getComponentLabel(comp.type) }} #{{ idx + 1 }}</label>
@@ -66,7 +66,7 @@
               :value="getCompDisplay(idx)"
               @input="onCompInput(idx, $event)"
               @blur="onCompBlur(idx)"
-              class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+              class="w-full min-w-0 px-2 py-1.5 border border-gray-300 rounded text-sm"
             />
             <span class="text-xs text-gray-500 whitespace-nowrap">{{ getComponentUnit(comp.type) }}</span>
           </div>

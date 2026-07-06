@@ -176,3 +176,52 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* ========== 响应式增强 ========== */
+
+/* 隐藏滚动条但保持可滚动 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 移动端表格横向滚动容器 */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-responsive table {
+  min-width: max-content;
+}
+
+/* 移动端隐藏列 */
+@media (max-width: 640px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* 触摸友好：增大可点击区域 */
+@media (max-width: 768px) {
+  .touch-friendly {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .touch-friendly-text {
+    padding: 8px 12px;
+  }
+}
+
+/* 卡片在移动端减少内边距 */
+@media (max-width: 640px) {
+  .card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .card-inner {
+    padding: 10px;
+  }
+}

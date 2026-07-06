@@ -8,7 +8,7 @@
       </div>
       <div class="flex flex-col lg:flex-row gap-6 items-center">
         <div class="flex-shrink-0 bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-5 border border-gray-200 shadow-sm">
-          <svg width="400" height="130" viewBox="0 0 400 130" class="text-gray-700">
+          <svg viewBox="0 0 400 130" class="w-full max-w-[400px] h-auto text-gray-700" style="height:auto;aspect-ratio:400/130">
             <line x1="70" y1="45" x2="95" y2="45" stroke="currentColor" stroke-width="2" />
             <line x1="140" y1="45" x2="168" y2="45" stroke="currentColor" stroke-width="2" />
             <line x1="238" y1="45" x2="265" y2="45" stroke="currentColor" stroke-width="2" />

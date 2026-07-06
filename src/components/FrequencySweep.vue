@@ -18,17 +18,17 @@
       </div>
     </div>
 
-    <div class="flex gap-3 mb-4">
-      <button @click="runSweep" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
-        开始频率扫描
+    <div class="flex gap-2 sm:gap-3 mb-4 flex-wrap">
+      <button @click="runSweep" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">
+        🔄 开始扫描
       </button>
-      <button @click="clearResults" class="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-300 transition-all">
-        清除结果
+      <button @click="clearResults" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-600 rounded-lg text-xs sm:text-sm hover:bg-gray-300 transition-all">
+        🗑️ 清除
       </button>
     </div>
 
-    <div v-if="sweepResults.length > 0" class="max-h-60 overflow-y-auto">
-      <table class="w-full text-xs border-collapse">
+    <div v-if="sweepResults.length > 0" class="max-h-60 overflow-y-auto overflow-x-auto table-responsive">
+      <table class="text-xs border-collapse">
         <thead>
           <tr class="bg-gray-50">
             <th class="border border-gray-200 px-2 py-1.5">序号</th>
@@ -54,7 +54,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { impedance, omega } from '../utils/physics'
+import { impedance } from '../utils/physics'
 
 const props = defineProps({
   params: {

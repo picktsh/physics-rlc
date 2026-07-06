@@ -99,12 +99,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="fixed bottom-5 right-5 z-[1999] flex flex-col items-end gap-3">
+  <div class="fixed bottom-0 sm:bottom-5 right-0 sm:right-5 z-[1999] flex flex-col items-end gap-3">
     <!-- 聊天窗口 -->
     <Transition name="chat-pop">
       <div
         v-if="isOpen"
-        class="w-[480px] h-[640px] max-w-[92vw] max-h-[78vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-200"
+        class="w-[92vw] sm:w-[480px] h-[480px] sm:h-[640px] max-h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-200"
       >
         <!-- 头部 -->
         <ChatHeader

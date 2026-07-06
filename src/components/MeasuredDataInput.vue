@@ -15,29 +15,29 @@
 
     <!-- 数据表格 -->
     <table class="w-full text-xs border-collapse mb-3">
-      <thead>
-        <tr class="bg-gray-50">
-          <th class="border border-gray-200 px-2 py-1.5">序号</th>
-          <th class="border border-gray-200 px-2 py-1.5">频率 (kHz)</th>
-          <th class="border border-gray-200 px-2 py-1.5">电流 (mA)</th>
-          <th class="border border-gray-200 px-2 py-1.5">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(d, idx) in localData" :key="idx">
-          <td class="border border-gray-200 px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-          <td class="border border-gray-200 px-2 py-1.5">
-            <input type="text" :value="toFixed4(localData[idx].freq)" @change="localData[idx].freq = parseFloat($event.target.value) || 0" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
-          </td>
-          <td class="border border-gray-200 px-2 py-1.5">
-            <input type="text" :value="toFixed4(localData[idx].current)" @change="localData[idx].current = parseFloat($event.target.value) || 0" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
-          </td>
-          <td class="border border-gray-200 px-2 py-1.5 text-center">
-            <button @click="deleteRow(idx)" class="text-red-500 hover:text-red-700">删除</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <thead>
+          <tr class="bg-gray-50">
+            <th class="border border-gray-200 px-2 py-1.5">序号</th>
+            <th class="border border-gray-200 px-2 py-1.5">频率 (kHz)</th>
+            <th class="border border-gray-200 px-2 py-1.5">电流 (mA)</th>
+            <th class="border border-gray-200 px-2 py-1.5">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(d, idx) in localData" :key="idx">
+            <td class="border border-gray-200 px-2 py-1.5 text-center">{{ idx + 1 }}</td>
+            <td class="border border-gray-200 px-2 py-1.5">
+              <input type="text" :value="toFixed4(localData[idx].freq)" @change="localData[idx].freq = parseFloat($event.target.value) || 0" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
+            </td>
+            <td class="border border-gray-200 px-2 py-1.5">
+              <input type="text" :value="toFixed4(localData[idx].current)" @change="localData[idx].current = parseFloat($event.target.value) || 0" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs" />
+            </td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center">
+              <button @click="deleteRow(idx)" class="text-red-500 hover:text-red-700">删除</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
     <div class="flex gap-2 flex-wrap">
       <button @click="addRow" class="text-indigo-600 text-sm hover:text-indigo-800">+ 添加数据行</button>

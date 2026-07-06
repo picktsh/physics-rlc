@@ -117,7 +117,7 @@ async function handleImportMeasHistory(file) {
 <template>
   <NConfigProvider :locale="zhCN" :date-locale="dateZhCN">
     <NMessageProvider>
-      <div class="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-500 p-3 md:p-4">
+      <div class="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-500 p-2 sm:p-3 md:p-4">
         <div class="max-w-7xl mx-auto">
           <!-- Header -->
           <header class="text-center text-white mb-4">
@@ -126,12 +126,12 @@ async function handleImportMeasHistory(file) {
           </header>
 
           <!-- Tab 导航 -->
-          <div class="flex gap-1.5 mb-5 overflow-x-auto pb-1">
+          <div class="flex gap-1.5 mb-5 overflow-x-auto pb-1 scrollbar-hide">
             <button
               v-for="tab in tabs"
               :key="tab.key"
               :class="[
-                'px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                'tab-btn px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-200',
                 activeTab === tab.key
                   ? 'bg-white text-indigo-700 shadow-lg scale-105'
                   : 'bg-white/20 text-white/90 hover:bg-white/30 backdrop-blur-sm',

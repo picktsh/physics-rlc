@@ -1,24 +1,24 @@
 <template>
   <div class="card">
     <!-- 标签和频率范围 -->
-    <div class="flex items-center gap-3 mb-3 flex-wrap">
-      <div class="flex gap-2">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+      <div class="flex gap-1.5 overflow-x-auto scrollbar-hide">
         <button
           v-for="tab in tabs"
           :key="tab.value"
-          :class="['px-4 py-2 text-sm rounded-lg transition-all', currentChart === tab.value ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+          :class="['px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm rounded-lg transition-all whitespace-nowrap', currentChart === tab.value ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
           @click="switchChart(tab.value, $event)"
         >
           {{ tab.label }}
         </button>
       </div>
-      <div class="ml-auto flex items-center gap-2 text-sm text-gray-600 flex-wrap">
-        <span>频率范围:</span>
-        <input type="range" min="1" max="10000" :value="localFStart" @input="syncFromSlider('start', $event)" class="w-20 cursor-pointer" />
-        <input type="number" v-model.number="localFStart" min="1" class="w-16 px-1.5 py-1 border border-gray-300 rounded text-sm" @change="applyFreqRange" />
+      <div class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-600 flex-wrap sm:ml-auto">
+        <span class="hidden sm:inline">频率范围:</span>
+        <input type="range" min="1" max="10000" :value="localFStart" @input="syncFromSlider('start', $event)" class="w-14 sm:w-20 cursor-pointer" />
+        <input type="number" v-model.number="localFStart" min="1" class="w-14 sm:w-16 px-1 py-1 border border-gray-300 rounded text-xs sm:text-sm" @change="applyFreqRange" />
         <span>~</span>
-        <input type="number" v-model.number="localFEnd" min="1" class="w-16 px-1.5 py-1 border border-gray-300 rounded text-sm" @change="applyFreqRange" />
-        <input type="range" min="1" max="10000" :value="localFEnd" @input="syncFromSlider('end', $event)" class="w-20 cursor-pointer" />
+        <input type="number" v-model.number="localFEnd" min="1" class="w-14 sm:w-16 px-1 py-1 border border-gray-300 rounded text-xs sm:text-sm" @change="applyFreqRange" />
+        <input type="range" min="1" max="10000" :value="localFEnd" @input="syncFromSlider('end', $event)" class="w-14 sm:w-20 cursor-pointer" />
         <span>Hz</span>
       </div>
     </div>
@@ -49,7 +49,7 @@
 
 <script setup>
 import { ref, watch, onMounted, nextTick, computed } from 'vue'
-import { impedance, calculateRLC, omega as calcOmega } from '../utils/physics'
+import { impedance, calculateRLC } from '../utils/physics'
 
 const props = defineProps({
   params: { type: Object, required: true },
@@ -64,7 +64,7 @@ const emit = defineEmits(['update-fstart', 'update-fend'])
 
 const chartCanvasRef = ref(null)
 const currentChart = ref('amp')
-const chartHeight = ref(typeof window !== 'undefined' && window.innerWidth <= 768 ? 350 : 450)
+const chartHeight = ref(typeof window !== 'undefined' && window.innerWidth < 640 ? 280 : window.innerWidth <= 768 ? 350 : 450)
 const SAMPLE_COUNT = 500
 
 const localFStart = ref(props.params.fStart || 100)
@@ -702,7 +702,7 @@ onMounted(() => {
   localFEnd.value = props.params.fEnd || 2000
   nextTick(() => drawChart())
   window.addEventListener('resize', () => {
-    chartHeight.value = window.innerWidth <= 768 ? 350 : 450
+    chartHeight.value = window.innerWidth < 640 ? 280 : window.innerWidth <= 768 ? 350 : 450
     drawChart()
   })
 })

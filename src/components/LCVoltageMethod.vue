@@ -2,35 +2,35 @@
   <div>
     <!-- 参数区 -->
     <section class="card mb-4">
-      <div class="flex flex-wrap items-center gap-3 p-4 bg-gray-50 rounded-lg">
-        <div class="flex items-center gap-1 text-sm">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center gap-1 text-xs sm:text-sm">
           <label class="font-semibold text-gray-700">R</label>
-          <input type="number" v-model.number="R" step="1" min="0.1" class="w-16 h-8 border border-gray-300 rounded px-1 text-sm text-center" />
+          <input type="number" v-model.number="R" step="1" min="0.1" class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">Ω</span>
         </div>
-        <div class="flex items-center gap-1 text-sm">
+        <div class="flex items-center gap-1 text-xs sm:text-sm">
           <label class="font-semibold text-gray-700">L</label>
-          <input type="number" v-model.number="L_mH" step="0.1" min="0.01" class="w-16 h-8 border border-gray-300 rounded px-1 text-sm text-center" />
+          <input type="number" v-model.number="L_mH" step="0.1" min="0.01" class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">mH</span>
         </div>
-        <div class="flex items-center gap-1 text-sm">
+        <div class="flex items-center gap-1 text-xs sm:text-sm">
           <label class="font-semibold text-gray-700">C</label>
-          <input type="number" v-model.number="C_uF" step="0.01" min="0.0001" class="w-16 h-8 border border-gray-300 rounded px-1 text-sm text-center" />
+          <input type="number" v-model.number="C_uF" step="0.01" min="0.0001" class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">μF</span>
         </div>
-        <div class="flex items-center gap-1 text-sm">
+        <div class="flex items-center gap-1 text-xs sm:text-sm">
           <label class="font-semibold text-gray-700">Us</label>
-          <input type="number" v-model.number="Us" step="0.1" min="0.1" class="w-16 h-8 border border-gray-300 rounded px-1 text-sm text-center" />
+          <input type="number" v-model.number="Us" step="0.1" min="0.1" class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">V</span>
         </div>
-        <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-          <label class="font-semibold text-gray-700 text-sm whitespace-nowrap">f</label>
-          <input type="number" v-model.number="f" step="1" class="w-20 h-8 border border-gray-300 rounded px-1 text-sm text-center" />
+        <div class="flex items-center gap-1 sm:gap-2 flex-1 min-w-[160px] sm:min-w-[200px]">
+          <label class="font-semibold text-gray-700 text-xs sm:text-sm whitespace-nowrap">f</label>
+          <input type="number" v-model.number="f" step="1" class="w-16 sm:w-20 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">Hz</span>
-          <input type="range" :min="freqMin" :max="freqMax" step="1" v-model.number="f" class="flex-1 cursor-pointer" />
-          <span class="text-sm font-semibold text-indigo-600 min-w-[80px] text-right">{{ t4(f) }} Hz</span>
+          <input type="range" :min="freqMin" :max="freqMax" step="1" v-model.number="f" class="flex-1 min-w-[60px] cursor-pointer" />
+          <span class="text-xs sm:text-sm font-semibold text-indigo-600 min-w-[70px] sm:min-w-[80px] text-right">{{ t4(f) }} Hz</span>
         </div>
-        <button @click="searchResonance" class="px-5 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">🔍 一键搜寻谐振频率</button>
+        <button @click="searchResonance" class="w-full sm:w-auto px-3 sm:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">🔍 搜索谐振</button>
       </div>
     </section>
 
@@ -115,15 +115,15 @@
 
     <!-- 操作控制 -->
     <section class="card mb-4">
-      <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-        <span class="text-sm font-semibold text-gray-800">🎛️ 操作控制</span>
+      <div class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+        <span class="text-xs sm:text-sm font-semibold text-gray-800">🎛️ 操作控制</span>
       </div>
-      <div class="flex flex-wrap items-center gap-3 p-3">
-        <button @click="autoScan" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">{{ isScanning ? '⏹️ 点击停止' : '🔄 自动扫频' }}</button>
-        <button @click="exportCSV" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-all">📥 导出CSV</button>
-        <button @click="clearData" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition-all">🗑️ 清空数据</button>
-        <span class="text-sm text-gray-600">误差阈值</span>
-        <input type="number" v-model.number="threshold" step="1" min="5" max="20" class="w-14 h-8 border border-gray-300 rounded px-1 text-sm text-center" />
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3">
+        <button @click="autoScan" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">{{ isScanning ? '⏹️ 停止' : '🔄 自动扫频' }}</button>
+        <button @click="exportCSV" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg text-xs sm:text-sm hover:bg-gray-300 transition-all">📥 导出CSV</button>
+        <button @click="clearData" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 rounded-lg text-xs sm:text-sm hover:bg-red-100 transition-all">🗑️ 清空</button>
+        <span class="text-xs sm:text-sm text-gray-600">阈值</span>
+        <input type="number" v-model.number="threshold" step="1" min="5" max="20" class="w-12 sm:w-14 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
         <span class="text-xs text-gray-500">%</span>
       </div>
     </section>
@@ -132,37 +132,37 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <!-- 数据表格 -->
       <div class="card">
-        <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📋 实验数据记录</span>
-          <span class="text-xs text-gray-500">UL、UC 幅值对比支撑谐振判定</span>
+        <div class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+          <span class="text-xs sm:text-sm font-semibold text-gray-800">📋 实验数据记录</span>
+          <span class="text-xs text-gray-500 hide-on-mobile">UL、UC 幅值对比支撑谐振判定</span>
         </div>
-        <div class="max-h-72 overflow-y-auto">
-          <table class="w-full text-xs border-collapse">
+        <div class="max-h-72 overflow-y-auto overflow-x-auto table-responsive">
+          <table class="text-xs border-collapse">
             <thead>
               <tr class="bg-gray-50 sticky top-0">
-                <th class="border border-gray-200 px-2 py-1.5">#</th>
-                <th class="border border-gray-200 px-2 py-1.5">f (Hz)</th>
-                <th class="border border-gray-200 px-2 py-1.5">I (mA)</th>
-                <th class="border border-gray-200 px-2 py-1.5">U<sub>L</sub> (V)</th>
-                <th class="border border-gray-200 px-2 py-1.5">U<sub>C</sub> (V)</th>
-                <th class="border border-gray-200 px-2 py-1.5">|Z| (Ω)</th>
-                <th class="border border-gray-200 px-2 py-1.5">φ (°)</th>
-                <th class="border border-gray-200 px-2 py-1.5">Q</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">#</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">f (Hz)</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">I (mA)</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">U<sub>L</sub> (V)</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">U<sub>C</sub> (V)</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5 hide-on-mobile">|Z| (Ω)</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5 hide-on-mobile">φ (°)</th>
+                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5 hide-on-mobile">Q</th>
               </tr>
             </thead>
             <tbody id="lcTableBody">
               <tr v-if="collected.length === 0">
-                <td colspan="8" class="text-center text-gray-400 py-8 text-sm">暂无数据，请采集</td>
+                <td colspan="8" class="text-center text-gray-400 py-8 text-xs">暂无数据，请采集</td>
               </tr>
               <tr v-for="(d, idx) in collected" :key="idx" :class="{ 'bg-green-50 font-semibold text-green-800': Math.abs(d.f - f0) < 1e-4 }">
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ t4(d.f) }}{{ Math.abs(d.f - f0) < 1e-4 ? ' ⭐' : '' }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ t4(d.I * 1e3) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ t4(d.UL) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ t4(d.UC) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ t4(d.Z) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ t4(d.phi * 180 / Math.PI) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ d.Q !== undefined ? t4(d.Q) : '-' }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ idx + 1 }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.f) }}{{ Math.abs(d.f - f0) < 1e-4 ? ' ⭐' : '' }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.I * 1e3) }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.UL) }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.UC) }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center hide-on-mobile">{{ t4(d.Z) }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center hide-on-mobile">{{ t4(d.phi * 180 / Math.PI) }}</td>
+                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center hide-on-mobile">{{ d.Q !== undefined ? t4(d.Q) : '-' }}</td>
               </tr>
             </tbody>
           </table>
@@ -171,9 +171,9 @@
 
       <!-- 实时面板 -->
       <div class="card">
-        <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📊 实时数据面板</span>
-          <span class="text-xs text-gray-500">UL/UC 幅值 + 李萨如相位协同判定</span>
+        <div class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+          <span class="text-xs sm:text-sm font-semibold text-gray-800">📊 实时数据面板</span>
+          <span class="text-xs text-gray-500 hide-on-mobile">UL/UC 幅值 + 李萨如相位协同判定</span>
         </div>
         <div class="p-4 space-y-2">
           <template v-if="selectedPoint">
