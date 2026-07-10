@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
       <div class="flex flex-col gap-1">
         <label class="text-xs text-gray-600">起始频率</label>

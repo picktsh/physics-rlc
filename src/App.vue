@@ -222,22 +222,18 @@ async function handleImportMeasHistory(file) {
             </section>
           </template>
 
-          <!-- Tab 内容: 相位差判别法 -->
+          <!-- Tab 内容: 相位差判别法 (布局模仿 LC电压幅值法) -->
           <template v-if="activeTab === 'measure'">
-            <section class="card mb-4">
-              <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <span>📐</span>
-                <span>李萨如图形分析</span>
-              </div>
-              <LissajousScope :params="params" @update-freq="handleLissaFreqUpdate" />
-            </section>
+            <LissajousScope :params="params" @update-freq="handleLissaFreqUpdate" />
 
+            <!-- 频率扫描 (模仿 LCVoltageMethod 的操作控制样式) -->
             <section class="card mb-4">
-              <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <span>🔍</span>
-                <span>频率扫描</span>
+              <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
+                <span class="text-sm font-semibold text-gray-800">🔍 频率扫描</span>
               </div>
-              <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
+              <div class="p-3">
+                <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
+              </div>
             </section>
           </template>
 
@@ -257,3 +253,9 @@ async function handleImportMeasHistory(file) {
     </NMessageProvider>
   </NConfigProvider>
 </template>
+
+<style scoped>
+.card-hd {
+  border-bottom: 1px solid #e2e8f0;
+}
+</style>

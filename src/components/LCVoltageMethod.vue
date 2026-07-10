@@ -825,27 +825,6 @@ function drawAmpChart() {
   ctx.fillText('Iₚ/√2', mL + 3, yh - 2)
   ctx.setLineDash([])
 
-  // peak point
-  const peakX = mx(data[mi].f)
-  const peakY = my(maxI)
-  ctx.fillStyle = '#ef4444'
-  ctx.beginPath()
-  ctx.arc(peakX, peakY, 4.5, 0, 2 * Math.PI)
-  ctx.fill()
-  ctx.strokeStyle = '#fff'
-  ctx.lineWidth = 2
-  ctx.stroke()
-  // 红色五角星 — 只有扫频实际采集到谐振点后才显示
-  const hasResonanceData = collected.value.some(p => Math.abs(p.f - f0.value) < 1)
-  if (hasResonanceData) {
-    drawStar(ctx, peakX, peakY - 16, 8, '#ff4757')
-    ctx.fillStyle = '#ff4757'
-    ctx.font = 'bold 10px system-ui'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'bottom'
-    ctx.fillText('★ 谐振', peakX, peakY - 24)
-  }
-
   // bandwidth markers
   if (bw > 0) {
     ctx.fillStyle = '#3b82f6'
@@ -898,6 +877,30 @@ function drawAmpChart() {
       ctx.lineWidth = 1.5
       ctx.beginPath(); ctx.arc(x, y, 5, 0, 2 * Math.PI); ctx.stroke()
     })
+  }
+
+  // 黄色谐振点绘制在最上层
+  const hasResonanceData = collected.value.some(p => Math.abs(p.f - f0.value) < 1)
+  if (hasResonanceData) {
+    const peakData = data[mi]
+    const peakX = mx(data[mi].f)
+    const peakY = my(maxI)
+    ctx.fillStyle = '#f59e0b'
+    ctx.shadowColor = '#f59e0b'
+    ctx.shadowBlur = 12
+    ctx.beginPath()
+    ctx.arc(peakX, peakY, 7, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.shadowBlur = 0
+    ctx.fillStyle = '#fff'
+    ctx.beginPath()
+    ctx.arc(peakX, peakY, 3, 0, 2 * Math.PI)
+    ctx.fill()
+    ctx.fillStyle = '#f59e0b'
+    ctx.font = 'bold 10px system-ui'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'bottom'
+    ctx.fillText('★ 谐振 (' + t4(peakData.f) + ' Hz, ' + t4(peakData.I * 1e3) + ' mA)', peakX, peakY - 24)
   }
 }
 
