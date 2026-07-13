@@ -7,6 +7,7 @@ export default defineConfig({
   base: './',
   plugins: [vue(), UnoCSS()],
   server: {
+    host: true,
     proxy: {
       '/api/doubao': {
         target: 'https://ark.cn-beijing.volces.com',
