@@ -6,7 +6,7 @@
         <button
           v-for="tab in tabs"
           :key="tab.value"
-          :class="['px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm rounded-lg transition-all whitespace-nowrap', currentChart === tab.value ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
+          :class="['px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm rounded-lg transition-all whitespace-nowrap', currentChart === tab.value ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']"
           @click="switchChart(tab.value, $event)"
         >
           {{ tab.label }}
@@ -32,7 +32,7 @@
     <!-- 图例 -->
     <div class="legend flex justify-center gap-4 mt-3 text-xs text-gray-600 flex-wrap">
       <div class="flex items-center gap-1">
-        <div class="w-4 h-0.5 bg-indigo-500"></div>
+        <div class="w-4 h-0.5 bg-[#667eea]"></div>
         <span>理论曲线</span>
       </div>
       <div class="flex items-center gap-1">

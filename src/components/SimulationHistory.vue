@@ -3,7 +3,7 @@
     <!-- 操作栏 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
       <span class="text-sm font-semibold text-gray-700">📋 仿真历史记录</span>
-      <span>共 <span class="bg-indigo-500 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ history.length }}</span> 条记录</span>
+      <span>共 <span class="bg-blue-600 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ history.length }}</span> 条记录</span>
       <button @click="$emit('export')" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all" title="保存历史记录为JSON文件">💾 保存</button>
       <label class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all cursor-pointer" title="从JSON文件加载历史记录">
         📂 打开
@@ -36,12 +36,12 @@
             <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.params.L }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.params.C }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.params.V }}</td>
-            <td class="border border-gray-200 px-2 py-1.5 text-center text-indigo-600 font-semibold">{{ r.results.fr.toFixed(4) }}</td>
+            <td class="border border-gray-200 px-2 py-1.5 text-center text-blue-600 font-semibold">{{ r.results.fr.toFixed(4) }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.results.Q.toFixed(4) }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.results.BW.toFixed(4) }}</td>
             <td class="border border-gray-200 px-2 py-1.5 text-center hide-on-mobile">{{ r.results.Imax.toFixed(4) }}</td>
             <td class="border border-gray-200 px-2 py-1.5 whitespace-nowrap text-center">
-              <button @click="$emit('load', idx)" class="text-indigo-600 border border-indigo-600 bg-white rounded px-1.5 sm:px-2 py-0.5 text-xs mr-1 hover:bg-indigo-50">加载</button>
+              <button @click="$emit('load', idx)" class="text-blue-600 border border-blue-600 bg-white rounded px-1.5 sm:px-2 py-0.5 text-xs mr-1 hover:bg-blue-50">加载</button>
               <button @click="$emit('delete', idx)" class="text-red-600 border border-red-600 bg-white rounded px-1.5 sm:px-2 py-0.5 text-xs hover:bg-red-50">删除</button>
             </td>
           </tr>

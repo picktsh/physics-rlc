@@ -6,7 +6,7 @@
       <section class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
           <span class="text-sm font-semibold text-gray-800">🟢 示波器 · 李萨如图</span>
-          <span class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded text-xs font-semibold">X-Y MODE</span>
+          <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-semibold">X-Y MODE</span>
         </div>
         <div class="bg-gray-50 overflow-hidden relative flex-1 flex flex-col">
           <canvas ref="scopeCanvasRef" class="w-full block cursor-crosshair" :height="canvasHeight"></canvas>
@@ -26,7 +26,7 @@
           <span>~</span>
           <input type="number" v-model.number="freqMax" placeholder="最大" class="w-16 px-1.5 py-1 border border-gray-300 rounded text-xs" />
           <span>Hz</span>
-          <button @click="applyFreqRange" class="px-2.5 py-1 bg-indigo-500 text-white rounded text-xs hover:bg-indigo-600">应用</button>
+          <button @click="applyFreqRange" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">应用</button>
         </div>
         <div class="p-3 bg-gray-50 flex-1 flex items-center">
           <canvas ref="ampCanvasRef" class="w-full block cursor-crosshair" :height="canvasHeight"></canvas>
@@ -145,7 +145,7 @@ const emit = defineEmits(['update-freq'])
 
 const scopeCanvasRef = ref(null)
 const ampCanvasRef = ref(null)
-const canvasHeight = ref(typeof window !== 'undefined' && window.innerWidth < 640 ? 280 : 420)
+const canvasHeight = ref(typeof window !== 'undefined' && window.innerWidth < 640 ? 320 : 540)
 
 // 状态
 const acquiredData = ref([])

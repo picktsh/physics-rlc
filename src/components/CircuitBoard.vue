@@ -7,7 +7,7 @@
         draggable="true"
         @dragstart="handleDragStart($event, comp.type)"
         @click="selectPaletteComponent(comp.type)"
-        :class="['component-item flex flex-col items-center p-2 rounded-lg cursor-pointer text-xs text-gray-600 transition-all', pendingPlaceType === comp.type ? 'bg-indigo-100 ring-2 ring-indigo-400' : 'bg-gray-100 hover:bg-gray-200']"
+        :class="['component-item flex flex-col items-center p-2 rounded-lg cursor-pointer text-xs text-gray-600 transition-all', pendingPlaceType === comp.type ? 'bg-blue-50 ring-2 ring-blue-400' : 'bg-gray-100 hover:bg-gray-200']"
       >
         <div :class="['comp-icon w-10 h-10 rounded-full flex items-center justify-center font-bold text-white', comp.colorClass]">
           {{ comp.label }}
@@ -18,7 +18,7 @@
 
     <div class="circuit-controls flex gap-2 mb-2 flex-wrap">
       <button
-        :class="['px-2.5 md:px-3 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm cursor-pointer transition-all', circuitMode === 'wire' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white']"
+        :class="['px-2.5 md:px-3 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm cursor-pointer transition-all', circuitMode === 'wire' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white']"
         @click="setCircuitMode('wire')"
       >
         🔗 接线
@@ -29,7 +29,7 @@
       >
         🗑️ 删除
       </button>
-      <button class="ml-auto px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs md:text-sm font-semibold hover:shadow-lg transition-all" @click="$emit('simulate')">
+      <button class="ml-auto px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs md:text-sm font-semibold shadow-sm transition-all" @click="$emit('simulate')">
         🚀 仿真
       </button>
       <button class="px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-600 rounded-lg text-xs md:text-sm hover:bg-gray-300 transition-all" @click="$emit('reset')">
@@ -57,7 +57,7 @@
     <div v-if="components.length > 0" class="mt-3">
       <div class="text-xs sm:text-sm font-semibold text-gray-700 mb-2">📝 元件参数编辑</div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div v-for="(comp, idx) in components" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-indigo-500' : '']">
+        <div v-for="(comp, idx) in components" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-blue-500' : '']">
           <label class="text-xs text-gray-600">{{ getComponentLabel(comp.type) }} #{{ idx + 1 }}</label>
           <div class="flex gap-1 items-center mt-1">
             <input
@@ -73,11 +73,48 @@
         </div>
       </div>
     </div>
+
+    <!-- 元件公差设置 -->
+    <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="text-xs sm:text-sm font-semibold text-gray-700">📐 元件公差</div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="toleranceEnabled" class="sr-only peer" @change="onToleranceToggle" />
+          <div class="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+        </label>
+        <span class="text-xs text-gray-500">{{ toleranceEnabled ? '已开启' : '已关闭' }}</span>
+      </div>
+      <div v-if="toleranceEnabled" class="flex items-center gap-3">
+        <span class="text-xs text-gray-600 whitespace-nowrap">公差范围：</span>
+        <input type="range" min="1" max="20" step="0.5" v-model.number="tolerancePercent" class="flex-1 cursor-pointer" @input="onToleranceChange" />
+        <span class="text-xs font-semibold text-blue-600 min-w-[40px] text-right">±{{ tolerancePercent.toFixed(1) }}%</span>
+      </div>
+      <div v-if="toleranceEnabled" class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
+        💡 开启后每次仿真实物参数将在标称值的 ±{{ tolerancePercent.toFixed(1) }}% 范围内随机波动
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useRLCCalculatorStore } from '../stores/rlcCalculator'
+
+const calcStore = useRLCCalculatorStore()
+
+const toleranceEnabled = ref(calcStore.toleranceEnabled)
+const tolerancePercent = ref(calcStore.tolerancePercent)
+
+function onToleranceToggle() {
+  calcStore.toleranceEnabled = toleranceEnabled.value
+  if (toleranceEnabled.value) {
+    calcStore.tolerancePercent = tolerancePercent.value
+  }
+}
+
+function onToleranceChange() {
+  calcStore.tolerancePercent = tolerancePercent.value
+}
 
 const props = defineProps({
   components: {

@@ -8,7 +8,7 @@
         class="w-full p-3 border border-gray-300 rounded-lg text-sm resize-y min-h-[80px]"
       ></textarea>
       <div class="text-xs text-gray-500 mt-1">格式示例：频率(kHz) 电流(mA)，每行一组数据</div>
-      <button @click="parsePasteData" class="mt-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
+      <button @click="parsePasteData" class="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all">
         解析并导入
       </button>
     </div>
@@ -40,8 +40,8 @@
       </table>
 
     <div class="flex gap-2 flex-wrap">
-      <button @click="addRow" class="text-indigo-600 text-sm hover:text-indigo-800">+ 添加数据行</button>
-      <button @click="$emit('plot')" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all">
+      <button @click="addRow" class="text-blue-600 text-sm hover:text-blue-800">+ 添加数据行</button>
+      <button @click="$emit('plot')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all">
         绘制实测曲线
       </button>
     </div>
@@ -50,7 +50,7 @@
     <div class="mt-4 pt-4 border-t border-gray-200">
       <div class="flex items-center gap-3 mb-3 flex-wrap">
         <span class="text-sm font-semibold text-gray-700">📋 实测历史记录</span>
-        <span>共 <span class="bg-indigo-500 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ history.length }}</span> 条记录</span>
+        <span>共 <span class="bg-blue-600 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ history.length }}</span> 条记录</span>
         <button @click="$emit('export-history')" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all">💾 保存</button>
         <label class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all cursor-pointer">
            打开
@@ -74,7 +74,7 @@
               <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.count }}</td>
               <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.freqRange }}</td>
               <td class="border border-gray-200 px-2 py-1.5 whitespace-nowrap text-center">
-                <button @click="$emit('load-history', idx)" class="text-indigo-600 border border-indigo-600 bg-white rounded px-2 py-0.5 text-xs mr-1 hover:bg-indigo-50">加载</button>
+                <button @click="$emit('load-history', idx)" class="text-blue-600 border border-blue-600 bg-white rounded px-2 py-0.5 text-xs mr-1 hover:bg-blue-50">加载</button>
                 <button @click="$emit('delete-history', idx)" class="text-red-600 border border-red-600 bg-white rounded px-2 py-0.5 text-xs hover:bg-red-50">删除</button>
               </td>
             </tr>

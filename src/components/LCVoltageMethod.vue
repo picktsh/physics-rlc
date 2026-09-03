@@ -28,9 +28,9 @@
           <input type="number" v-model.number="f" step="1" class="w-16 sm:w-20 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">Hz</span>
           <input type="range" :min="freqMin" :max="freqMax" step="1" v-model.number="f" class="flex-1 min-w-[60px] cursor-pointer" />
-          <span class="text-xs sm:text-sm font-semibold text-indigo-600 min-w-[70px] sm:min-w-[80px] text-right">{{ t4(f) }} Hz</span>
+          <span class="text-xs sm:text-sm font-semibold text-blue-600 min-w-[70px] sm:min-w-[80px] text-right">{{ t4(f) }} Hz</span>
         </div>
-        <button @click="searchResonance" class="w-full sm:w-auto px-3 sm:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">🔍 搜索谐振</button>
+        <button @click="searchResonance" class="w-full sm:w-auto px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all">🔍 搜索谐振</button>
       </div>
     </section>
 
@@ -119,7 +119,7 @@
         <span class="text-xs sm:text-sm font-semibold text-gray-800">🎛️ 操作控制</span>
       </div>
       <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3">
-        <button @click="autoScan" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">{{ isScanning ? '⏹️ 停止' : '🔄 自动扫频' }}</button>
+        <button @click="autoScan" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all">{{ isScanning ? '⏹️ 停止' : '🔄 自动扫频' }}</button>
         <button @click="exportCSV" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg text-xs sm:text-sm hover:bg-gray-300 transition-all">📥 导出CSV</button>
         <button @click="clearData" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 rounded-lg text-xs sm:text-sm hover:bg-red-100 transition-all">🗑️ 清空</button>
         <span class="text-xs sm:text-sm text-gray-600">阈值</span>
@@ -177,7 +177,7 @@
         </div>
         <div class="p-4 space-y-2">
           <template v-if="selectedPoint">
-            <div class="text-xs text-indigo-600 font-semibold mb-2 flex items-center gap-2">
+            <div class="text-xs text-blue-600 font-semibold mb-2 flex items-center gap-2">
               📌 已选中采集点 f = {{ t4(selectedPoint.f) }} Hz
               <button @click="selectedPoint = null; drawAmpChart()" class="text-xs text-gray-400 hover:text-red-500 ml-auto">✕ 取消</button>
             </div>
@@ -241,10 +241,10 @@
       </div>
       <div class="p-4">
         <div class="flex gap-4 flex-wrap text-xs mb-3">
-          <span class="bg-gray-100 px-3 py-1.5 rounded">总采集 <strong class="text-indigo-600">{{ collected.length }}</strong></span>
-          <span class="bg-gray-100 px-3 py-1.5 rounded">有效保留 <strong class="text-indigo-600">{{ validData.length }}</strong></span>
+          <span class="bg-gray-100 px-3 py-1.5 rounded">总采集 <strong class="text-blue-600">{{ collected.length }}</strong></span>
+          <span class="bg-gray-100 px-3 py-1.5 rounded">有效保留 <strong class="text-blue-600">{{ validData.length }}</strong></span>
           <span class="bg-gray-100 px-3 py-1.5 rounded">剔除异常 <strong class="text-red-600">{{ rejectedData.length }}</strong></span>
-          <span class="bg-gray-100 px-3 py-1.5 rounded">平均误差 <strong class="text-indigo-600">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span>
+          <span class="bg-gray-100 px-3 py-1.5 rounded">平均误差 <strong class="text-blue-600">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span>
           <span class="bg-gray-100 px-3 py-1.5 rounded">最大误差 <strong class="text-red-600">{{ maxErr > 0 ? t4(maxErr) + '%' : '—' }}</strong></span>
         </div>
         <div class="max-h-28 overflow-y-auto mb-2">

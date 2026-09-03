@@ -114,24 +114,29 @@ async function handleImportMeasHistory(file) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-500 p-2 sm:p-3 md:p-4">
-    <div class="max-w-7xl mx-auto">
+  <div class="min-h-100dvh bg-[#eef1f6] p-2 sm:p-3 md:p-4">
+    <div class="w-full">
       <!-- Header -->
-      <header class="text-center text-white mb-4">
-        <h1 class="text-xl font-bold">🔬 RLC电路实验助手</h1>
-        <p class="text-sm opacity-90">你的AI实验助手</p>
+      <header class="mb-4">
+        <div class="flex items-center gap-3 bg-white border border-gray-200/80 rounded-2xl shadow-sm px-4 sm:px-6 py-3 sm:py-4">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 text-white text-xl shrink-0">🔬</div>
+          <div class="min-w-0">
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">RLC电路实验助手</h1>
+            <p class="text-xs sm:text-sm text-slate-500 leading-tight">你的 AI 实验助手</p>
+          </div>
+        </div>
       </header>
 
       <!-- Tab 导航 -->
-      <div class="flex gap-1.5 mb-5 overflow-x-auto pb-1 scrollbar-hide">
+      <div class="flex gap-1 mb-5 overflow-x-auto pb-1 scrollbar-hide bg-white border border-gray-200/80 rounded-xl p-1.5 shadow-sm">
         <button
           v-for="tab in tabs"
           :key="tab.key"
           :class="[
-            'tab-btn px-3 md:px-5 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-200',
+            'tab-btn px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-semibold whitespace-nowrap transition-colors duration-200',
             activeTab === tab.key
-              ? 'bg-white text-indigo-700 shadow-lg scale-105'
-              : 'bg-white/20 text-white/90 hover:bg-white/30 backdrop-blur-sm',
+              ? 'bg-blue-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
           ]"
           @click="activeTab = tab.key"
         >

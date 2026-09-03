@@ -78,7 +78,7 @@ defineExpose({ scrollToBottom })
 
         <!-- 用户消息 -->
         <div v-else class="max-w-[80%]">
-          <div class="px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words bg-indigo-500 text-white rounded-br-sm">
+          <div class="px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words bg-blue-600 text-white rounded-br-sm">
             <!-- 附件预览 -->
             <div v-if="msg.attachments?.length" class="mb-2 space-y-2">
               <div v-for="(att, idx) in msg.attachments" :key="idx" class="rounded-lg overflow-hidden">
@@ -99,9 +99,9 @@ defineExpose({ scrollToBottom })
       <div v-if="loading && messages.length && messages[messages.length - 1].content === ''" class="flex justify-start">
         <div class="bg-white px-3 py-2 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100">
           <div class="flex gap-1">
-            <span class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0s" />
-            <span class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.15s" />
-            <span class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.3s" />
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0s" />
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.15s" />
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.3s" />
           </div>
         </div>
       </div>
@@ -146,7 +146,7 @@ defineExpose({ scrollToBottom })
   font-weight: 600;
 }
 :deep(.prose blockquote) {
-  border-left: 4px solid #6366f1;
+  border-left: 4px solid #2563eb;
   padding-left: 1rem;
   color: #6b7280;
   font-style: italic;

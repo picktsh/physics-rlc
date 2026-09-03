@@ -19,7 +19,7 @@
     </div>
 
     <div class="flex gap-2 sm:gap-3 mb-4 flex-wrap">
-      <button @click="runSweep" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">
+      <button @click="runSweep" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all">
         🔄 开始扫描
       </button>
       <button @click="clearResults" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-600 rounded-lg text-xs sm:text-sm hover:bg-gray-300 transition-all">
