@@ -23,6 +23,17 @@
       </div>
     </div>
 
+    <!-- 实测提示:实测点仅叠加在幅频图上,避免在相频/阻抗页误以为丢失 -->
+    <div v-if="measuredData.length > 0 && currentChart !== 'amp'" class="mb-1.5 text-xs text-amber-600">
+      📗 已有实测数据:绿色实测曲线叠加在「幅频特性 I-f」图上,请切换查看
+    </div>
+    <!-- 实测-仿真量级错配提示:实测电流远大于仿真峰时,蓝线会被压缩成底部直线,引导用户检查单位与参数 -->
+    <div
+      v-if="currentChart === 'amp' && measuredData.length > 0 && ampPeaks.meas > 0 && ampPeaks.meas > ampPeaks.theory * 1.5"
+      class="mb-1.5 text-xs text-amber-600"
+    >
+      ⚠ 实测电流峰值 {{ ampPeaks.meas.toFixed(2) }} mA,高于仿真峰值 {{ ampPeaks.theory.toFixed(2) }} mA:蓝色仿真曲线被压缩变矮,请核对电流单位(mA)与仿真参数(R/L/C/V,元件修改后需重新仿真)
+    </div>
     <!-- 图表Canvas -->
     <div class="chart-container bg-gray-50 rounded-xl p-3 border border-gray-200 relative">
       <canvas ref="chartCanvasRef" class="w-full cursor-crosshair" :style="{ height: chartHeight + 'px' }" @click="handleChartClick" @mousemove="handleChartHover" @mouseleave="hideTooltip"></canvas>
@@ -32,11 +43,11 @@
     <!-- 图例 -->
     <div class="legend flex justify-center gap-4 mt-3 text-xs text-gray-600 flex-wrap">
       <div class="flex items-center gap-1">
-        <div class="w-4 h-0.5 bg-[#667eea]"></div>
+        <div class="w-4 h-0.5 bg-[#2563eb]"></div>
         <span>理论曲线</span>
       </div>
       <div class="flex items-center gap-1">
-        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+        <div class="w-2 h-2 rounded-full bg-green-600"></div>
         <span>实测数据</span>
       </div>
       <div class="flex items-center gap-1">
@@ -69,6 +80,9 @@ const SAMPLE_COUNT = 500
 
 const localFStart = ref(props.params.fStart || 100)
 const localFEnd = ref(props.params.fEnd || 2000)
+
+// 幅频图绘制时窗口内的理论峰值与实测峰值(供量级错配提示条使用)
+const ampPeaks = ref({ theory: 0, meas: 0 })
 
 const tooltip = ref({ show: false, x: 0, y: 0, content: '' })
 
@@ -123,12 +137,14 @@ function drawChart() {
   }
 
   const { R, L, C, V, usingDefaults } = getPlotParams()
-  const fStart = localFStart.value
-  const fEnd = localFEnd.value
+  // 退化窗口防御(李萨如单频点击等会使 fStart==fEnd):回退到默认显示范围,避免除零导致曲线消失
+  let fStart = localFStart.value
+  let fEnd = localFEnd.value
+  if (!(fEnd > fStart)) { fStart = 1400; fEnd = 3200 }
   const N = SAMPLE_COUNT
 
   // 网格
-  ctx.strokeStyle = '#e8e8e8'
+  ctx.strokeStyle = '#e6ecf4'
   ctx.lineWidth = 1
   for (let i = 0; i <= 5; i++) {
     ctx.beginPath(); ctx.moveTo(pad.left, pad.top + (height / 5) * i); ctx.lineTo(W - pad.right, pad.top + (height / 5) * i); ctx.stroke()
@@ -137,7 +153,7 @@ function drawChart() {
 
   // 默认值警告
   if (usingDefaults) {
-    ctx.fillStyle = 'rgba(255,152,0,0.85)'
+    ctx.fillStyle = 'rgba(169,121,46,0.85)'
     ctx.font = '11px system-ui'
     ctx.textAlign = 'left'
     ctx.fillText('⚠ 部分元件使用默认值（R=100Ω, L=10mH, C=1μF）', pad.left + 5, pad.top - 8)
@@ -158,7 +174,7 @@ function drawPlaceholder(ctx, W, H, pad) {
   const cy = H / 2
 
   // 浅色网格
-  ctx.strokeStyle = '#ececec'
+  ctx.strokeStyle = '#e6ecf4'
   ctx.lineWidth = 1
   const gH = H - pad.top - pad.bottom
   const gW = W - pad.left - pad.right
@@ -168,7 +184,7 @@ function drawPlaceholder(ctx, W, H, pad) {
   }
 
   // 坐标轴装饰线
-  ctx.strokeStyle = '#d0d0d0'
+  ctx.strokeStyle = '#c9d3e2'
   ctx.lineWidth = 1.5
   ctx.beginPath()
   ctx.moveTo(pad.left, pad.top)
@@ -177,7 +193,7 @@ function drawPlaceholder(ctx, W, H, pad) {
   ctx.stroke()
 
   // 占位主图标 —— 三条虚线示意曲线
-  ctx.strokeStyle = '#dcdcdc'
+  ctx.strokeStyle = '#d3dbe8'
   ctx.lineWidth = 2
   ctx.setLineDash([6, 6])
   // 示意幅频曲线
@@ -189,18 +205,18 @@ function drawPlaceholder(ctx, W, H, pad) {
   ctx.setLineDash([])
 
   // 中央提示文字
-  ctx.fillStyle = '#b0b0b0'
+  ctx.fillStyle = '#9db0c8'
   ctx.font = 'bold 16px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('请搭建 RLC 电路并点击「开始仿真」', cx, cy - 24)
 
-  ctx.fillStyle = '#c5c5c5'
+  ctx.fillStyle = '#b3c1d4'
   ctx.font = '13px system-ui'
   ctx.fillText('以查看幅频 / 相频 / 阻抗特性曲线', cx, cy + 12)
 
   // 小箭头提示
-  ctx.fillStyle = '#d5d5d5'
+  ctx.fillStyle = '#d3dbe8'
   ctx.font = '20px system-ui'
   ctx.fillText('👆', cx, cy + 58)
   ctx.font = '12px system-ui'
@@ -220,9 +236,17 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
     if (I > maxI) maxI = I
   }
   maxI = Math.max(maxI * 1.1, 10.5)
+  const theoryPeakInWindow = maxI // 仿真峰值(y 轴基准,含下限)
+  // 实测电流可能高于理论峰(元件公差/源电压偏差等),把实测最大值并入 y 轴量程,保证绿点不飞出画布顶
+  let measPeak = 0
+  for (const md of props.measuredData) {
+    if (md.current > 0 && md.current > maxI) maxI = md.current
+    if (md.current > 0 && md.current > measPeak) measPeak = md.current
+  }
+  ampPeaks.value = { theory: theoryPeakInWindow, meas: measPeak }
 
   // 理论曲线
-  ctx.strokeStyle = '#667eea'
+  ctx.strokeStyle = '#2563eb'
   ctx.lineWidth = 2.5
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -241,7 +265,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
 
   // Imax/√2截止线
   const halfPowerY = pad.top + height * (1 - theory.halfPower / maxI)
-  ctx.strokeStyle = '#888'
+  ctx.strokeStyle = '#7d93b8'
   ctx.lineWidth = 1
   ctx.setLineDash([5, 3])
   ctx.beginPath()
@@ -253,45 +277,45 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   // Imax标记
   const resX = pad.left + ((theory.fr - fStart) / (fEnd - fStart)) * width
   const resY = pad.top + height * (1 - theory.Imax / maxI)
-  ctx.fillStyle = '#667eea'
+  ctx.fillStyle = '#2563eb'
   ctx.beginPath()
   ctx.arc(resX, resY, 6, 0, 2 * Math.PI)
   ctx.fill()
-  ctx.fillStyle = '#667eea'
+  ctx.fillStyle = '#2563eb'
   ctx.font = 'bold 11px system-ui'
   ctx.fillText('Imax=' + theory.Imax.toFixed(4) + 'mA', resX - 35, resY - 10)
 
   // Imax/√2标注
-  ctx.fillStyle = '#ff6b6b'
+  ctx.fillStyle = '#e0523f'
   ctx.font = '10px system-ui'
   ctx.fillText('Imax/√2=' + theory.halfPower.toFixed(4) + 'mA', pad.left + 5, halfPowerY - 5)
 
   // f1/f2截止频率
   const f1x = pad.left + ((theory.f1 - fStart) / (fEnd - fStart)) * width
   const f2x = pad.left + ((theory.f2 - fStart) / (fEnd - fStart)) * width
-  ctx.fillStyle = '#dc3545'
+  ctx.fillStyle = '#e0523f'
   ctx.beginPath(); ctx.arc(f1x, halfPowerY, 6, 0, 2 * Math.PI); ctx.fill()
   ctx.beginPath(); ctx.arc(f2x, halfPowerY, 6, 0, 2 * Math.PI); ctx.fill()
 
-  ctx.fillStyle = '#dc3545'
+  ctx.fillStyle = '#e0523f'
   ctx.font = 'bold 10px system-ui'
   ctx.fillText('f₁=' + theory.f1.toFixed(4) + 'Hz', f1x - 35, halfPowerY + 22)
   ctx.fillText('f₂=' + theory.f2.toFixed(4) + 'Hz', f2x - 35, halfPowerY + 22)
 
   // BW通频带线
-  ctx.strokeStyle = '#dc3545'
+  ctx.strokeStyle = '#e0523f'
   ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(f1x, halfPowerY)
   ctx.lineTo(f2x, halfPowerY)
   ctx.stroke()
 
-  ctx.fillStyle = '#dc3545'
+  ctx.fillStyle = '#e0523f'
   ctx.font = 'bold 12px system-ui'
   ctx.fillText('BW=' + theory.BW.toFixed(4) + 'Hz', (f1x + f2x) / 2 - 35, halfPowerY - 18)
 
   // 虚线到x轴
-  ctx.strokeStyle = '#dc3545'
+  ctx.strokeStyle = '#e0523f'
   ctx.lineWidth = 1
   ctx.setLineDash([3, 3])
   ctx.beginPath(); ctx.moveTo(f1x, halfPowerY); ctx.lineTo(f1x, H - pad.bottom + 10); ctx.stroke()
@@ -299,19 +323,23 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.setLineDash([])
 
   // 通频带标签
-  ctx.fillStyle = '#dc3545'
+  ctx.fillStyle = '#e0523f'
   ctx.font = '9px system-ui'
   const bwLabelY = Math.min(halfPowerY, pad.top + height * 0.3)
   ctx.fillText('通频带', (f1x + f2x) / 2 - 20, bwLabelY - 5)
 
-  // 实测数据（Cardinal Spline平滑曲线）
+  // 实测数据（Cardinal Spline平滑曲线;裁剪到绘图区,防止窗口外的点把连线拉出画布）
   if (props.measuredData.length > 0) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.rect(pad.left, pad.top, width, height)
+    ctx.clip()
     if (props.measuredData.length >= 2) {
       const mPts = props.measuredData.map(md => ({
         x: pad.left + ((md.freq * 1000 - fStart) / (fEnd - fStart)) * width,
         y: pad.top + height * (1 - md.current / maxI),
       }))
-      ctx.strokeStyle = '#28a745'
+      ctx.strokeStyle = '#16a34a'
       ctx.lineWidth = 2
       ctx.beginPath()
       ctx.moveTo(mPts[0].x, mPts[0].y)
@@ -331,11 +359,12 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
     for (const md of props.measuredData) {
       const mx = pad.left + ((md.freq * 1000 - fStart) / (fEnd - fStart)) * width
       const my = pad.top + height * (1 - md.current / maxI)
-      ctx.fillStyle = '#28a745'
+      ctx.fillStyle = '#16a34a'
       ctx.beginPath()
       ctx.arc(mx, my, 5, 0, 2 * Math.PI)
       ctx.fill()
     }
+    ctx.restore()
   }
 
   drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxI, '频率 f (Hz)', '电流 I (mA)')
@@ -343,7 +372,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
 
 // 相频特性
 function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N) {
-  ctx.strokeStyle = '#667eea'
+  ctx.strokeStyle = '#2563eb'
   ctx.lineWidth = 2.5
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -358,8 +387,8 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
 
   // 特殊相位点标注
   const refPhases = [
-    { target: 45, label: 'φ=+45°', color: '#ff9800' },
-    { target: -45, label: 'φ=−45°', color: '#2196f3' },
+    { target: 45, label: 'φ=+45°', color: '#d9962b' },
+    { target: -45, label: 'φ=−45°', color: '#3b82f6' },
   ]
 
   for (const sp of refPhases) {
@@ -399,7 +428,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   // 0°基准线
   const zeroY = pad.top + height * 0.5
   ctx.save()
-  ctx.strokeStyle = '#28a745'
+  ctx.strokeStyle = '#16a34a'
   ctx.lineWidth = 2
   ctx.setLineDash([8, 4])
   ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(W - pad.right, zeroY); ctx.stroke()
@@ -416,11 +445,11 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
       const t2 = (0 - p1) / (p2 - p1)
       const fZero = f1 + t2 * (f2 - f1)
       const zx = pad.left + ((fZero - fStart) / (fEnd - fStart)) * width
-      ctx.fillStyle = '#28a745'
+      ctx.fillStyle = '#16a34a'
       ctx.beginPath(); ctx.arc(zx, zeroY, 7, 0, 2 * Math.PI); ctx.fill()
       ctx.fillStyle = '#fff'
       ctx.beginPath(); ctx.arc(zx, zeroY, 3.5, 0, 2 * Math.PI); ctx.fill()
-      ctx.fillStyle = '#28a745'
+      ctx.fillStyle = '#16a34a'
       ctx.font = 'bold 11px system-ui'
       ctx.textAlign = 'left'
       ctx.fillText('φ=0° f=' + fZero.toFixed(4) + 'Hz', zx + 12, zeroY - 8)
@@ -429,7 +458,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   }
 
   // Y轴刻度（相位映射）
-  ctx.fillStyle = '#666'
+  ctx.fillStyle = '#7d8aa6'
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   for (let i = 0; i <= 5; i++) {
@@ -443,7 +472,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   }
   ctx.font = 'bold 13px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#333'
+  ctx.fillStyle = '#3f4c63'
   ctx.fillText('频率 f (Hz)', W / 2, H - 5)
   ctx.save()
   ctx.translate(25, H / 2)
@@ -463,7 +492,7 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   }
   maxZ *= 1.1
 
-  ctx.strokeStyle = '#667eea'
+  ctx.strokeStyle = '#2563eb'
   ctx.lineWidth = 2.5
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -480,9 +509,9 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   const theory = calcTheory(R, L, C, props.params.V || 5)
   const resX = pad.left + ((theory.fr - fStart) / (fEnd - fStart)) * width
   const resY = pad.top + height * (1 - R / maxZ)
-  ctx.fillStyle = '#667eea'
+  ctx.fillStyle = '#2563eb'
   ctx.beginPath(); ctx.arc(resX, resY, 6, 0, 2 * Math.PI); ctx.fill()
-  ctx.fillStyle = '#667eea'
+  ctx.fillStyle = '#2563eb'
   ctx.font = 'bold 11px system-ui'
   ctx.textAlign = 'center'
   ctx.fillText('Zmin=' + R + 'Ω', resX, resY - 12)
@@ -501,7 +530,7 @@ function formatAxisNum(v) {
 
 // 通用坐标轴绘制
 function drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxVal, xLabel, yLabel) {
-  ctx.fillStyle = '#666'
+  ctx.fillStyle = '#7d8aa6'
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   for (let i = 0; i <= 5; i++) {
@@ -513,7 +542,7 @@ function drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxVal, xLabel, y
   }
   ctx.font = 'bold 13px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#333'
+  ctx.fillStyle = '#3f4c63'
   ctx.fillText(xLabel, W / 2, H - 5)
   ctx.save()
   ctx.translate(25, H / 2)

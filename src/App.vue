@@ -2,22 +2,24 @@
 import { dateZhCN, NConfigProvider, NMessageProvider, zhCN } from 'naive-ui'
 import IndexVue from './views/index.vue'
 
-// naive-ui 主题定制：与页面整体蓝色主色保持一致
+// naive-ui 主题定制：学术藏青主色 + 直角 + 衬线字体
 const themeOverrides = {
   common: {
-    primaryColor: '#2563eb',
-    primaryColorHover: '#3b82f6',
-    primaryColorPressed: '#1d4ed8',
-    primaryColorSuppl: '#2563eb',
-    infoColor: '#2563eb',
-    infoColorHover: '#3b82f6',
-    infoColorPressed: '#1d4ed8',
-    infoColorSuppl: '#2563eb',
-    borderRadius: '8px',
+    primaryColor: '#1f4e79',
+    primaryColorHover: '#2a5b8f',
+    primaryColorPressed: '#17375c',
+    primaryColorSuppl: '#1f4e79',
+    infoColor: '#1f4e79',
+    infoColorHover: '#2a5b8f',
+    infoColorPressed: '#17375c',
+    infoColorSuppl: '#1f4e79',
+    borderRadius: '0px',
     fontSize: '14px',
+    fontFamily:
+      "Georgia, 'Times New Roman', 'Songti SC', 'STSong', SimSun, 'Noto Serif CJK SC', serif",
   },
   Button: {
-    fontWeight: '500',
+    fontWeight: '600',
   },
 }
 </script>

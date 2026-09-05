@@ -2,7 +2,7 @@
   <div class="simulation-history">
     <!-- 操作栏 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
-      <span class="text-sm font-semibold text-gray-700">📋 仿真历史记录</span>
+      <span class="text-sm font-semibold text-gray-700">仿真历史记录</span>
       <span>共 <span class="bg-blue-600 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ history.length }}</span> 条记录</span>
       <button @click="$emit('export')" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all" title="保存历史记录为JSON文件">💾 保存</button>
       <label class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all cursor-pointer" title="从JSON文件加载历史记录">

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRLCCalculatorStore } from '../../stores/rlcCalculator'
 import { useHistoryStore } from '../../stores/historyDB'
@@ -13,6 +13,7 @@ import FrequencySweep from '../../components/FrequencySweep.vue'
 import SimulationHistory from '../../components/SimulationHistory.vue'
 import FormulaPrinciple from '../../components/FormulaPrinciple.vue'
 import LCVoltageMethod from '../../components/LCVoltageMethod.vue'
+import TunerExperiment from '../../components/TunerExperiment.vue'
 import DoubaoChat from '../../components/DoubaoChat.vue'
 
 const calcStore = useRLCCalculatorStore()
@@ -27,19 +28,70 @@ watch(activeTab, (val) => {
 })
 
 const tabs = [
-  { key: 'formula', label: '📖 公式原理' },
-  { key: 'circuit', label: '🧩 电路搭建' },
-  { key: 'analysis', label: '📊 仿真分析' },
-  { key: 'measure', label: '📋 相位差判别法' },
-  { key: 'lc-voltage', label: '📋 LC电压幅值法' },
+  { key: 'formula', label: '公式原理' },
+  { key: 'circuit', label: '电路搭建' },
+  { key: 'analysis', label: '仿真分析' },
+  { key: 'measure', label: '相位差判别法' },
+  { key: 'lc-voltage', label: 'LC 电压幅值法' },
+  { key: 'tuner', label: 'RLC工程应用' },
 ]
+
+// 当前导航项名称(内容区左上角标题随导航保持一致)
+const currentTabLabel = computed(() => tabs.find(t => t.key === activeTab.value)?.label || '')
 
 const chartPanelRef = ref(null)
 
-// 实测数据绘制
+// 实测点频率窗口自动适配:实测范围超出当前窗口时扩窗(各留 12% 边距);已在窗口内则尊重手动设置
+function fitWindowToMeasured(data) {
+  if (!Array.isArray(data) || data.length === 0) return
+  let fMin = Infinity
+  let fMax = -Infinity
+  for (const d of data) {
+    const fHz = Number(d.freq) * 1000 // 实测数据频率单位为 kHz
+    if (!(fHz > 0)) continue
+    if (fHz < fMin) fMin = fHz
+    if (fHz > fMax) fMax = fHz
+  }
+  if (!isFinite(fMin)) return
+  const curStart = calcStore.params.fStart
+  const curEnd = calcStore.params.fEnd
+  // 窗口已退化为单点(如李萨如单频联动)时不再视为有效窗口,强制按实测数据扩窗
+  if (curEnd > curStart && fMin >= curStart && fMax <= curEnd) return
+  const span = fMax - fMin
+  const pad = Math.max(span * 0.12, 50) // 单点等退化场景给保底边距
+  calcStore.updateParams({
+    fStart: Math.max(1, Math.round(fMin - pad)),
+    fEnd: Math.round(fMax + pad),
+  })
+}
+
+// 实测数据绘制(空数据不落库;未仿真时自动补跑仿真;对频率/电流量级异常给出单位提示;窗口外自动扩窗后重绘)
 function handlePlotMeasured() {
-  historyStore.saveMeasuredRecord(calcStore.measuredData)
-  // 保存后触发图表重绘
+  const data = calcStore.measuredData
+  if (!Array.isArray(data) || data.length === 0) {
+    alert('暂无实测数据:请先在上方输入或粘贴数据,再点击绘制')
+    return
+  }
+  // 若尚未仿真:自动补跑一次,蓝色曲线采用电路搭建页的实际参数
+  // (电路未闭合/缺元件时 simulate 静默失败,蓝线回退为默认参数的理论曲线,不影响实测绘制)
+  if (!calcStore.simulated) {
+    calcStore.simulate()
+  }
+  // 频率单位校验:表格单位为 kHz。若把 Hz 数值直接填入(如 2252 而不是 2.252),会超出常见量级,
+  // 窗口被拉远后理论曲线在该频段电流趋近于 0,视觉上就是贴底的蓝色直线
+  const maxFreqK = Math.max(...data.map(d => Number(d.freq) || 0))
+  if (maxFreqK > 500) {
+    alert('提示:实测最大频率约 ' + maxFreqK.toFixed(1) + ' kHz,远超本实验量级。\n若你输入的是 2252 这类 Hz 数值,请除以 1000 改为 2.252(频率单位是 kHz)。')
+  }
+  // 电流量级校验:与当前仿真全域峰值比较,错配会把蓝色仿真曲线压缩成底部直线
+  const measMax = Math.max(...data.map(d => Number(d.current) || 0))
+  const simPeak = calcStore.results.Imax
+  if (measMax > 0 && simPeak > 0 && measMax > simPeak * 2.5) {
+    alert('提示:实测电流峰值 ' + measMax.toFixed(2) + ' mA,约为当前仿真峰值 ' + simPeak.toFixed(2) + ' mA 的 ' + (measMax / simPeak).toFixed(1) + ' 倍。\n请检查:1) 电流是否以 mA 为单位;2) 电路元件(R/L/C/V)修改后是否重新点过「开始仿真」。否则蓝色曲线会被压缩成底部直线。')
+  }
+  historyStore.saveMeasuredRecord(data)
+  fitWindowToMeasured(data)
+  // 保存与扩窗后触发图表重绘
   nextTick(() => {
     chartPanelRef.value?.drawChart?.()
   })
@@ -59,9 +111,10 @@ function handleSimulate() {
   })
 }
 
-// 频率扫描完成
+// 频率扫描完成(数据已按 kHz 约定下发;自动扩窗保证绿线可见)
 function handleSweepDone(data) {
   calcStore.measuredData = data
+  fitWindowToMeasured(data)
 }
 
 // 李萨如幅频图点击更新频率
@@ -89,6 +142,7 @@ function handleLoadMeasHistory(idx) {
   const r = historyStore.measuredHistory[idx]
   if (!r) return
   calcStore.measuredData = JSON.parse(JSON.stringify(r.data))
+  fitWindowToMeasured(calcStore.measuredData)
 }
 
 // 导入历史文件处理
@@ -114,43 +168,60 @@ async function handleImportMeasHistory(file) {
 </script>
 
 <template>
-  <div class="min-h-100dvh bg-[#eef1f6] p-2 sm:p-3 md:p-4">
-    <div class="w-full">
-      <!-- Header -->
-      <header class="mb-4">
-        <div class="flex items-center gap-3 bg-white border border-gray-200/80 rounded-2xl shadow-sm px-4 sm:px-6 py-3 sm:py-4">
-          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 text-white text-xl shrink-0">🔬</div>
-          <div class="min-w-0">
-            <h1 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">RLC电路实验助手</h1>
-            <p class="text-xs sm:text-sm text-slate-500 leading-tight">你的 AI 实验助手</p>
-          </div>
-        </div>
-      </header>
-
-      <!-- Tab 导航 -->
-      <div class="flex gap-1 mb-5 overflow-x-auto pb-1 scrollbar-hide bg-white border border-gray-200/80 rounded-xl p-1.5 shadow-sm">
+  <div class="app-layout">
+    <!-- 左侧竖排目录(≥1024px 显示) -->
+    <aside class="side-rail">
+      <div class="side-brand">
+        <span class="side-brand-cn">RLC 串联谐振电路实验</span>
+        <span class="side-brand-en">SERIES RESONANCE · LAB</span>
+      </div>
+      <nav class="side-nav" role="tablist" aria-label="实验章节">
         <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          :class="[
-            'tab-btn px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-semibold whitespace-nowrap transition-colors duration-200',
-            activeTab === tab.key
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-          ]"
+          v-for="(tab, i) in tabs"
+          :key="'s' + tab.key"
+          class="snav-item"
+          :class="{ active: activeTab === tab.key }"
+          role="tab"
+          :aria-selected="activeTab === tab.key"
           @click="activeTab = tab.key"
         >
-          {{ tab.label }}
+          <span class="snav-num">{{ String(i + 1).padStart(2, '0') }}</span>
+          <span class="snav-label">{{ tab.label }}</span>
         </button>
+      </nav>
+      <div class="side-foot">
+        《大学物理》实验报告<br />
+        RLC 串联电路频率特性研究
       </div>
+    </aside>
+
+    <!-- 右侧主内容 -->
+    <main class="main-col">
+      <div class="w-full max-w-[1560px] mx-auto">
+        <!-- 论文题头 -->
+        <header>
+          <div class="paper-head">
+            <h1>{{ currentTabLabel }}</h1>
+            <p class="paper-meta">RLC 串联谐振电路实验 · 理论仿真 · 实测比对 · 误差分析</p>
+          </div>
+        </header>
+
+        <!-- 窄屏目录(顶部横排) -->
+        <nav class="paper-tabs" role="tablist">
+          <button
+            v-for="tab in tabs"
+            :key="'t' + tab.key"
+            :class="['ptab', activeTab === tab.key ? 'active' : '']"
+            @click="activeTab = tab.key"
+          >
+            {{ tab.label }}
+          </button>
+        </nav>
 
       <!-- Tab 内容: 电路搭建 -->
       <template v-if="activeTab === 'circuit'">
         <section class="card mb-4">
-          <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <span>🧩</span>
-            <span>电子拖拽接线台</span>
-          </div>
+          <h2 class="sec-title">电路搭建与仿真</h2>
           <CircuitBoard
             v-model:components="calcStore.components"
             v-model:wires="calcStore.wires"
@@ -165,10 +236,7 @@ async function handleImportMeasHistory(file) {
       <!-- Tab 内容: 仿真分析 -->
       <template v-if="activeTab === 'analysis'">
         <section class="card mb-4">
-          <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <span>📊</span>
-            <span>计算结果</span>
-          </div>
+          <h2 class="sec-title">计算结果</h2>
           <ResultCards :results="results" :simulated="calcStore.simulated" />
           <SimulationHistory
             :history="simulationHistory"
@@ -181,10 +249,7 @@ async function handleImportMeasHistory(file) {
         </section>
 
         <section class="card mb-4">
-          <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <span>📈</span>
-            <span>三大特性曲线图</span>
-          </div>
+          <h2 class="sec-title">三大特性曲线</h2>
           <ChartPanel
             ref="chartPanelRef"
             :params="params"
@@ -199,10 +264,7 @@ async function handleImportMeasHistory(file) {
         </section>
 
         <section class="card mb-4">
-          <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <span>📊</span>
-            <span>实测数据输入</span>
-          </div>
+          <h2 class="sec-title">实测数据输入</h2>
           <MeasuredDataInput
             v-model:data="calcStore.measuredData"
             :history="measuredHistory"
@@ -216,10 +278,7 @@ async function handleImportMeasHistory(file) {
         </section>
 
         <section class="card mb-4">
-          <div class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <span>📝</span>
-            <span>误差分析</span>
-          </div>
+          <h2 class="sec-title">误差分析</h2>
           <ErrorAnalysis :results="results" />
         </section>
       </template>
@@ -233,7 +292,7 @@ async function handleImportMeasHistory(file) {
           <div
             class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
           >
-            <span class="text-sm font-semibold text-gray-800">🔍 频率扫描</span>
+            <span class="text-sm font-semibold text-gray-800">频率扫描</span>
           </div>
           <div class="p-3">
             <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
@@ -250,14 +309,20 @@ async function handleImportMeasHistory(file) {
       <template v-if="activeTab === 'lc-voltage'">
         <LCVoltageMethod />
       </template>
-    </div>
 
-    <DoubaoChat />
+      <!-- Tab 内容: RLC工程应用(收音机选频) -->
+      <template v-if="activeTab === 'tuner'">
+        <TunerExperiment />
+      </template>
+      </div>
+
+      <DoubaoChat />
+      </main>
   </div>
 </template>
 
 <style scoped>
 .card-hd {
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e3e7ee;
 }
 </style>

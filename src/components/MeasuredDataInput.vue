@@ -4,10 +4,10 @@
     <div class="mb-4">
       <textarea
         v-model="pasteText"
-        placeholder="200 10&#10;500 35&#10;700 48&#10;796 50&#10;900 45&#10;1200 25"
+        placeholder="1.6 4.2&#10;1.9 6.5&#10;2.1 8.2&#10;2.25 9.0&#10;2.4 7.8&#10;2.7 5.2&#10;3.0 3.4"
         class="w-full p-3 border border-gray-300 rounded-lg text-sm resize-y min-h-[80px]"
       ></textarea>
-      <div class="text-xs text-gray-500 mt-1">格式示例：频率(kHz) 电流(mA)，每行一组数据</div>
+      <div class="text-xs text-gray-500 mt-1">格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=100mH、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252 kHz）</div>
       <button @click="parsePasteData" class="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all">
         解析并导入
       </button>
@@ -49,7 +49,7 @@
     <!-- 历史记录 -->
     <div class="mt-4 pt-4 border-t border-gray-200">
       <div class="flex items-center gap-3 mb-3 flex-wrap">
-        <span class="text-sm font-semibold text-gray-700">📋 实测历史记录</span>
+        <span class="text-sm font-semibold text-gray-700">实测历史记录</span>
         <span>共 <span class="bg-blue-600 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{ history.length }}</span> 条记录</span>
         <button @click="$emit('export-history')" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all">💾 保存</button>
         <label class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all cursor-pointer">
