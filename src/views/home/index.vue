@@ -283,31 +283,33 @@ async function handleImportMeasHistory(file) {
         </section>
       </template>
 
-      <!-- Tab 内容: 相位差判别法 (布局模仿 LC电压幅值法) -->
-      <template v-if="activeTab === 'measure'">
-        <LissajousScope :params="params" @update-freq="handleLissaFreqUpdate" />
+      <!-- Tab 内容: 相位差判别法 / LC电压幅值法
+      用 KeepAlive 保活:两个页面的「自动扫频」由组件内定时链驱动,
+      切到其它 tab 时不再卸载组件,扫频在后台继续,切回时进度不丢 -->
+      <KeepAlive>
+        <LissajousScope
+          v-if="activeTab === 'measure'"
+          :params="params"
+          @update-freq="handleLissaFreqUpdate"
+        />
+        <LCVoltageMethod v-else-if="activeTab === 'lc-voltage'" />
+      </KeepAlive>
 
-        <!-- 频率扫描 (模仿 LCVoltageMethod 的操作控制样式) -->
-        <section class="card mb-4">
-          <div
-            class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
-          >
-            <span class="text-sm font-semibold text-gray-800">频率扫描</span>
-          </div>
-          <div class="p-3">
-            <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
-          </div>
-        </section>
-      </template>
+      <!-- 频率扫描 (相位差判别法页内的一次性计算工具,无需保活) -->
+      <section v-if="activeTab === 'measure'" class="card mb-4">
+        <div
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+        >
+          <span class="text-sm font-semibold text-gray-800">频率扫描</span>
+        </div>
+        <div class="p-3">
+          <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
+        </div>
+      </section>
 
       <!-- Tab 内容: 公式原理 -->
       <template v-if="activeTab === 'formula'">
         <FormulaPrinciple />
-      </template>
-
-      <!-- Tab 内容: LC电压幅值法 -->
-      <template v-if="activeTab === 'lc-voltage'">
-        <LCVoltageMethod />
       </template>
 
       <!-- Tab 内容: RLC工程应用(收音机选频) -->

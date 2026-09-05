@@ -277,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 
 // ---- 参数状态 ----
 const R = ref(100)
@@ -452,6 +452,7 @@ function drawULUC() {
   const canvas = ulCanvasRef.value
   if (!canvas) return
   const rect = canvas.parentElement.getBoundingClientRect()
+  if (rect.width < 2) return // 组件隐藏(keep-alive 切走)期间布局为 0,跳过以免画布缓冲被清零
   canvas.width = rect.width * (window.devicePixelRatio || 1)
   canvas.height = 130 * (window.devicePixelRatio || 1)
   canvas.style.height = '130px'
@@ -462,6 +463,7 @@ function drawULUC() {
   const canvas2 = ucCanvasRef.value
   if (!canvas2) return
   const rect2 = canvas2.parentElement.getBoundingClientRect()
+  if (rect2.width < 2) return
   canvas2.width = rect2.width * (window.devicePixelRatio || 1)
   canvas2.height = 130 * (window.devicePixelRatio || 1)
   canvas2.style.height = '130px'
@@ -477,6 +479,7 @@ function drawLissajous() {
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
   const size = Math.min(rect.width, rect.height)
+  if (size < 2) return // 隐藏期间跳过,不覆盖内联宽度,避免恢复后画布锁死为 0 宽
   canvas.width = size * dpr
   canvas.height = size * dpr
   canvas.style.width = size + 'px'
@@ -570,6 +573,7 @@ function drawLissajousULUC() {
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
   const size = Math.min(rect.width, rect.height)
+  if (size < 2) return // 隐藏期间跳过,不覆盖内联宽度,避免恢复后画布锁死为 0 宽
   canvas.width = size * dpr
   canvas.height = size * dpr
   canvas.style.width = size + 'px'
@@ -738,6 +742,7 @@ function drawAmpChart() {
   if (!canvas) return
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
+  if (rect.width < 2) return // 隐藏期间跳过,避免把幅频图画布缓冲清零
   canvas.width = rect.width * dpr
   canvas.height = 380 * dpr
   canvas.style.height = '380px'
@@ -1230,6 +1235,20 @@ onMounted(() => {
     refreshAll()
     animId = requestAnimationFrame(animate)
   })
+})
+
+// keep-alive 保活期间:切走(组件 DOM 移出文档、布局为 0)时暂停动画,
+// 切回时恢复动画并全量重绘,保证画面不因隐藏期的零尺寸绘制而空白
+onDeactivated(() => {
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+})
+
+onActivated(() => {
+  if (!animId) animId = requestAnimationFrame(animate)
+  refreshAll()
 })
 
 onUnmounted(() => {

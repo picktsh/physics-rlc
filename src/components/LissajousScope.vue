@@ -131,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 import { impedance, current, resonantFreq } from '../utils/physics'
 
 const props = defineProps({
@@ -164,6 +164,7 @@ let animPhase = 0
 let animFrame = 0
 const SKIP_FRAMES = 2
 let lastAmpDraw = 0
+let animId = null
 
 // 计算测量值
 const measures = computed(() => {
@@ -245,6 +246,7 @@ function drawStar(ctx, x, y, r, color) {
 function setupHiDPICanvas(canvas, height) {
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.parentElement.getBoundingClientRect()
+  if (rect.width < 2) return null // 组件隐藏(keep-alive 切走)期间布局为 0,跳过绘制以免画布缓冲被清零
   canvas.width = rect.width * dpr
   canvas.height = height * dpr
   canvas.style.height = height + 'px'
@@ -261,7 +263,9 @@ function setupHiDPICanvas(canvas, height) {
 function drawScope() {
   const canvas = scopeCanvasRef.value
   if (!canvas) return
-  const { ctx, W, H } = setupHiDPICanvas(canvas, canvasHeight.value)
+  const s = setupHiDPICanvas(canvas, canvasHeight.value)
+  if (!s) return
+  const { ctx, W, H } = s
   const cx = W / 2,
     cy = H / 2
   const pad = 40,
@@ -389,7 +393,9 @@ function drawScope() {
 function drawAmpChart() {
   const canvas = ampCanvasRef.value
   if (!canvas) return
-  const { ctx, W, H } = setupHiDPICanvas(canvas, canvasHeight.value)
+  const s = setupHiDPICanvas(canvas, canvasHeight.value)
+  if (!s) return
+  const { ctx, W, H } = s
   const pad = { l: 65, r: 25, t: 30, b: 50 }
   const gW = W - pad.l - pad.r,
     gH = H - pad.t - pad.b
@@ -559,8 +565,9 @@ function drawAmpChart() {
   canvas._plotInfo = { fMin, fRange, iMax, pad, gW, gH }
 }
 
-// 动画循环
+// 动画循环(先续接下帧再绘制,便于外部通过 animId 暂停/恢复)
 function animate() {
+  animId = requestAnimationFrame(animate)
   animFrame++
   const now = Date.now()
   if (animFrame % (SKIP_FRAMES + 1) !== 0) {
@@ -569,7 +576,6 @@ function animate() {
       drawAmpChart()
       lastAmpDraw = now
     }
-    requestAnimationFrame(animate)
     return
   }
   drawScope()
@@ -577,7 +583,6 @@ function animate() {
     drawAmpChart()
     lastAmpDraw = now
   }
-  requestAnimationFrame(animate)
 }
 
 
@@ -766,6 +771,24 @@ onMounted(() => {
   nextTick(() => {
     animate()
   })
+})
+
+// keep-alive 保活期间:切走(组件 DOM 移出文档、布局为 0)时暂停动画循环,
+// 切回时恢复循环并立即重绘幅频图,保证画面不因隐藏期的零尺寸绘制而空白
+onDeactivated(() => {
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+})
+
+onActivated(() => {
+  if (!animId) animate()
+  drawAmpChart()
+})
+
+onUnmounted(() => {
+  if (animId) cancelAnimationFrame(animId)
 })
 
 watch(() => props.params, () => {
