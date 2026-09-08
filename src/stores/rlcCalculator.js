@@ -261,9 +261,9 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
       if (infoA && infoB && infoA.compIndex === infoB.compIndex && !visitedComps.has(infoA.compIndex)) {
         visitedComps.add(infoA.compIndex)
         const comp = components.value[infoA.compIndex]
-        if (comp.type === 'R') R_total += comp.value
+        if (comp.type === 'R' || comp.type === 'RV') R_total += comp.value
         else if (comp.type === 'L') L_total += comp.value
-        else if (comp.type === 'C' && comp.value > 0) C_inv_total += 1 / comp.value
+        else if ((comp.type === 'C' || comp.type === 'CV') && comp.value > 0) C_inv_total += 1 / comp.value
       }
     }
 

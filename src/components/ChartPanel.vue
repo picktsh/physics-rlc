@@ -35,7 +35,7 @@
       ⚠ 实测电流峰值 {{ ampPeaks.meas.toFixed(2) }} mA,高于仿真峰值 {{ ampPeaks.theory.toFixed(2) }} mA:蓝色仿真曲线被压缩变矮,请核对电流单位(mA)与仿真参数(R/L/C/V,元件修改后需重新仿真)
     </div>
     <!-- 图表Canvas -->
-    <div class="chart-container bg-gray-50 rounded-xl p-3 border border-gray-200 relative">
+    <div class="chart-container blueprint-grid rounded-xl p-3 border border-gray-200 relative">
       <canvas ref="chartCanvasRef" class="w-full cursor-crosshair" :style="{ height: chartHeight + 'px' }" @click="handleChartClick" @mousemove="handleChartHover" @mouseleave="hideTooltip"></canvas>
       <div v-if="tooltip.show" class="chart-tooltip absolute bg-white/95 border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-lg pointer-events-none whitespace-nowrap" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }" v-html="tooltip.content"></div>
     </div>

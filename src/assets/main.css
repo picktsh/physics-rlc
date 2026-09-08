@@ -87,6 +87,30 @@ body {
   font-size: 15px;
 }
 
+/* 极淡蓝氛围光:让大面积纸灰底产生空间层次,不引入任何彩色块 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 420px at 86% -8%, rgba(214, 227, 252, 0.65), transparent 62%),
+    radial-gradient(900px 420px at -6% 106%, rgba(214, 227, 252, 0.5), transparent 60%);
+}
+
+/* 极淡蓝氛围光:让大面积纸灰底产生空间层次,不引入任何彩色块 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 420px at 86% -8%, rgba(214, 227, 252, 0.65), transparent 62%),
+    radial-gradient(900px 420px at -6% 106%, rgba(214, 227, 252, 0.5), transparent 60%);
+}
+
 /* 移除默认边框 */
 fieldset {
   border: none;
@@ -143,13 +167,15 @@ a {
 
 /* ========== 公共组件类 ========== */
 
-/* 通用卡片容器(白色细边卡片) */
+/* 通用卡片容器(白色细边卡片):双层阴影(硬投影 + 远距柔蓝光)让卡片从纸灰底上"浮"起 */
 .card {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 18px 20px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 18px 42px -22px rgba(37, 99, 235, 0.3);
 }
 
 /* 小卡片/子面板 */
@@ -158,7 +184,7 @@ a {
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   padding: 12px;
-  box-shadow: none;
+  box-shadow: 0 2px 12px -8px rgba(37, 99, 235, 0.18);
 }
 
 /* 主按钮 */
@@ -283,8 +309,8 @@ a {
   background: #e9f0fe;
 }
 .ptab.active {
-  background: var(--navy);
-  color: #fff;
+  background: #dbe7ff;
+  color: var(--navy-deep);
   font-weight: 700;
 }
 
@@ -404,16 +430,16 @@ a {
   color: var(--navy);
 }
 .snav-item.active {
-  background: var(--navy);
+  background: #dbe7ff;
 }
 .snav-item.active .snav-num {
-  color: #dbe7ff;
+  color: var(--navy-deep);
   font-weight: 700;
 }
 .snav-item.active .snav-label {
   font-size: 20px;
   font-weight: 700;
-  color: #fff;
+  color: var(--navy-deep);
 }
 
 /* 侧栏页脚 */
@@ -426,12 +452,21 @@ a {
   margin-top: 10px;
 }
 
-/* 面板标题条:去灰底,改为白色细线 */
+/* 面板标题条:浅蓝灰底 + 细线,与白色内容区形成区块层次 */
 [class~='card-hd'] {
-  background: #fff !important;
-  border-bottom: 1px solid var(--line-soft) !important;
+  background: #f6f8fc !important;
+  border-bottom: 1px solid var(--line) !important;
   padding-left: 16px;
   padding-right: 16px;
+}
+
+/* ========== 电路图纸式浅蓝坐标纸底(2D 画布/图表容器) ========== */
+.blueprint-grid {
+  background-color: #f9fbfe;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.055) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 
@@ -447,6 +482,129 @@ a {
   .ptab.active {
     font-size: 15px;
   }
+}
+
+/* ========== 参数速览条(页眉下常驻,实时电路状态) ========== */
+.param-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 13px;
+  margin: -8px 0 16px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 10px 26px -18px rgba(37, 99, 235, 0.35);
+}
+.param-strip .ps-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  margin-right: 2px;
+}
+.ps-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #edf2fe;
+  font-size: 12px;
+  color: #46536b;
+  white-space: nowrap;
+}
+.ps-chip b {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy-deep);
+  font-size: 13.5px;
+}
+.ps-chip .u {
+  color: var(--faint);
+  font-size: 11px;
+}
+.ps-chip.ps-f0 {
+  background: #fff;
+  border: 1px solid #dce5f7;
+}
+.ps-chip.ps-f0 b {
+  color: var(--ink);
+}
+.ps-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line-soft);
+  margin: 0 2px;
+}
+.ps-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.ps-state i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c6cfdc;
+  box-shadow: 0 0 0 3px rgba(198, 207, 220, 0.18);
+}
+.ps-state.on {
+  color: #1f7a43;
+}
+.ps-state.on i {
+  background: #22a55c;
+  box-shadow: 0 0 0 3px rgba(34, 165, 92, 0.16);
+}
+
+/* ========== 实验器材条(原理演示卡底部) ========== */
+.lab-gear {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px dashed #d6e0ef;
+}
+.lab-gear-t {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  margin-right: 2px;
+}
+.mtrl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #dce4f2;
+  background: #fff;
+  font-size: 13px;
+  color: #46536b;
+  transition: all 0.18s;
+}
+.mtrl-chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #93a7cd;
+}
+.mtrl-chip:hover {
+  border-color: #b9c9e6;
+  color: var(--navy-deep);
 }
 
 /* 章条式区块标题 */

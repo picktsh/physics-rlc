@@ -28,6 +28,21 @@
           <line x1="26" y1="6" x2="26" y2="26" />
           <line x1="26" y1="16" x2="44" y2="16" />
         </svg>
+        <svg v-else-if="comp.type === 'RV'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="16" x2="10" y2="16" />
+          <rect x="10" y="6" width="28" height="20" />
+          <line x1="16" y1="22" x2="30.5" y2="11" />
+          <path d="M26.2 8.9 L30.5 11 L27.5 15" />
+          <line x1="38" y1="16" x2="44" y2="16" />
+        </svg>
+        <svg v-else-if="comp.type === 'CV'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="16" x2="13" y2="16" />
+          <line x1="13" y1="9" x2="13" y2="23" />
+          <line x1="22" y1="9" x2="22" y2="23" />
+          <line x1="22" y1="16" x2="44" y2="16" />
+          <line x1="15" y1="21" x2="20.5" y2="10" />
+          <path d="M17 8.8 L20.5 10 L18.6 13.9" />
+        </svg>
         <svg v-else viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="4" y1="16" x2="12" y2="16" />
           <circle cx="24" cy="16" r="12" />
@@ -61,17 +76,38 @@
       </button>
     </div>
 
-    <canvas
-      ref="canvasRef"
-      class="w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
-      @drop="handleDrop"
-      @dragover="allowDrop"
-      @mousedown="handlePointerDown"
-      @mousemove="handlePointerMove"
-      @touchstart="handleTouchStart"
-      @touchmove="handleTouchMove"
-      @touchend="handleTouchEnd"
-    />
+    <div class="relative">
+      <canvas
+        ref="canvasRef"
+        class="w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-gray-300 rounded-xl blueprint-grid cursor-crosshair touch-none"
+        @drop="handleDrop"
+        @dragover="allowDrop"
+        @mousedown="handlePointerDown"
+        @mousemove="handlePointerMove"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+      />
+      <!-- 空态引导:淡色居中提示,不抢画布焦点 -->
+      <div
+        v-if="components.length === 0"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pointer-events-none select-none"
+      >
+        <svg viewBox="0 0 64 40" class="w-16 h-10 opacity-40">
+          <!-- 画布空态淡线示意:R-L-C-V 串联链 + 虚线连接 -->
+          <line x1="6" y1="20" x2="16" y2="20" stroke="#9db0c8" stroke-width="1.6" />
+          <rect x="16" y="12" width="12" height="16" fill="none" stroke="#9db0c8" stroke-width="1.6" />
+          <text x="22" y="25" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">R</text>
+          <path d="M 31 20 Q 34.5 10 38 20 Q 41.5 10 45 20" fill="none" stroke="#9db0c8" stroke-width="1.6" />
+          <text x="38" y="31" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">L</text>
+          <line x1="47.5" y1="13" x2="47.5" y2="27" stroke="#9db0c8" stroke-width="2" />
+          <line x1="52.5" y1="13" x2="52.5" y2="27" stroke="#9db0c8" stroke-width="2" />
+          <text x="50" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">C</text>
+          <circle cx="61" cy="20" r="2.5" fill="none" stroke="#9db0c8" stroke-width="1.6" />
+        </svg>
+        <span class="text-xs text-gray-400">从左侧拖入元件,在画布上搭建 RLC 串联电路</span>
+      </div>
+    </div>
 
     <div class="text-xs text-gray-500 text-center mt-2">
       拖拽元件到画布上搭建RLC电路 | 点击元件可编辑参数 | 接线模式: 点击端点→点击添加拐点→点击目标端点完成折线 | 💡 点击导线中间可创建节点实现并联 | 删除模式: 点击元件/导线删除
@@ -172,6 +208,10 @@ import { useRLCCalculatorStore } from '../stores/rlcCalculator'
 
 const calcStore = useRLCCalculatorStore()
 
+// 元件默认值与可调量程(滑线变阻器/可调电容仿真语义同 R/C,带下限防呆避免除零/Q 发散)
+const DEFAULT_VALUES = { R: 100, RV: 100, L: 100, C: 0.05, CV: 0.05, V: 0.9 }
+const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
+
 const toleranceEnabled = ref(calcStore.toleranceEnabled)
 const tolerancePercent = ref(calcStore.tolerancePercent)
 
@@ -234,7 +274,8 @@ function onCompBlur(idx) {
     const num = parseFloat(raw)
     if (!isNaN(num)) {
       const newComponents = [...props.components]
-      newComponents[idx].value = num
+      const range = VALUE_RANGE[newComponents[idx].type]
+      newComponents[idx].value = range ? Math.min(Math.max(num, range.min), range.max) : num
       emit('update:components', newComponents)
     }
     delete compInputValues.value[idx]
@@ -243,8 +284,10 @@ function onCompBlur(idx) {
 
 const componentTypes = [
   { type: 'R', name: '电阻' },
+  { type: 'RV', name: '变阻器' },
   { type: 'L', name: '电感' },
   { type: 'C', name: '电容' },
+  { type: 'CV', name: '可调电容' },
   { type: 'V', name: '信号源' },
 ]
 
@@ -264,7 +307,7 @@ function selectPaletteComponent(type) {
 function placeComponentAt(x, y) {
   const type = pendingPlaceType.value
   if (!type) return false
-  const defaultValues = { R: 100, L: 100, C: 0.05, V: 0.9 }
+  const defaultValues = DEFAULT_VALUES
   const newComp = {
     type,
     x,
@@ -293,7 +336,7 @@ function handleDrop(event) {
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
 
-  const defaultValues = { R: 100, L: 100, C: 0.05, V: 0.9 }
+  const defaultValues = DEFAULT_VALUES
   const newComp = {
     type,
     x,
@@ -647,6 +690,22 @@ function getWireEnd(wire) {
   return { x: wire.x2, y: wire.y2 }
 }
 
+// 斜箭头头部(GB 可变符号):沿起点→终点方向在末端补出小三角
+function arrowHead(ctx, x1, y1, x2, y2, size = 4) {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len = Math.hypot(dx, dy) || 1
+  const ux = dx / len
+  const uy = dy / len
+  const px = -uy
+  const py = ux
+  ctx.beginPath()
+  ctx.moveTo(x2 - ux * size + px * size * 0.62, y2 - uy * size + py * size * 0.62)
+  ctx.lineTo(x2, y2)
+  ctx.lineTo(x2 - ux * size - px * size * 0.62, y2 - uy * size - py * size * 0.62)
+  ctx.stroke()
+}
+
 function drawCircuit() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -733,6 +792,51 @@ function drawCircuit() {
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('C', 0, -19)
+    } else if (comp.type === 'RV') {
+      // 滑线变阻器:两端引线 + 矩形 + 斜箭头(GB 可变电阻符号)
+      ctx.beginPath()
+      ctx.moveTo(-30, 0)
+      ctx.lineTo(-18, 0)
+      ctx.moveTo(18, 0)
+      ctx.lineTo(30, 0)
+      ctx.stroke()
+      ctx.strokeRect(-18, -9, 36, 18)
+      ctx.beginPath()
+      ctx.moveTo(-8.5, 6.5)
+      ctx.lineTo(8.5, -6.5)
+      ctx.stroke()
+      arrowHead(ctx, -8.5, 6.5, 8.5, -6.5, 3.4)
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('RV', 0, -16)
+    } else if (comp.type === 'CV') {
+      // 可调电容:两端引线 + 平行板 + 板间斜箭头(GB 可变电容符号)
+      ctx.beginPath()
+      ctx.moveTo(-30, 0)
+      ctx.lineTo(-4, 0)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(-4, -11)
+      ctx.lineTo(-4, 11)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(4, -11)
+      ctx.lineTo(4, 11)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(4, 0)
+      ctx.lineTo(30, 0)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(-3.2, 8.6)
+      ctx.lineTo(3.2, -8.6)
+      ctx.stroke()
+      arrowHead(ctx, -3.2, 8.6, 3.2, -8.6, 3)
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('CV', 0, -19)
     } else if (comp.type === 'V') {
       // 交流电压源:两端引线 + 圆环内正弦波
       ctx.beginPath()
@@ -925,6 +1029,120 @@ function addFilmCap(g, comp) {
     lead(g, xs, 8.5, z0, wx(ep.x), wz(ep.y), 1.5, 0xd0d4da)
   }
 }
+// 滑线变阻器(教学型:陶瓷管密绕电阻丝 + 镀铬滑杆 + 滑块触片,卧式悬架于两端板间)
+// 滑块位置随有效阻值对数映射(滑向左侧=阻值小),左右接线柱分别对应绕线端与滑片端
+function addRheostat(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const v = Math.min(Math.max(comp.value || 100, 10), 1000)
+  const k = Math.min(Math.max((Math.log(v) - Math.log(10)) / (Math.log(1000) - Math.log(10)), 0), 1)
+  const sx = -15.6 + k * 31.2 // 滑块行程限在两端支架之间
+  const mFrame = cmat('#3b434c', 0.5, 0.35) // 端板/支架深灰金属
+  const mBody = cmat('#e9e1cd', 0.68, 0.02) // 陶瓷管米白
+  const mWind = cmat('#c8924a', 0.32, 0.45) // 电阻丝金铜
+  const mRod = cmat('#cfd6dd', 0.2, 0.75) // 镀铬滑杆
+  const mSlider = cmat('#262c33', 0.6, 0.12) // 滑块胶木
+  const mTerm = cmat('#d0d4da', 0.3, 0.5) // 镀锡接线柱/触片
+  // 两端板(立式,底贴台面)
+  for (const s of [-1, 1]) {
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(2, 15, 11), mFrame)
+    plate.position.set(hx + s * 22, 7.5, z0)
+    g.add(plate)
+  }
+  // 陶瓷管(两端入端板悬架,管心略高于台面)
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 43, 20), mBody)
+  tube.rotation.z = Math.PI / 2
+  tube.position.set(hx, 9.5, z0)
+  g.add(tube)
+  // 密绕电阻丝(环面单层,外缘与端板顶平齐)
+  for (let i = 0; i < 8; i++) {
+    const t = new THREE.Mesh(new THREE.TorusGeometry(5.5, 0.5, 10, 22), mWind)
+    t.position.set(hx - 17 + i * 4.86, 9.5, z0)
+    t.rotation.y = Math.PI / 2
+    g.add(t)
+  }
+  // 滑杆支架(顶在端板上)
+  for (const s of [-1, 1]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(1.8, 4, 3), mFrame)
+    post.position.set(hx + s * 20, 17, z0)
+    g.add(post)
+    // 端帽收口
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1, 3.6), mTerm)
+    cap.position.set(hx + s * 20, 19, z0)
+    g.add(cap)
+  }
+  // 镀铬滑杆(两端穿入支架)
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 42, 12), mRod)
+  rod.rotation.z = Math.PI / 2
+  rod.position.set(hx, 17.9, z0)
+  g.add(rod)
+  // 滑块(骑杆)与触片(压丝)—— 位置随阻值
+  const slider = new THREE.Mesh(new THREE.BoxGeometry(7, 6, 5.5), mSlider)
+  slider.position.set(hx + sx, 18.4, z0)
+  g.add(slider)
+  const wiper = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2, 2.6), mTerm)
+  wiper.position.set(hx + sx, 14.4, z0)
+  g.add(wiper)
+  // 左右接线柱(竖于台面,贴端板外侧)与引线到端点焊盘
+  for (const [s, ep] of [[-1, comp.endpoints[0]], [1, comp.endpoints[1]]]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 4.6, 16), mTerm)
+    post.position.set(hx + s * 25, 2.3, z0)
+    g.add(post)
+    lead(g, hx + s * 25, 4.6, z0, wx(ep.x), wz(ep.y), 1.4, mTerm)
+  }
+}
+
+// 旋转可变电容(收音机同款:半圆动/定片同轴层叠 + 顶部旋钮)
+// 动片组相对定片组绕竖轴错角随容量映射(近重叠=大容量,错开=小容量)
+function addVarCap(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const v = Math.min(Math.max(comp.value || 0.05, 0.005), 0.2)
+  const k = (v - 0.005) / (0.2 - 0.005)
+  const rotY = ((168 - 156 * k) * Math.PI) / 180 // 动片组错角
+  const mBase = cmat('#3a332b', 0.72, 0.02) // 电木底座
+  const mStator = cmat('#9aa4b0', 0.5, 0.5) // 定片哑光铝
+  const mRotor = cmat('#e8edf2', 0.22, 0.7) // 动片亮铝
+  const mAxis = cmat('#2e353c', 0.5, 0.2) // 轴/旋钮
+  const mKnob = cmat('#f2f5f8', 0.35, 0.1) // 指示条
+  const mTerm = cmat('#d0d4da', 0.3, 0.5)
+  // 底座
+  const base = new THREE.Mesh(new THREE.BoxGeometry(15, 2.4, 11), mBase)
+  base.position.set(hx, 1.2, z0)
+  g.add(base)
+  const mkSemi = (r, th, mat) => new THREE.Mesh(new THREE.CylinderGeometry(r, r, th, 20, 1, false, 0, Math.PI), mat)
+  // 定片(固定层,叠于底座上方)
+  for (const dy of [3.4, 5.4]) {
+    const st = mkSemi(7, 0.4, mStator)
+    st.position.set(hx, dy, z0)
+    g.add(st)
+  }
+  // 动片组(与旋钮同轴旋转,层间夹于定片之间)
+  const rotor = new THREE.Group()
+  rotor.position.set(hx, 0, z0)
+  for (const dy of [4.4, 6.4]) {
+    const rt = mkSemi(7, 0.4, mRotor)
+    rt.position.set(0, dy, 0)
+    rotor.add(rt)
+  }
+  // 轴(穿过动片组中心)与顶部旋钮(带一字指示,随动片旋转)
+  const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 13, 14), mAxis)
+  axis.position.set(0, 8.6, 0)
+  rotor.add(axis)
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 2.6, 22), mAxis)
+  knob.position.set(0, 14.9, 0)
+  rotor.add(knob)
+  const idx = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 6.4), mKnob)
+  idx.position.set(0, 16.55, 0)
+  rotor.add(idx)
+  rotor.rotation.y = rotY
+  g.add(rotor)
+  // 接线:左侧出线接定片(焊盘左端点),右侧出线接动片(焊盘右端点)
+  for (const [s, ep] of [[-1, comp.endpoints[0]], [1, comp.endpoints[1]]]) {
+    lead(g, hx + s * 8, 3.6, z0, wx(ep.x), wz(ep.y), 1.3, mTerm)
+  }
+}
+
 // 信号源:圆角白面板+荧光波形屏+双旋钮+红黑输出端子(呼应页面卡片风)
 let waveTex = null
 function getWaveTex() {
@@ -1122,7 +1340,9 @@ function drawCircuit3D() {
     for (const c of props.components) {
       if (c.type === 'V') addSource(world3d, c)
       else if (c.type === 'C') addFilmCap(world3d, c)
+      else if (c.type === 'CV') addVarCap(world3d, c)
       else if (c.type === 'L') addInductor(world3d, c)
+      else if (c.type === 'RV') addRheostat(world3d, c)
       else addAxial(world3d, c, CFG.R)
     }
   }
@@ -1286,12 +1506,12 @@ function updateComponentValue(index, value) {
 }
 
 function getComponentLabel(type) {
-  const labels = { R: '电阻 R', L: '电感 L', C: '电容 C', V: '电压 V' }
+  const labels = { R: '电阻 R', RV: '变阻器 RV', L: '电感 L', C: '电容 C', CV: '可调电容 CV', V: '电压 V' }
   return labels[type] || type
 }
 
 function getComponentUnit(type) {
-  const units = { R: 'Ω', L: 'mH', C: 'μF', V: 'V' }
+  const units = { R: 'Ω', RV: 'Ω', L: 'mH', C: 'μF', CV: 'μF', V: 'V' }
   return units[type] || ''
 }
 
