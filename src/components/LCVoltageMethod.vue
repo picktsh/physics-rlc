@@ -28,9 +28,9 @@
           <input type="number" v-model.number="f" step="1" class="w-16 sm:w-20 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center" />
           <span class="text-xs text-gray-500">Hz</span>
           <input type="range" :min="freqMin" :max="freqMax" step="1" v-model.number="f" class="flex-1 min-w-[60px] cursor-pointer" />
-          <span class="text-xs sm:text-sm font-semibold text-indigo-600 min-w-[70px] sm:min-w-[80px] text-right">{{ t4(f) }} Hz</span>
+          <span class="text-xs sm:text-sm font-semibold text-blue-600 min-w-[70px] sm:min-w-[80px] text-right">{{ t4(f) }} Hz</span>
         </div>
-        <button @click="searchResonance" class="w-full sm:w-auto px-3 sm:px-5 py-1.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">🔍 搜索谐振</button>
+        <button @click="searchResonance" class="w-full sm:w-auto px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all">🔍 搜索谐振</button>
       </div>
     </section>
 
@@ -39,19 +39,19 @@
       <!-- ===== 行1列1: UL/UC 波形 ===== -->
       <div class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📊 UL / UC 双通道时域波形</span>
+          <span class="text-sm font-semibold text-gray-800">UL / UC 双通道时域波形</span>
           <span class="text-xs text-gray-500">谐振时两波形峰值相等·相位相反</span>
         </div>
         <div class="p-3 space-y-3 flex-1 flex flex-col">
           <div>
             <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1">
-              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#e8633a"></span>电感电压 U<sub>L</sub>
+              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#d9962b"></span>电感电压 U<sub>L</sub>
             </div>
             <canvas ref="ulCanvasRef" class="w-full border border-gray-100 rounded" style="height:130px"></canvas>
           </div>
           <div>
             <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1">
-              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#3b82f6"></span>电容电压 U<sub>C</sub>
+              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#2563eb"></span>电容电压 U<sub>C</sub>
             </div>
             <canvas ref="ucCanvasRef" class="w-full border border-gray-100 rounded" style="height:130px"></canvas>
           </div>
@@ -70,7 +70,7 @@
       <!-- ===== 行1列2: 李萨如图 (UL vs UC) ===== -->
       <section class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">🟢 李萨如图 (UL–UC XY 轨迹)</span>
+          <span class="text-sm font-semibold text-gray-800">李萨如图 (UL–UC XY 轨迹)</span>
         </div>
         <div class="text-xs text-gray-600 px-4 pt-3 pb-1 bg-gray-50 border-b border-gray-200">
           示波器·李萨如图 ( X轴：<strong>U<sub>L</sub></strong> 电感电压 | Y轴：<strong>U<sub>C</sub></strong> 电容电压 )
@@ -84,7 +84,7 @@
       <!-- ===== 行2列1: 幅频特性曲线 ===== -->
       <section class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📈 辅助 · 幅频特性曲线 ( f–I )</span>
+          <span class="text-sm font-semibold text-gray-800">辅助 · 幅频特性曲线 ( f–I )</span>
           <span class="text-xs text-gray-500">峰值点对应 UL=UC 谐振频率</span>
         </div>
         <div class="p-3 bg-gray-50 flex-1 flex items-center">
@@ -100,7 +100,7 @@
       <!-- ===== 行2列2: 李萨如图 (Us vs Ur) ===== -->
       <div class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">🔵 李萨如图 (Us-Ur XY 轨迹)</span>
+          <span class="text-sm font-semibold text-gray-800">李萨如图 (Us-Ur XY 轨迹)</span>
         </div>
         <div class="text-xs text-gray-600 px-4 pt-3 pb-1 bg-gray-50 border-b border-gray-200">
           示波器·李萨如图 ( X轴：<strong>Us</strong> 回路激励总电压 | Y轴：<strong>Ur</strong> 电阻分压，等效表征回路电流 )
@@ -116,10 +116,10 @@
     <!-- 操作控制 -->
     <section class="card mb-4">
       <div class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-        <span class="text-xs sm:text-sm font-semibold text-gray-800">🎛️ 操作控制</span>
+        <span class="text-xs sm:text-sm font-semibold text-gray-800">操作控制</span>
       </div>
       <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3">
-        <button @click="autoScan" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:shadow-lg transition-all">{{ isScanning ? '⏹️ 停止' : '🔄 自动扫频' }}</button>
+        <button @click="autoScan" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all">{{ isScanning ? '⏹️ 停止' : '🔄 自动扫频' }}</button>
         <button @click="exportCSV" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg text-xs sm:text-sm hover:bg-gray-300 transition-all">📥 导出CSV</button>
         <button @click="clearData" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 rounded-lg text-xs sm:text-sm hover:bg-red-100 transition-all">🗑️ 清空</button>
         <span class="text-xs sm:text-sm text-gray-600">阈值</span>
@@ -133,7 +133,7 @@
       <!-- 数据表格 -->
       <div class="card">
         <div class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-xs sm:text-sm font-semibold text-gray-800">📋 实验数据记录</span>
+          <span class="text-xs sm:text-sm font-semibold text-gray-800">实验数据记录</span>
           <span class="text-xs text-gray-500 hide-on-mobile">UL、UC 幅值对比支撑谐振判定</span>
         </div>
         <div class="max-h-72 overflow-y-auto overflow-x-auto table-responsive">
@@ -154,7 +154,7 @@
               <tr v-if="collected.length === 0">
                 <td colspan="8" class="text-center text-gray-400 py-8 text-xs">暂无数据，请采集</td>
               </tr>
-              <tr v-for="(d, idx) in collected" :key="idx" :class="{ 'bg-green-50 font-semibold text-green-800': Math.abs(d.f - f0) < 1e-4 }">
+              <tr v-for="(d, idx) in collected" :key="idx" :class="{ 'bg-[#e8f0fe] font-semibold text-[#1e40af]': Math.abs(d.f - f0) < 1e-4 }">
                 <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ idx + 1 }}</td>
                 <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.f) }}{{ Math.abs(d.f - f0) < 1e-4 ? ' ⭐' : '' }}</td>
                 <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.I * 1e3) }}</td>
@@ -172,12 +172,12 @@
       <!-- 实时面板 -->
       <div class="card">
         <div class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-xs sm:text-sm font-semibold text-gray-800">📊 实时数据面板</span>
+          <span class="text-xs sm:text-sm font-semibold text-gray-800">实时数据面板</span>
           <span class="text-xs text-gray-500 hide-on-mobile">UL/UC 幅值 + 李萨如相位协同判定</span>
         </div>
         <div class="p-4 space-y-2">
           <template v-if="selectedPoint">
-            <div class="text-xs text-indigo-600 font-semibold mb-2 flex items-center gap-2">
+            <div class="text-xs text-blue-600 font-semibold mb-2 flex items-center gap-2">
               📌 已选中采集点 f = {{ t4(selectedPoint.f) }} Hz
               <button @click="selectedPoint = null; drawAmpChart()" class="text-xs text-gray-400 hover:text-red-500 ml-auto">✕ 取消</button>
             </div>
@@ -237,14 +237,14 @@
     <!-- 误差分析 -->
     <section class="card mb-4">
       <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-        <span class="text-sm font-semibold text-gray-800">📉 误差分析 · 数据预处理</span>
+        <span class="text-sm font-semibold text-gray-800">误差分析 · 数据预处理</span>
       </div>
       <div class="p-4">
         <div class="flex gap-4 flex-wrap text-xs mb-3">
-          <span class="bg-gray-100 px-3 py-1.5 rounded">总采集 <strong class="text-indigo-600">{{ collected.length }}</strong></span>
-          <span class="bg-gray-100 px-3 py-1.5 rounded">有效保留 <strong class="text-indigo-600">{{ validData.length }}</strong></span>
+          <span class="bg-gray-100 px-3 py-1.5 rounded">总采集 <strong class="text-blue-600">{{ collected.length }}</strong></span>
+          <span class="bg-gray-100 px-3 py-1.5 rounded">有效保留 <strong class="text-blue-600">{{ validData.length }}</strong></span>
           <span class="bg-gray-100 px-3 py-1.5 rounded">剔除异常 <strong class="text-red-600">{{ rejectedData.length }}</strong></span>
-          <span class="bg-gray-100 px-3 py-1.5 rounded">平均误差 <strong class="text-indigo-600">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span>
+          <span class="bg-gray-100 px-3 py-1.5 rounded">平均误差 <strong class="text-blue-600">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span>
           <span class="bg-gray-100 px-3 py-1.5 rounded">最大误差 <strong class="text-red-600">{{ maxErr > 0 ? t4(maxErr) + '%' : '—' }}</strong></span>
         </div>
         <div class="max-h-28 overflow-y-auto mb-2">
@@ -277,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 
 // ---- 参数状态 ----
 const R = ref(100)
@@ -404,7 +404,7 @@ function drawWaveform(ctx, w, h, amp, phaseOffset, color) {
   const sc = ph * 0.45 / Math.max(UL_peak.value, UC_peak.value, 0.001)
   const mid = 22 + ph / 2
 
-  ctx.strokeStyle = '#e2e8f0'
+  ctx.strokeStyle = '#d9e2ee'
   ctx.lineWidth = 0.8
   ctx.beginPath()
   ctx.moveTo(mL, mid)
@@ -439,7 +439,7 @@ function drawWaveform(ctx, w, h, amp, phaseOffset, color) {
   ctx.setLineDash([])
   ctx.globalAlpha = 1
 
-  ctx.fillStyle = '#64748b'
+  ctx.fillStyle = '#7d8dab'
   ctx.font = '10px sans-serif'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
@@ -452,22 +452,24 @@ function drawULUC() {
   const canvas = ulCanvasRef.value
   if (!canvas) return
   const rect = canvas.parentElement.getBoundingClientRect()
+  if (rect.width < 2) return // 组件隐藏(keep-alive 切走)期间布局为 0,跳过以免画布缓冲被清零
   canvas.width = rect.width * (window.devicePixelRatio || 1)
   canvas.height = 130 * (window.devicePixelRatio || 1)
   canvas.style.height = '130px'
   const ctx = canvas.getContext('2d')
   ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1)
-  drawWaveform(ctx, rect.width, 130, UL_peak.value, Math.PI / 2, '#e8633a')
+  drawWaveform(ctx, rect.width, 130, UL_peak.value, Math.PI / 2, '#d9962b')
 
   const canvas2 = ucCanvasRef.value
   if (!canvas2) return
   const rect2 = canvas2.parentElement.getBoundingClientRect()
+  if (rect2.width < 2) return
   canvas2.width = rect2.width * (window.devicePixelRatio || 1)
   canvas2.height = 130 * (window.devicePixelRatio || 1)
   canvas2.style.height = '130px'
   const ctx2 = canvas2.getContext('2d')
   ctx2.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1)
-  drawWaveform(ctx2, rect2.width, 130, UC_peak.value, -Math.PI / 2, '#3b82f6')
+  drawWaveform(ctx2, rect2.width, 130, UC_peak.value, -Math.PI / 2, '#2563eb')
 }
 
 // ---- 李萨如图 ----
@@ -477,6 +479,7 @@ function drawLissajous() {
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
   const size = Math.min(rect.width, rect.height)
+  if (size < 2) return // 隐藏期间跳过,不覆盖内联宽度,避免恢复后画布锁死为 0 宽
   canvas.width = size * dpr
   canvas.height = size * dpr
   canvas.style.width = size + 'px'
@@ -519,13 +522,13 @@ function drawLissajous() {
   ctx.lineTo(cx + ds, cy)
   ctx.stroke()
 
-  ctx.fillStyle = '#6a7a8a'
+  ctx.fillStyle = '#9fb0cf'
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillText('X：Us 激励电压', cx, cy + ds + 6)
   ctx.save()
-  ctx.fillStyle = '#6a7a8a'
+  ctx.fillStyle = '#9fb0cf'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
   ctx.translate(cx - ds - 8, cy)
@@ -533,7 +536,7 @@ function drawLissajous() {
   ctx.fillText('Y：Ur 等效回路电流', 0, 0)
   ctx.restore()
 
-  ctx.fillStyle = '#5a6a7a'
+  ctx.fillStyle = '#96a9c9'
   ctx.font = '10px system-ui'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'top'
@@ -570,6 +573,7 @@ function drawLissajousULUC() {
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
   const size = Math.min(rect.width, rect.height)
+  if (size < 2) return // 隐藏期间跳过,不覆盖内联宽度,避免恢复后画布锁死为 0 宽
   canvas.width = size * dpr
   canvas.height = size * dpr
   canvas.style.width = size + 'px'
@@ -613,13 +617,13 @@ function drawLissajousULUC() {
   ctx.stroke()
 
   // X轴标签：UL
-  ctx.fillStyle = '#6a7a8a'
+  ctx.fillStyle = '#9fb0cf'
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillText('X：Uₗ 电感电压', cx, cy + ds + 6)
   ctx.save()
-  ctx.fillStyle = '#6a7a8a'
+  ctx.fillStyle = '#9fb0cf'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
   ctx.translate(cx - ds - 8, cy)
@@ -627,7 +631,7 @@ function drawLissajousULUC() {
   ctx.fillText('Y：Uᴄ 电容电压', 0, 0)
   ctx.restore()
 
-  ctx.fillStyle = '#5a6a7a'
+  ctx.fillStyle = '#96a9c9'
   ctx.font = '10px system-ui'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'top'
@@ -669,13 +673,13 @@ function drawLissajousULUC() {
     let t, c, b
     if (diff < 0.001 || Math.abs(pd) < 3) {
       t = 'UL / UC = -' + t4(ratio) + ' ✅ 谐振状态（UL≈UC）'
-      c = '#10b981'; b = '#ecfdf5'
+      c = '#23a876'; b = '#e8f1ea'
     } else if (ratio > 1) {
       t = 'UL / UC = -' + t4(ratio) + ' ⚡ 感性失谐（UL与UC反相，|UL|>|UC|）'
-      c = '#f59e0b'; b = '#fffbeb'
+      c = '#d9962b'; b = '#f8f2e3'
     } else {
       t = 'UL / UC = -' + t4(ratio) + ' 🔵 容性失谐（UL与UC反相，|UC|>|UL|）'
-      c = '#3b82f6'; b = '#eff6ff'
+      c = '#2563eb'; b = '#e8f0fe'
     }
     ulucLissajousStatusRef.value.textContent = t
     ulucLissajousStatusRef.value.style.color = c
@@ -690,13 +694,13 @@ function updatePhaseStatus() {
   let t, c, b
   if (a < 3) {
     t = '相位差 φ = ' + t4(pd) + '° ✅ 谐振状态（φ≈0°，UL≈UC）'
-    c = '#10b981'; b = '#ecfdf5'
+    c = '#23a876'; b = '#e8f1ea'
   } else if (pd > 0) {
     t = '相位差 φ = ' + t4(pd) + '° ⚡ 感性失谐 — UL>UC, φ>0'
-    c = '#f59e0b'; b = '#fffbeb'
+    c = '#d9962b'; b = '#f8f2e3'
   } else {
     t = '相位差 φ = ' + t4(pd) + '° 🔵 容性失谐 — UC>UL, φ<0'
-    c = '#3b82f6'; b = '#eff6ff'
+    c = '#2563eb'; b = '#e8f0fe'
   }
   if (phaseStatusRef.value) {
     phaseStatusRef.value.textContent = t
@@ -708,7 +712,7 @@ function updatePhaseStatus() {
 function updateResGain() {
   const q = Math.sqrt(L_H.value / C_F.value) / R.value
   if (resGainRef.value) {
-    resGainRef.value.style.color = '#065f46'
+    resGainRef.value.style.color = '#23a876'
     const extra = Math.abs(phi.value) < 1e-9 ? '' : '<span style="font-weight:400;font-size:11px;margin-left:8px;">【仅谐振点满足 UL=UC=Q·Us，失谐时放大倍数小于理论Q】</span>'
     resGainRef.value.innerHTML = '🔺 电压放大倍数 ≈ Q = ' + t4(q) + '（Us 的 ' + q.toFixed(1) + ' 倍）' + extra
   }
@@ -738,6 +742,7 @@ function drawAmpChart() {
   if (!canvas) return
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
+  if (rect.width < 2) return // 隐藏期间跳过,避免把幅频图画布缓冲清零
   canvas.width = rect.width * dpr
   canvas.height = 380 * dpr
   canvas.style.height = '380px'
@@ -772,7 +777,7 @@ function drawAmpChart() {
   const yh = my(Ih)
 
   // grid
-  ctx.strokeStyle = '#e8edf4'
+  ctx.strokeStyle = '#e2e8f2'
   ctx.lineWidth = 0.5
   for (let i = 0; i <= 5; i++) {
     const y = 18 + i / 5 * ph
@@ -787,10 +792,10 @@ function drawAmpChart() {
   }
 
   // border & labels
-  ctx.strokeStyle = '#64748b'
+  ctx.strokeStyle = '#7d8dab'
   ctx.lineWidth = 1.5
   ctx.strokeRect(mL, 18, pw, ph)
-  ctx.fillStyle = '#475569'
+  ctx.fillStyle = '#6d81a3'
   ctx.font = '10px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
@@ -806,19 +811,19 @@ function drawAmpChart() {
   // curve
   ctx.beginPath()
   data.forEach(p => ctx.lineTo(mx(p.f), my(p.I)))
-  ctx.strokeStyle = '#3b82f6'
+  ctx.strokeStyle = '#2563eb'
   ctx.lineWidth = 2
   ctx.stroke()
 
   // half power line
   ctx.setLineDash([4, 4])
-  ctx.strokeStyle = '#f59e0b'
+  ctx.strokeStyle = '#d9962b'
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(mL, yh)
   ctx.lineTo(mL + pw, yh)
   ctx.stroke()
-  ctx.fillStyle = '#f59e0b'
+  ctx.fillStyle = '#d9962b'
   ctx.font = '9px system-ui'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'bottom'
@@ -827,10 +832,10 @@ function drawAmpChart() {
 
   // bandwidth markers
   if (bw > 0) {
-    ctx.fillStyle = '#3b82f6'
+    ctx.fillStyle = '#2563eb'
     ctx.beginPath(); ctx.arc(mx(fL), yh, 3.5, 0, 2 * Math.PI); ctx.fill()
     ctx.beginPath(); ctx.arc(mx(fR), yh, 3.5, 0, 2 * Math.PI); ctx.fill()
-    ctx.strokeStyle = '#3b82f6'
+    ctx.strokeStyle = '#2563eb'
     ctx.lineWidth = 0.8
     ctx.setLineDash([3, 3])
     ctx.beginPath()
@@ -838,7 +843,7 @@ function drawAmpChart() {
     ctx.lineTo(mx(fR), yh - 12)
     ctx.stroke()
     ctx.setLineDash([])
-    ctx.fillStyle = '#3b82f6'
+    ctx.fillStyle = '#2563eb'
     ctx.font = '10px system-ui'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
@@ -856,8 +861,8 @@ function drawAmpChart() {
     validData.value.forEach(p => {
       const x = mx(p.f), y = my(p.I)
       const isSelected = selectedPoint.value && Math.abs(p.f - selectedPoint.value.f) < 1e-6
-      ctx.fillStyle = isSelected ? '#ef4444' : '#2563eb'
-      ctx.shadowColor = isSelected ? '#ef4444' : 'transparent'
+      ctx.fillStyle = isSelected ? '#d14a3f' : '#3b82f6'
+      ctx.shadowColor = isSelected ? '#d14a3f' : 'transparent'
       ctx.shadowBlur = isSelected ? 10 : 0
       ctx.beginPath(); ctx.arc(x, y, isSelected ? 5.5 : 3.5, 0, 2 * Math.PI); ctx.fill()
       ctx.shadowBlur = 0
@@ -873,7 +878,7 @@ function drawAmpChart() {
   if (rejectedData.value.length) {
     rejectedData.value.forEach(p => {
       const x = mx(p.f), y = my(p.I)
-      ctx.strokeStyle = '#94a3b8'
+      ctx.strokeStyle = '#8ba0bf'
       ctx.lineWidth = 1.5
       ctx.beginPath(); ctx.arc(x, y, 5, 0, 2 * Math.PI); ctx.stroke()
     })
@@ -885,8 +890,8 @@ function drawAmpChart() {
     const peakData = data[mi]
     const peakX = mx(data[mi].f)
     const peakY = my(maxI)
-    ctx.fillStyle = '#f59e0b'
-    ctx.shadowColor = '#f59e0b'
+    ctx.fillStyle = '#d9962b'
+    ctx.shadowColor = '#d9962b'
     ctx.shadowBlur = 12
     ctx.beginPath()
     ctx.arc(peakX, peakY, 7, 0, 2 * Math.PI)
@@ -896,7 +901,7 @@ function drawAmpChart() {
     ctx.beginPath()
     ctx.arc(peakX, peakY, 3, 0, 2 * Math.PI)
     ctx.fill()
-    ctx.fillStyle = '#f59e0b'
+    ctx.fillStyle = '#d9962b'
     ctx.font = 'bold 10px system-ui'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
@@ -1032,6 +1037,7 @@ function autoScan() {
   }
   isScanning.value = true
   const f0_val = f0.value
+  // 固定 1950~2550Hz 对数窗生成扫频点(谐振点自动插入)
   const freqs = Array.from({ length: 51 }, (_, i) => 1950 * Math.pow(2550 / 1950, i / 50))
   let insIdx = freqs.findIndex(f => f >= f0_val)
   if (insIdx < 0) insIdx = freqs.length
@@ -1096,6 +1102,7 @@ function autoScanWithNoise() {
   rejectedData.value = []
 
   const f0_val = f0.value
+  // 固定 1950~2550Hz 对数窗生成扫频点(谐振点自动插入)
   const freqs = Array.from({ length: 51 }, (_, i) => 1950 * Math.pow(2550 / 1950, i / 50))
   let insIdx = freqs.findIndex(f => f >= f0_val)
   if (insIdx < 0) insIdx = freqs.length
@@ -1230,6 +1237,20 @@ onMounted(() => {
   })
 })
 
+// keep-alive 保活期间:切走(组件 DOM 移出文档、布局为 0)时暂停动画,
+// 切回时恢复动画并全量重绘,保证画面不因隐藏期的零尺寸绘制而空白
+onDeactivated(() => {
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+})
+
+onActivated(() => {
+  if (!animId) animId = requestAnimationFrame(animate)
+  refreshAll()
+})
+
 onUnmounted(() => {
   if (animId) cancelAnimationFrame(animId)
 })
@@ -1237,7 +1258,7 @@ onUnmounted(() => {
 
 <style scoped>
 .card-hd {
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #d8e9e6;
 }
 canvas {
   display: block;

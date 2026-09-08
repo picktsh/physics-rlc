@@ -41,6 +41,30 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
   // 标记是否已通过电路搭建执行仿真（初始默认不显示曲线）
   const simulated = ref(false)
 
+  // 元件公差设置
+  const toleranceEnabled = ref(false)
+  const tolerancePercent = ref(5)
+
+  // 缓存当前仿真用的带公差值（避免每次读取时随机变化）
+  let _toleranceCache = null
+
+  function applyTolerance(values) {
+    if (!toleranceEnabled.value) return values
+    if (_toleranceCache) return _toleranceCache
+    const offset = (Math.random() - 0.5) * 2 * (tolerancePercent.value / 100)
+    _toleranceCache = {
+      R: values.R * (1 + offset),
+      L: values.L * (1 + offset),
+      C: values.C * (1 + offset),
+      V: values.V,
+    }
+    return _toleranceCache
+  }
+
+  function clearToleranceCache() {
+    _toleranceCache = null
+  }
+
   // 实测数据
   const measuredData = ref([])
 
@@ -237,14 +261,15 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
       if (infoA && infoB && infoA.compIndex === infoB.compIndex && !visitedComps.has(infoA.compIndex)) {
         visitedComps.add(infoA.compIndex)
         const comp = components.value[infoA.compIndex]
-        if (comp.type === 'R') R_total += comp.value
+        if (comp.type === 'R' || comp.type === 'RV') R_total += comp.value
         else if (comp.type === 'L') L_total += comp.value
-        else if (comp.type === 'C' && comp.value > 0) C_inv_total += 1 / comp.value
+        else if ((comp.type === 'C' || comp.type === 'CV') && comp.value > 0) C_inv_total += 1 / comp.value
       }
     }
 
     const C = C_inv_total > 0 ? 1 / C_inv_total : 0
-    return { R: R_total, L: L_total, C, V }
+    const raw = { R: R_total, L: L_total, C, V }
+    return applyTolerance(raw)
   }
 
   function simulate() {
@@ -252,6 +277,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     if (!validation.valid) {
       return { success: false, message: validation.message }
     }
+    clearToleranceCache()
     const ep = extractCircuitParams()
     if (ep.error) {
       return { success: false, message: ep.error }
@@ -286,6 +312,9 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     circuitMode,
     measuredData,
     simulated,
+    toleranceEnabled,
+    tolerancePercent,
+    clearToleranceCache,
     calculate,
     updateParams,
     resetParams,

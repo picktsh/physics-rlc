@@ -1,24 +1,63 @@
 <template>
   <div class="card">
-    <div class="components-palette flex gap-2 mb-3 flex-wrap justify-center">
+    <!-- 三栏布局(桌面):左=2D 元件库(竖排) / 中=2D+3D 画布 / 右=元件参数与公差;窄屏自动退化为单列上下堆叠 -->
+    <div class="lg:grid lg:grid-cols-[136px_minmax(0,1fr)_228px] lg:gap-4">
+    <div class="components-palette flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0">
       <div
         v-for="comp in componentTypes"
         :key="comp.type"
         draggable="true"
         @dragstart="handleDragStart($event, comp.type)"
         @click="selectPaletteComponent(comp.type)"
-        :class="['component-item flex flex-col items-center p-2 rounded-lg cursor-pointer text-xs text-gray-600 transition-all', pendingPlaceType === comp.type ? 'bg-indigo-100 ring-2 ring-indigo-400' : 'bg-gray-100 hover:bg-gray-200']"
+        :class="['component-item flex flex-col items-center justify-center gap-1.5 p-2 border border-gray-200 rounded-xl cursor-pointer text-xs text-gray-600 transition-all lg:flex-1', pendingPlaceType === comp.type ? 'bg-blue-50 ring-2 ring-[#3b82f6]' : 'bg-white hover:bg-gray-100 hover:border-gray-300']"
       >
-        <div :class="['comp-icon w-10 h-10 rounded-full flex items-center justify-center font-bold text-white', comp.colorClass]">
-          {{ comp.label }}
-        </div>
+        <!-- 2D 平面元件符号(教科书电路图样式) -->
+        <svg v-if="comp.type === 'R'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="16" x2="10" y2="16" />
+          <rect x="10" y="6" width="28" height="20" />
+          <line x1="38" y1="16" x2="44" y2="16" />
+        </svg>
+        <svg v-else-if="comp.type === 'L'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="16" x2="10" y2="16" />
+          <path d="M10 16a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0" />
+          <line x1="34" y1="16" x2="44" y2="16" />
+        </svg>
+        <svg v-else-if="comp.type === 'C'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="16" x2="22" y2="16" />
+          <line x1="22" y1="6" x2="22" y2="26" />
+          <line x1="26" y1="6" x2="26" y2="26" />
+          <line x1="26" y1="16" x2="44" y2="16" />
+        </svg>
+        <svg v-else-if="comp.type === 'RV'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="16" x2="10" y2="16" />
+          <rect x="10" y="6" width="28" height="20" />
+          <line x1="16" y1="22" x2="30.5" y2="11" />
+          <path d="M26.2 8.9 L30.5 11 L27.5 15" />
+          <line x1="38" y1="16" x2="44" y2="16" />
+        </svg>
+        <svg v-else-if="comp.type === 'CV'" viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="16" x2="13" y2="16" />
+          <line x1="13" y1="9" x2="13" y2="23" />
+          <line x1="22" y1="9" x2="22" y2="23" />
+          <line x1="22" y1="16" x2="44" y2="16" />
+          <line x1="15" y1="21" x2="20.5" y2="10" />
+          <path d="M17 8.8 L20.5 10 L18.6 13.9" />
+        </svg>
+        <svg v-else viewBox="0 0 48 32" class="w-14 h-10" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="16" x2="12" y2="16" />
+          <circle cx="24" cy="16" r="12" />
+          <path d="M17 16q3.5-8 7 0t7 0" />
+          <line x1="36" y1="16" x2="44" y2="16" />
+        </svg>
         <span>{{ comp.name }}</span>
       </div>
     </div>
 
+    <!-- 中栏:2D 画布 + 3D 实体模型 -->
+    <div class="min-w-0">
     <div class="circuit-controls flex gap-2 mb-2 flex-wrap">
       <button
-        :class="['px-2.5 md:px-3 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm cursor-pointer transition-all', circuitMode === 'wire' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white']"
+        :class="['px-2.5 md:px-3 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg text-xs md:text-sm cursor-pointer transition-all', circuitMode === 'wire' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white']"
         @click="setCircuitMode('wire')"
       >
         🔗 接线
@@ -29,7 +68,7 @@
       >
         🗑️ 删除
       </button>
-      <button class="ml-auto px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg text-xs md:text-sm font-semibold hover:shadow-lg transition-all" @click="$emit('simulate')">
+      <button class="ml-auto px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs md:text-sm font-semibold shadow-sm transition-all" @click="$emit('simulate')">
         🚀 仿真
       </button>
       <button class="px-3 md:px-4 py-1.5 md:py-2 bg-gray-200 text-gray-600 rounded-lg text-xs md:text-sm hover:bg-gray-300 transition-all" @click="$emit('reset')">
@@ -37,27 +76,89 @@
       </button>
     </div>
 
-    <canvas
-      ref="canvasRef"
-      class="w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 cursor-crosshair touch-none"
-      @drop="handleDrop"
-      @dragover="allowDrop"
-      @mousedown="handlePointerDown"
-      @mousemove="handlePointerMove"
-      @touchstart="handleTouchStart"
-      @touchmove="handleTouchMove"
-      @touchend="handleTouchEnd"
-    />
+    <div class="relative">
+      <canvas
+        ref="canvasRef"
+        class="w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-gray-300 rounded-xl blueprint-grid cursor-crosshair touch-none"
+        @drop="handleDrop"
+        @dragover="allowDrop"
+        @mousedown="handlePointerDown"
+        @mousemove="handlePointerMove"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+      />
+      <!-- 空态引导:淡色居中提示,不抢画布焦点 -->
+      <div
+        v-if="components.length === 0"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pointer-events-none select-none"
+      >
+        <svg viewBox="0 0 64 40" class="w-16 h-10 opacity-40">
+          <!-- 画布空态淡线示意:R-L-C-V 串联链 + 虚线连接 -->
+          <line x1="6" y1="20" x2="16" y2="20" stroke="#9db0c8" stroke-width="1.6" />
+          <rect x="16" y="12" width="12" height="16" fill="none" stroke="#9db0c8" stroke-width="1.6" />
+          <text x="22" y="25" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">R</text>
+          <path d="M 31 20 Q 34.5 10 38 20 Q 41.5 10 45 20" fill="none" stroke="#9db0c8" stroke-width="1.6" />
+          <text x="38" y="31" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">L</text>
+          <line x1="47.5" y1="13" x2="47.5" y2="27" stroke="#9db0c8" stroke-width="2" />
+          <line x1="52.5" y1="13" x2="52.5" y2="27" stroke="#9db0c8" stroke-width="2" />
+          <text x="50" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">C</text>
+          <circle cx="61" cy="20" r="2.5" fill="none" stroke="#9db0c8" stroke-width="1.6" />
+        </svg>
+        <span class="text-xs text-gray-400">从左侧拖入元件,在画布上搭建 RLC 串联电路</span>
+      </div>
+    </div>
 
     <div class="text-xs text-gray-500 text-center mt-2">
       拖拽元件到画布上搭建RLC电路 | 点击元件可编辑参数 | 接线模式: 点击端点→点击添加拐点→点击目标端点完成折线 | 💡 点击导线中间可创建节点实现并联 | 删除模式: 点击元件/导线删除
     </div>
 
+    <!-- 3D 实体模型(Three.js 真 3D,与上方 2D 电路实时同步) -->
+    <div class="mt-3">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-xs sm:text-sm font-semibold text-gray-700">🧊 3D 实体模型</span>
+        <span class="text-[11px] text-gray-400">🖱 拖拽旋转 · 滚轮缩放 · 自动同步上方 2D 布局</span>
+      </div>
+      <div class="relative">
+        <canvas
+          ref="canvas3dRef"
+          class="w-full h-[300px] sm:h-[400px] lg:h-[460px] xl:h-[540px] rounded-xl bg-gradient-to-b from-[#eef4fc] via-[#e2ecf8] to-[#c0d4ee] touch-none cursor-grab active:cursor-grabbing shadow-[0_16px_36px_-18px_rgba(37,99,235,0.45)]"
+        />
+        <div
+          v-if="components.length > 0"
+          class="absolute right-2 bottom-2 flex gap-1.5 z-10"
+        >
+          <button
+            class="px-2 py-1 bg-white/90 hover:bg-white text-[11px] text-[#1d4ed8] rounded-md border border-[#c7d8f5] shadow-sm transition-colors"
+            @click="reset3DView"
+          >
+            🎯 复位视角
+          </button>
+          <button
+            class="px-2 py-1 bg-white/90 hover:bg-white text-[11px] text-[#1d4ed8] rounded-md border border-[#c7d8f5] shadow-sm transition-colors"
+            @click="toggle3DRotate"
+          >
+            {{ autoRotate3D ? '⏸ 停止旋转' : '▶ 自动旋转' }}
+          </button>
+        </div>
+        <div
+          v-if="components.length === 0"
+          class="absolute inset-0 flex flex-col items-center justify-center gap-1 pointer-events-none select-none"
+        >
+          <span class="text-gray-300 text-3xl leading-none">🧊</span>
+          <span class="text-xs text-gray-400">先在 2D 画布拖入元件并接线,此处自动生成 3D 实体模型</span>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- 右栏:元件参数编辑 + 公差设置 -->
+    <div class="min-w-0">
     <!-- 元件参数编辑器 -->
     <div v-if="components.length > 0" class="mt-3">
       <div class="text-xs sm:text-sm font-semibold text-gray-700 mb-2">📝 元件参数编辑</div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div v-for="(comp, idx) in components" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-indigo-500' : '']">
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-1 gap-2">
+        <div v-for="(comp, idx) in components" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-blue-500' : '']">
           <label class="text-xs text-gray-600">{{ getComponentLabel(comp.type) }} #{{ idx + 1 }}</label>
           <div class="flex gap-1 items-center mt-1">
             <input
@@ -73,11 +174,57 @@
         </div>
       </div>
     </div>
+
+    <!-- 元件公差设置 -->
+    <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="text-xs sm:text-sm font-semibold text-gray-700">📐 元件公差</div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" v-model="toleranceEnabled" class="sr-only peer" @change="onToleranceToggle" />
+          <div class="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+        </label>
+        <span class="text-xs text-gray-500">{{ toleranceEnabled ? '已开启' : '已关闭' }}</span>
+      </div>
+      <div v-if="toleranceEnabled" class="flex items-center gap-3">
+        <span class="text-xs text-gray-600 whitespace-nowrap">公差范围：</span>
+        <input type="range" min="1" max="20" step="0.5" v-model.number="tolerancePercent" class="flex-1 cursor-pointer" @input="onToleranceChange" />
+        <span class="text-xs font-semibold text-blue-600 min-w-[40px] text-right">±{{ tolerancePercent.toFixed(1) }}%</span>
+      </div>
+      <div v-if="toleranceEnabled" class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
+        💡 开启后每次仿真实物参数将在标称值的 ±{{ tolerancePercent.toFixed(1) }}% 范围内随机波动
+      </div>
+    </div>
+    </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { useRLCCalculatorStore } from '../stores/rlcCalculator'
+
+const calcStore = useRLCCalculatorStore()
+
+// 元件默认值与可调量程(滑线变阻器/可调电容仿真语义同 R/C,带下限防呆避免除零/Q 发散)
+const DEFAULT_VALUES = { R: 100, RV: 100, L: 100, C: 0.05, CV: 0.05, V: 0.9 }
+const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
+
+const toleranceEnabled = ref(calcStore.toleranceEnabled)
+const tolerancePercent = ref(calcStore.tolerancePercent)
+
+function onToleranceToggle() {
+  calcStore.toleranceEnabled = toleranceEnabled.value
+  if (toleranceEnabled.value) {
+    calcStore.tolerancePercent = tolerancePercent.value
+  }
+}
+
+function onToleranceChange() {
+  calcStore.tolerancePercent = tolerancePercent.value
+}
 
 const props = defineProps({
   components: {
@@ -101,6 +248,8 @@ const props = defineProps({
 const emit = defineEmits(['update:components', 'update:wires', 'update:junctions', 'update:mode', 'simulate', 'reset'])
 
 const canvasRef = ref(null)
+const canvas3dRef = ref(null)
+const autoRotate3D = ref(false)
 const circuitMode = ref(props.mode)
 const selectedEndpoint = ref(null) // { compIndex, epIndex } or { junctionIndex }
 const wireIntermediatePoints = ref([])
@@ -125,7 +274,8 @@ function onCompBlur(idx) {
     const num = parseFloat(raw)
     if (!isNaN(num)) {
       const newComponents = [...props.components]
-      newComponents[idx].value = num
+      const range = VALUE_RANGE[newComponents[idx].type]
+      newComponents[idx].value = range ? Math.min(Math.max(num, range.min), range.max) : num
       emit('update:components', newComponents)
     }
     delete compInputValues.value[idx]
@@ -133,10 +283,12 @@ function onCompBlur(idx) {
 }
 
 const componentTypes = [
-  { type: 'R', label: 'R', name: '电阻', colorClass: 'bg-green-500' },
-  { type: 'L', label: 'L', name: '电感', colorClass: 'bg-orange-500' },
-  { type: 'C', label: 'C', name: '电容', colorClass: 'bg-blue-500' },
-  { type: 'V', label: 'V', name: '信号源', colorClass: 'bg-purple-500' },
+  { type: 'R', name: '电阻' },
+  { type: 'RV', name: '变阻器' },
+  { type: 'L', name: '电感' },
+  { type: 'C', name: '电容' },
+  { type: 'CV', name: '可调电容' },
+  { type: 'V', name: '信号源' },
 ]
 
 function handleDragStart(event, type) {
@@ -155,7 +307,7 @@ function selectPaletteComponent(type) {
 function placeComponentAt(x, y) {
   const type = pendingPlaceType.value
   if (!type) return false
-  const defaultValues = { R: 100, L: 100, C: 0.05, V: 0.9 }
+  const defaultValues = DEFAULT_VALUES
   const newComp = {
     type,
     x,
@@ -184,7 +336,7 @@ function handleDrop(event) {
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
 
-  const defaultValues = { R: 100, L: 100, C: 0.05, V: 0.9 }
+  const defaultValues = DEFAULT_VALUES
   const newComp = {
     type,
     x,
@@ -379,7 +531,7 @@ function handlePointerMove(event) {
     const { x, y } = getCanvasCoords(event)
     const ep = getEndpointPos(selectedEndpoint.value)
 
-    ctx.strokeStyle = 'rgba(102, 126, 234, 0.5)'
+    ctx.strokeStyle = 'rgba(14, 141, 156, 0.45)'
     ctx.lineWidth = 2
     ctx.setLineDash([5, 5])
     ctx.beginPath()
@@ -390,7 +542,7 @@ function handlePointerMove(event) {
     ctx.setLineDash([])
 
     for (const pt of wireIntermediatePoints.value) {
-      ctx.fillStyle = 'rgba(102, 126, 234, 0.6)'
+      ctx.fillStyle = 'rgba(14, 141, 156, 0.55)'
       ctx.beginPath()
       ctx.arc(pt.x, pt.y, 4, 0, 2 * Math.PI)
       ctx.fill()
@@ -538,6 +690,22 @@ function getWireEnd(wire) {
   return { x: wire.x2, y: wire.y2 }
 }
 
+// 斜箭头头部(GB 可变符号):沿起点→终点方向在末端补出小三角
+function arrowHead(ctx, x1, y1, x2, y2, size = 4) {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len = Math.hypot(dx, dy) || 1
+  const ux = dx / len
+  const uy = dy / len
+  const px = -uy
+  const py = ux
+  ctx.beginPath()
+  ctx.moveTo(x2 - ux * size + px * size * 0.62, y2 - uy * size + py * size * 0.62)
+  ctx.lineTo(x2, y2)
+  ctx.lineTo(x2 - ux * size - px * size * 0.62, y2 - uy * size - py * size * 0.62)
+  ctx.stroke()
+}
+
 function drawCircuit() {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -551,9 +719,9 @@ function drawCircuit() {
 
   ctx.clearRect(0, 0, rect.width, rect.height)
 
-  // 绘制导线
-  ctx.strokeStyle = '#4a90d9'
-  ctx.lineWidth = 3
+  // 绘制导线(墨色细线)
+  ctx.strokeStyle = '#2563eb'
+  ctx.lineWidth = 2
   for (const wire of props.wires) {
     ctx.beginPath()
     if (wire.points && wire.points.length > 2) {
@@ -566,121 +734,769 @@ function drawCircuit() {
     ctx.stroke()
   }
 
-  // 绘制元件
+  // 绘制元件(教科书 2D 平面符号:墨色细线)
   for (let i = 0; i < props.components.length; i++) {
     const comp = props.components[i]
     ctx.save()
     ctx.translate(comp.x, comp.y)
+    ctx.strokeStyle = '#2563eb'
+    ctx.lineWidth = 2
 
     if (comp.type === 'R') {
-      ctx.strokeStyle = '#4caf50'
-      ctx.lineWidth = 2.5
-      ctx.strokeRect(-18, -8, 36, 16)
-      ctx.fillStyle = '#4caf50'
-      ctx.font = 'bold 10px sans-serif'
+      // 电阻:两端引线 + 平面矩形
+      ctx.beginPath()
+      ctx.moveTo(-30, 0)
+      ctx.lineTo(-18, 0)
+      ctx.moveTo(18, 0)
+      ctx.lineTo(30, 0)
+      ctx.stroke()
+      ctx.strokeRect(-18, -9, 36, 18)
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('R', 0, 4)
     } else if (comp.type === 'L') {
-      ctx.strokeStyle = '#ff9800'
-      ctx.lineWidth = 2.5
+      // 电感:两端引线 + 拱形线圈
       ctx.beginPath()
-      ctx.moveTo(-20, 0)
+      ctx.moveTo(-30, 0)
       ctx.lineTo(-16, 0)
       for (let b = 0; b < 4; b++) {
         const bx = -16 + b * 8
         ctx.arc(bx, 0, 4, Math.PI, 0, false)
       }
-      ctx.lineTo(20, 0)
+      ctx.lineTo(30, 0)
       ctx.stroke()
-      ctx.fillStyle = '#ff9800'
-      ctx.font = 'bold 9px sans-serif'
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText('L', 0, -8)
+      ctx.fillText('L', 0, -10)
     } else if (comp.type === 'C') {
-      ctx.strokeStyle = '#2196f3'
-      ctx.lineWidth = 2.5
+      // 电容:两端引线 + 平行板
       ctx.beginPath()
-      ctx.moveTo(-4, -14)
-      ctx.lineTo(-4, 14)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(4, -14)
-      ctx.lineTo(4, 14)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(-20, 0)
+      ctx.moveTo(-30, 0)
       ctx.lineTo(-4, 0)
       ctx.stroke()
       ctx.beginPath()
-      ctx.moveTo(4, 0)
-      ctx.lineTo(20, 0)
+      ctx.moveTo(-4, -12)
+      ctx.lineTo(-4, 12)
       ctx.stroke()
-      ctx.fillStyle = '#2196f3'
-      ctx.font = 'bold 9px sans-serif'
+      ctx.beginPath()
+      ctx.moveTo(4, -12)
+      ctx.lineTo(4, 12)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(4, 0)
+      ctx.lineTo(30, 0)
+      ctx.stroke()
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText('C', 0, -18)
+      ctx.fillText('C', 0, -19)
+    } else if (comp.type === 'RV') {
+      // 滑线变阻器:两端引线 + 矩形 + 斜箭头(GB 可变电阻符号)
+      ctx.beginPath()
+      ctx.moveTo(-30, 0)
+      ctx.lineTo(-18, 0)
+      ctx.moveTo(18, 0)
+      ctx.lineTo(30, 0)
+      ctx.stroke()
+      ctx.strokeRect(-18, -9, 36, 18)
+      ctx.beginPath()
+      ctx.moveTo(-8.5, 6.5)
+      ctx.lineTo(8.5, -6.5)
+      ctx.stroke()
+      arrowHead(ctx, -8.5, 6.5, 8.5, -6.5, 3.4)
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('RV', 0, -16)
+    } else if (comp.type === 'CV') {
+      // 可调电容:两端引线 + 平行板 + 板间斜箭头(GB 可变电容符号)
+      ctx.beginPath()
+      ctx.moveTo(-30, 0)
+      ctx.lineTo(-4, 0)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(-4, -11)
+      ctx.lineTo(-4, 11)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(4, -11)
+      ctx.lineTo(4, 11)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(4, 0)
+      ctx.lineTo(30, 0)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(-3.2, 8.6)
+      ctx.lineTo(3.2, -8.6)
+      ctx.stroke()
+      arrowHead(ctx, -3.2, 8.6, 3.2, -8.6, 3)
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('CV', 0, -19)
     } else if (comp.type === 'V') {
-      ctx.strokeStyle = '#9c27b0'
-      ctx.lineWidth = 2
+      // 交流电压源:两端引线 + 圆环内正弦波
+      ctx.beginPath()
+      ctx.moveTo(-30, 0)
+      ctx.lineTo(-16, 0)
+      ctx.stroke()
       ctx.beginPath()
       ctx.arc(0, 0, 16, 0, 2 * Math.PI)
       ctx.stroke()
-      ctx.lineWidth = 2.5
       ctx.beginPath()
-      ctx.moveTo(-10, -7)
-      ctx.lineTo(10, -7)
+      ctx.moveTo(-8, 0)
+      ctx.quadraticCurveTo(-4, -8, 0, 0)
+      ctx.quadraticCurveTo(4, 8, 8, 0)
       ctx.stroke()
-      ctx.lineWidth = 1.5
       ctx.beginPath()
-      ctx.moveTo(-6, 7)
-      ctx.lineTo(6, 7)
+      ctx.moveTo(16, 0)
+      ctx.lineTo(30, 0)
       ctx.stroke()
-      ctx.fillStyle = '#9c27b0'
-      ctx.font = 'bold 8px sans-serif'
+      ctx.fillStyle = '#1c2534'
+      ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText('+', 0, -11)
-      ctx.fillText('−', 0, 15)
+      ctx.fillText('V', 0, -24)
     }
 
     ctx.restore()
 
-    // 绘制端点
+    // 绘制端点(中空接线环)
     for (let j = 0; j < comp.endpoints.length; j++) {
       const ep = comp.endpoints[j]
       const isSelected = selectedEndpoint.value && selectedEndpoint.value.compIndex === i && selectedEndpoint.value.epIndex === j
-      ctx.fillStyle = isSelected ? '#28a745' : '#ff9800'
+      ctx.fillStyle = isSelected ? '#2563eb' : '#9fb2d1'
       ctx.beginPath()
-      ctx.arc(ep.x, ep.y, 8, 0, 2 * Math.PI)
+      ctx.arc(ep.x, ep.y, 6.5, 0, 2 * Math.PI)
       ctx.fill()
       ctx.fillStyle = '#fff'
       ctx.beginPath()
-      ctx.arc(ep.x, ep.y, 4, 0, 2 * Math.PI)
+      ctx.arc(ep.x, ep.y, 3, 0, 2 * Math.PI)
       ctx.fill()
     }
 
-    // 绘制junction节点
+    // 绘制junction节点(实心连接点)
     for (let ji = 0; ji < props.junctions.length; ji++) {
       const j = props.junctions[ji]
       const isSelected = selectedEndpoint.value && selectedEndpoint.value.junctionIndex === ji
-      ctx.fillStyle = isSelected ? '#28a745' : '#e91e63'
+      ctx.fillStyle = isSelected ? '#2563eb' : '#2563eb'
       ctx.beginPath()
-      ctx.arc(j.x, j.y, 7, 0, 2 * Math.PI)
-      ctx.fill()
-      ctx.fillStyle = '#fff'
-      ctx.beginPath()
-      ctx.arc(j.x, j.y, 3, 0, 2 * Math.PI)
+      ctx.arc(j.x, j.y, 4, 0, 2 * Math.PI)
       ctx.fill()
     }
 
     // 选中框
     if (i === selectedComponentIndex.value) {
-      ctx.strokeStyle = '#dc3545'
-      ctx.lineWidth = 2
-      ctx.setLineDash([4, 3])
-      ctx.strokeRect(comp.x - 35, comp.y - 22, 70, 44)
+      ctx.strokeStyle = '#2563eb'
+      ctx.lineWidth = 1.5
+      ctx.setLineDash([5, 4])
+      ctx.strokeRect(comp.x - 34, comp.y - 24, 68, 48)
       ctx.setLineDash([])
     }
   }
+}
+
+// ===== 3D 实体模型:Three.js 场景(拟真元件·导线·焊盘,随 2D 电路实时重建) =====
+const YWIRE = 3 // 导体层高度(板面 y=0)
+let scene3d = null, renderer3d = null, camera3d = null, controls3d = null
+let world3d = null, ro3d = null, raf3d = 0, ready3d = false
+let midX3 = 0, midZ3 = 0, boardR3 = 300, lastBoardR3 = 0, lastEmpty3d = null
+const matCache = new Map()
+const cmat = (color, rough = 0.5, metal = 0.05) => {
+  const k = color + '|' + rough + '|' + metal
+  if (!matCache.has(k)) matCache.set(k, new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: metal }))
+  return matCache.get(k)
+}
+// 沿 x 轴的圆柱(横置元件主体/端帽/色环/接线柱通用)
+const cylX = (r, len, color, rough, metal) => {
+  const g = new THREE.CylinderGeometry(r, r, len, 24)
+  g.rotateZ(Math.PI / 2)
+  return new THREE.Mesh(g, cmat(color, rough, metal))
+}
+// 两点间圆柱段(p = [x, y, z]),长度≈0 时返回 null
+const seg = (a, b, r, color, rough = 0.35, metal = 0.15) => {
+  const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2]
+  const len = Math.hypot(dx, dy, dz)
+  if (len < 0.01) return null
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 10), cmat(color, rough, metal))
+  m.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2)
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx, dy, dz).normalize())
+  return m
+}
+// 引脚:从元件端 (xs, ys, z) 竖落到导体层,再水平接到端点 (xe, ze)
+const lead = (g, xs, ys, z, xe, ze, r, color) => {
+  const a = seg([xs, ys, z], [xs, YWIRE, z], r, color)
+  const b = seg([xs, YWIRE, z], [xe, YWIRE, ze], r, color)
+  if (a) g.add(a)
+  if (b) g.add(b)
+}
+// 电路坐标 → 世界坐标(以内容中心为原点)
+const wx = (x) => x - midX3
+const wz = (y) => y - midZ3
+
+// 轴向元件外观配置(贴实物:电阻米白碳膜体,棕黑棕金=100Ω,镀锡银端帽;体量较真实元件适当放大便于教学观察)
+const CFG = {
+  R: { r: 9, len: 50, body: '#e9dcc0', cap: 0xd0d4da, bands: [{ x: -7.8, w: 3, c: '#8a5a2b' }, { x: -3.9, w: 3, c: '#33373d' }, { x: 0, w: 3, c: '#8a5a2b' }, { x: 3.9, w: 3.6, c: '#dfb255' }] },
+}
+// 横置轴向元件(圆柱+圆头端盖+色环+镀锡引线,纯基础几何构建)
+function addAxial(g, comp, cfg) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const r = cfg.r
+  const bh = cfg.len / 2
+  const midLen = Math.max(cfg.len - 2 * r, 2)
+  const mBody = cmat(cfg.body, 0.6, 0.02)
+  const mCap = cmat(cfg.cap, 0.32, 0.55)
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, midLen, 24), mBody)
+  body.rotation.z = Math.PI / 2
+  body.position.set(hx, r, z0)
+  g.add(body)
+  for (const s of [-1, 1]) {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 14), mCap)
+    cap.position.set(hx + s * (midLen / 2), r, z0)
+    g.add(cap)
+  }
+  for (const b of cfg.bands) {
+    const band = cylX(r + 0.22, b.w, b.c, 0.78, 0.02)
+    band.position.set(hx + b.x, r, z0)
+    g.add(band)
+  }
+  for (const s of [-1, 1]) {
+    const wire = cylX(1.6, 6, cfg.cap, 0.3, 0.5)
+    wire.position.set(hx + s * (bh + 3), r, z0)
+    g.add(wire)
+  }
+  for (const ep of comp.endpoints) {
+    const xs = hx + Math.sign(ep.x - comp.x) * (bh + 6)
+    lead(g, xs, r, z0, wx(ep.x), wz(ep.y), 1.4, cfg.cap)
+  }
+}
+// 工字电感(铁氧体磁芯 + 漆包铜线单层密绕 + 两端盘状挡片,贴实物)
+function addInductor(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const rCore = 6.4, coreLen = 38, rFlange = 11.6, wFlange = 2.8
+  const axY = rFlange // 卧放:轴心高 = 挡片半径(盘缘触台,中柱悬空)
+  // 铁氧体磁芯(中柱)
+  const core = cylX(rCore, coreLen, 0x4d5560, 0.6, 0.15)
+  core.position.set(hx, axY, z0)
+  g.add(core)
+  // 两端盘状挡片
+  for (const s of [-1, 1]) {
+    const fl = cylX(rFlange, wFlange, 0x3f4650, 0.5, 0.2)
+    fl.position.set(hx + s * (coreLen / 2 - wFlange / 2), axY, z0)
+    g.add(fl)
+    // 镀锡引线:挡片外侧水平引出
+    const wire = cylX(1.6, 12, 0xd0d4da, 0.3, 0.5)
+    wire.position.set(hx + s * (coreLen / 2 + wFlange / 2 + 4), axY, z0)
+    g.add(wire)
+  }
+  // 漆包铜线单层密绕(环面逐匝紧排,匝间露磁芯)
+  const rWire = 1.9
+  const inner = coreLen / 2 - wFlange - 1.2
+  const n = Math.max(3, Math.floor((inner * 2) / (rWire * 2)))
+  for (let i = 0; i < n; i++) {
+    const turn = new THREE.Mesh(new THREE.TorusGeometry(rCore + rWire, rWire, 12, 24), cmat(0xc98d3f, 0.38, 0.42))
+    turn.position.set(hx - inner + i * rWire * 2 + rWire, axY, z0)
+    turn.rotation.y = Math.PI / 2 // 环面环绕 x 轴(元件沿 x 卧放)
+    g.add(turn)
+  }
+  // 端点焊盘引线(与轴向元件同一落台方式)
+  for (const ep of comp.endpoints) {
+    const xs = hx + Math.sign(ep.x - comp.x) * (coreLen / 2 + wFlange + 8)
+    lead(g, xs, axY, z0, wx(ep.x), wz(ep.y), 1.4, 0xd0d4da)
+  }
+}
+// 薄膜电容(黄色卧式方块,贴近 CBB 实物样式)
+function addFilmCap(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const bw = 42, bh = 17, bd = 26
+  const mBody = cmat('#e9c55c', 0.45, 0.02) // 薄膜电容标志黄
+  const body = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mBody)
+  body.position.set(hx, bh / 2, z0)
+  g.add(body)
+  // 顶面浅色印字带
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.66, 0.5, bd * 0.55), cmat('#f6e7ba', 0.55, 0))
+  strip.position.set(hx, bh + 0.25, z0)
+  g.add(strip)
+  // 两端镀锡引脚:从盒端引出、下落贴台面后接到端点焊盘
+  for (const ep of comp.endpoints) {
+    const s = Math.sign(ep.x - comp.x)
+    const xs = hx + s * (bw / 2 - 1)
+    lead(g, xs, 8.5, z0, wx(ep.x), wz(ep.y), 1.5, 0xd0d4da)
+  }
+}
+// 滑线变阻器(教学型:陶瓷管密绕电阻丝 + 镀铬滑杆 + 滑块触片,卧式悬架于两端板间)
+// 滑块位置随有效阻值对数映射(滑向左侧=阻值小),左右接线柱分别对应绕线端与滑片端
+function addRheostat(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const v = Math.min(Math.max(comp.value || 100, 10), 1000)
+  const k = Math.min(Math.max((Math.log(v) - Math.log(10)) / (Math.log(1000) - Math.log(10)), 0), 1)
+  const sx = -15.6 + k * 31.2 // 滑块行程限在两端支架之间
+  const mFrame = cmat('#3b434c', 0.5, 0.35) // 端板/支架深灰金属
+  const mBody = cmat('#e9e1cd', 0.68, 0.02) // 陶瓷管米白
+  const mWind = cmat('#c8924a', 0.32, 0.45) // 电阻丝金铜
+  const mRod = cmat('#cfd6dd', 0.2, 0.75) // 镀铬滑杆
+  const mSlider = cmat('#262c33', 0.6, 0.12) // 滑块胶木
+  const mTerm = cmat('#d0d4da', 0.3, 0.5) // 镀锡接线柱/触片
+  // 两端板(立式,底贴台面)
+  for (const s of [-1, 1]) {
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(2, 15, 11), mFrame)
+    plate.position.set(hx + s * 22, 7.5, z0)
+    g.add(plate)
+  }
+  // 陶瓷管(两端入端板悬架,管心略高于台面)
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 43, 20), mBody)
+  tube.rotation.z = Math.PI / 2
+  tube.position.set(hx, 9.5, z0)
+  g.add(tube)
+  // 密绕电阻丝(环面单层,外缘与端板顶平齐)
+  for (let i = 0; i < 8; i++) {
+    const t = new THREE.Mesh(new THREE.TorusGeometry(5.5, 0.5, 10, 22), mWind)
+    t.position.set(hx - 17 + i * 4.86, 9.5, z0)
+    t.rotation.y = Math.PI / 2
+    g.add(t)
+  }
+  // 滑杆支架(顶在端板上)
+  for (const s of [-1, 1]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(1.8, 4, 3), mFrame)
+    post.position.set(hx + s * 20, 17, z0)
+    g.add(post)
+    // 端帽收口
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1, 3.6), mTerm)
+    cap.position.set(hx + s * 20, 19, z0)
+    g.add(cap)
+  }
+  // 镀铬滑杆(两端穿入支架)
+  const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 42, 12), mRod)
+  rod.rotation.z = Math.PI / 2
+  rod.position.set(hx, 17.9, z0)
+  g.add(rod)
+  // 滑块(骑杆)与触片(压丝)—— 位置随阻值
+  const slider = new THREE.Mesh(new THREE.BoxGeometry(7, 6, 5.5), mSlider)
+  slider.position.set(hx + sx, 18.4, z0)
+  g.add(slider)
+  const wiper = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2, 2.6), mTerm)
+  wiper.position.set(hx + sx, 14.4, z0)
+  g.add(wiper)
+  // 左右接线柱(竖于台面,贴端板外侧)与引线到端点焊盘
+  for (const [s, ep] of [[-1, comp.endpoints[0]], [1, comp.endpoints[1]]]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 4.6, 16), mTerm)
+    post.position.set(hx + s * 25, 2.3, z0)
+    g.add(post)
+    lead(g, hx + s * 25, 4.6, z0, wx(ep.x), wz(ep.y), 1.4, mTerm)
+  }
+}
+
+// 旋转可变电容(收音机同款:半圆动/定片同轴层叠 + 顶部旋钮)
+// 动片组相对定片组绕竖轴错角随容量映射(近重叠=大容量,错开=小容量)
+function addVarCap(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const v = Math.min(Math.max(comp.value || 0.05, 0.005), 0.2)
+  const k = (v - 0.005) / (0.2 - 0.005)
+  const rotY = ((168 - 156 * k) * Math.PI) / 180 // 动片组错角
+  const mBase = cmat('#3a332b', 0.72, 0.02) // 电木底座
+  const mStator = cmat('#9aa4b0', 0.5, 0.5) // 定片哑光铝
+  const mRotor = cmat('#e8edf2', 0.22, 0.7) // 动片亮铝
+  const mAxis = cmat('#2e353c', 0.5, 0.2) // 轴/旋钮
+  const mKnob = cmat('#f2f5f8', 0.35, 0.1) // 指示条
+  const mTerm = cmat('#d0d4da', 0.3, 0.5)
+  // 底座
+  const base = new THREE.Mesh(new THREE.BoxGeometry(15, 2.4, 11), mBase)
+  base.position.set(hx, 1.2, z0)
+  g.add(base)
+  const mkSemi = (r, th, mat) => new THREE.Mesh(new THREE.CylinderGeometry(r, r, th, 20, 1, false, 0, Math.PI), mat)
+  // 定片(固定层,叠于底座上方)
+  for (const dy of [3.4, 5.4]) {
+    const st = mkSemi(7, 0.4, mStator)
+    st.position.set(hx, dy, z0)
+    g.add(st)
+  }
+  // 动片组(与旋钮同轴旋转,层间夹于定片之间)
+  const rotor = new THREE.Group()
+  rotor.position.set(hx, 0, z0)
+  for (const dy of [4.4, 6.4]) {
+    const rt = mkSemi(7, 0.4, mRotor)
+    rt.position.set(0, dy, 0)
+    rotor.add(rt)
+  }
+  // 轴(穿过动片组中心)与顶部旋钮(带一字指示,随动片旋转)
+  const axis = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 13, 14), mAxis)
+  axis.position.set(0, 8.6, 0)
+  rotor.add(axis)
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 2.6, 22), mAxis)
+  knob.position.set(0, 14.9, 0)
+  rotor.add(knob)
+  const idx = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 6.4), mKnob)
+  idx.position.set(0, 16.55, 0)
+  rotor.add(idx)
+  rotor.rotation.y = rotY
+  g.add(rotor)
+  // 接线:左侧出线接定片(焊盘左端点),右侧出线接动片(焊盘右端点)
+  for (const [s, ep] of [[-1, comp.endpoints[0]], [1, comp.endpoints[1]]]) {
+    lead(g, hx + s * 8, 3.6, z0, wx(ep.x), wz(ep.y), 1.3, mTerm)
+  }
+}
+
+// 信号源:圆角白面板+荧光波形屏+双旋钮+红黑输出端子(呼应页面卡片风)
+let waveTex = null
+function getWaveTex() {
+  if (!waveTex) {
+    const cv = document.createElement('canvas')
+    cv.width = 256
+    cv.height = 128
+    const c = cv.getContext('2d')
+    c.clearRect(0, 0, 256, 128)
+    // 屏幕内框与刻度
+    c.strokeStyle = 'rgba(255,255,255,0.16)'
+    c.lineWidth = 1.5
+    c.strokeRect(8, 8, 240, 112)
+    c.setLineDash([6, 8])
+    c.beginPath()
+    c.moveTo(128, 8)
+    c.lineTo(128, 120)
+    c.stroke()
+    c.setLineDash([])
+    // 荧光青正弦波形
+    c.strokeStyle = '#57e8c9'
+    c.lineWidth = 3
+    c.beginPath()
+    for (let i = 8; i <= 248; i++) {
+      const y = 64 - 40 * Math.sin(((i - 8) / 240) * Math.PI * 4)
+      i === 8 ? c.moveTo(i, y) : c.lineTo(i, y)
+    }
+    c.stroke()
+    waveTex = new THREE.CanvasTexture(cv)
+    waveTex.colorSpace = THREE.SRGBColorSpace
+  }
+  return waveTex
+}
+function addSource(g, comp) {
+  const hx = wx(comp.x)
+  const z0 = wz(comp.y)
+  const body = new THREE.Mesh(new THREE.BoxGeometry(46, 18, 28), cmat('#f4f8f6', 0.6, 0.02))
+  body.position.set(hx, 9, z0)
+  g.add(body)
+  // 荧光屏(深青底 + 波形亮层)
+  const scr = new THREE.Mesh(new THREE.BoxGeometry(24, 1, 14), cmat('#12253f', 0.5, 0.05))
+  scr.position.set(hx, 18.55, z0 - 1)
+  g.add(scr)
+  const wave = new THREE.Mesh(
+    new THREE.BoxGeometry(22, 0.24, 12.4),
+    new THREE.MeshBasicMaterial({ map: getWaveTex(), transparent: true })
+  )
+  wave.position.set(hx, 19.1, z0 - 1)
+  g.add(wave)
+  // 调节旋钮(顶面一排,带一字指示)
+  for (const dx of [-11, -3.5, 4]) {
+    const knob = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 4.4, 4.6, 22), cmat('#3a4349', 0.4, 0.25))
+    knob.position.set(hx + dx, 21.3, z0 + 8)
+    g.add(knob)
+    const idx = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 4), cmat('#dfe6e3', 0.5, 0.1))
+    idx.position.set(hx + dx, 23.8, z0 + 8)
+    g.add(idx)
+  }
+  // 红/黑输出端子(左红右黑,底脚插入焊盘)
+  for (const ep of comp.endpoints) {
+    const s = Math.sign(ep.x - comp.x)
+    const col = s < 0 ? 0xe0523f : 0x2f3940 // 呼应全站亮红
+    const post = cylX(4, 8, col, 0.3, 0.45)
+    post.position.set(hx + s * 27, 9, z0)
+    g.add(post)
+    lead(g, wx(ep.x), 9, z0, wx(ep.x), wz(ep.y), 1.6, col)
+  }
+}
+
+// 板面导线(折线逐段)/ 节点焊点 / 端点焊盘
+function addRoutes(g) {
+  for (const w of props.wires) {
+    const pts = w.points && w.points.length > 0 ? w.points : [{ x: w.x1, y: w.y1 }, { x: w.x2, y: w.y2 }]
+    for (let i = 0; i < pts.length - 1; i++) {
+      const s = seg([wx(pts[i].x), YWIRE, wz(pts[i].y)], [wx(pts[i + 1].x), YWIRE, wz(pts[i + 1].y)], 1.9, 0x2563eb, 0.45, 0.15)
+      if (s) g.add(s)
+    }
+  }
+  for (const j of props.junctions) {
+    const d = new THREE.Mesh(new THREE.SphereGeometry(2.9, 16, 12), cmat('#2563eb', 0.3, 0.3))
+    d.position.set(wx(j.x), YWIRE, wz(j.y))
+    g.add(d)
+  }
+  for (const c of props.components) {
+    for (const ep of c.endpoints) {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.6, 1.3, 18), cmat('#c3cede', 0.4, 0.35))
+      p.position.set(wx(ep.x), YWIRE, wz(ep.y))
+      g.add(p)
+    }
+  }
+}
+// 高级实验台:近黑炭灰台身 + 中央中灰蓝工作区(微凸 0.4 避免与台身共面闪烁)+ 周界金属收边
+function addBoard(g) {
+  const half = Math.max(boardR3 * 2, 340)
+  const s = half * 2
+  // 台身(近黑炭灰,轻微金属质感)
+  const deskMat = cmat('#22262c', 0.52, 0.34)
+  deskMat.side = THREE.DoubleSide
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(s, 46, s), deskMat)
+  desk.name = 'static-bench'
+  desk.position.y = -23
+  g.add(desk)
+  // 中央工作区(中灰蓝哑光,顶面高出台面 0.4 形成防静电垫厚度,四周留出台身收边)
+  const ph = Math.min(Math.max(boardR3 * 0.85, 200), boardR3 * 1.05)
+  const padMat = cmat('#646f7e', 0.78, 0.16)
+  padMat.side = THREE.DoubleSide
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(ph * 2, 4, ph * 2), padMat)
+  pad.name = 'static-bench'
+  pad.position.y = -1.6
+  g.add(pad)
+  // 工作区周界金属亮条(细窄微凸,精致收边;底部嵌入工作区)
+  const edgeMat = cmat(0xc0cad8, 0.18, 0.95)
+  edgeMat.side = THREE.DoubleSide
+  const mkEdge = (len) => {
+    const e = new THREE.Mesh(new THREE.BoxGeometry(len, 2, 2.4), edgeMat)
+    e.name = 'static-bench'
+    e.position.y = 1
+    return e
+  }
+  const e1 = mkEdge(ph * 2)
+  e1.position.set(0, 1, -ph)
+  g.add(e1)
+  const e2 = mkEdge(ph * 2)
+  e2.position.set(0, 1, ph)
+  g.add(e2)
+  const e3 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2, ph * 2), edgeMat)
+  e3.position.set(-ph, 1, 0)
+  g.add(e3)
+  const e4 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2, ph * 2), edgeMat)
+  e4.position.set(ph, 1, 0)
+  g.add(e4)
+}
+// 整组重建:清理几何并移除旧组
+function clearWorld() {
+  if (!world3d) return
+  world3d.traverse((n) => n.geometry && n.geometry.dispose())
+  scene3d.remove(world3d)
+  world3d = new THREE.Group()
+  scene3d.add(world3d)
+}
+// 相机取景:产品展示视角——斜向低角 + 视点抬高至元件群高度,保留台面纵深与顶部背景光晕
+// 注意:全部 3D 物件经 wx()/wz() 平移到世界原点居中,轨道目标必须固定为原点(不能跟随 midX3/midZ3)
+function fitView3D() {
+  if (!camera3d || !controls3d) return
+  const dir = new THREE.Vector3(0.66, 0.46, 0.84).normalize()
+  controls3d.target.set(0, 8, 0)
+  const dist = Math.max((boardR3 * 1.0) / Math.tan((camera3d.fov * Math.PI) / 360), 160)
+  camera3d.position.copy(controls3d.target).addScaledVector(dir, dist)
+  controls3d.update()
+}
+function reset3DView() {
+  fitView3D()
+}
+function toggle3DRotate() {
+  autoRotate3D.value = !autoRotate3D.value
+  if (controls3d) controls3d.autoRotate = autoRotate3D.value
+}
+
+// 重建整个 3D 场景(与 2D 电路数据同步)
+function drawCircuit3D() {
+  if (!ready3d) return
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+  const feed = (p) => {
+    if (!p) return
+    if (p.x < minX) minX = p.x
+    if (p.x > maxX) maxX = p.x
+    if (p.y < minY) minY = p.y
+    if (p.y > maxY) maxY = p.y
+  }
+  for (const c of props.components) for (const ep of c.endpoints) feed(ep)
+  for (const w of props.wires) {
+    if (w.points && w.points.length > 0) for (const p of w.points) feed(p)
+    else {
+      feed({ x: w.x1, y: w.y1 })
+      feed({ x: w.x2, y: w.y2 })
+    }
+  }
+  for (const j of props.junctions) feed(j)
+  const has = props.components.length > 0
+  if (!has) {
+    minX = -150
+    maxX = 150
+    minY = -100
+    maxY = 100
+  }
+  const spanX = Math.max(maxX - minX, 60)
+  const spanY = Math.max(maxY - minY, 60)
+  midX3 = (minX + maxX) / 2
+  midZ3 = (minY + maxY) / 2
+  boardR3 = Math.hypot(spanX, spanY) / 2 + 100
+  clearWorld()
+  addBoard(world3d, spanX, spanY)
+  if (has) {
+    addRoutes(world3d)
+    for (const c of props.components) {
+      if (c.type === 'V') addSource(world3d, c)
+      else if (c.type === 'C') addFilmCap(world3d, c)
+      else if (c.type === 'CV') addVarCap(world3d, c)
+      else if (c.type === 'L') addInductor(world3d, c)
+      else if (c.type === 'RV') addRheostat(world3d, c)
+      else addAxial(world3d, c, CFG.R)
+    }
+  }
+  // 首次渲染 / 空态↔内容切换 / 视野扩张过大时,复位视角
+  if (!lastBoardR3 || lastEmpty3d !== has || boardR3 > lastBoardR3 * 1.5) {
+    fitView3D()
+  }
+  // 光照投影:仅活动元件投影(静态台面不参与 cast,避免转动时阴影边缘抖动/闪烁)
+  world3d.traverse((n) => {
+    if (!n.isMesh) return
+    if (n.name !== 'static-bench') n.castShadow = true
+    if (n.position.y <= 0) n.receiveShadow = true
+  })
+  lastBoardR3 = boardR3
+  lastEmpty3d = has
+  if (controls3d) controls3d.autoRotate = autoRotate3D.value && has
+}
+
+// === Three.js 场景初始化 / 自适应 / 动画循环 ===
+// 注意:3D 初始化与重建均与 2D 画布完全隔离,任何异常都不影响 2D 搭建交互
+function init3D() {
+  const canvas = canvas3dRef.value
+  if (!canvas || ready3d) return
+  try {
+    scene3d = new THREE.Scene()
+    scene3d.add(new THREE.HemisphereLight(0xffffff, 0x9db8e8, 1.05))
+    const key = new THREE.DirectionalLight(0xffffff, 2.0)
+    key.position.set(200, 420, 150)
+    key.castShadow = true
+    key.shadow.mapSize.set(1024, 1024)
+    key.shadow.camera.near = 50
+    key.shadow.camera.far = 4000
+    key.shadow.bias = -0.0004
+    // 正交阴影相机范围需盖住整块底板(底板随电路跨度动态伸缩)
+    const sd = 1200
+    key.shadow.camera.left = -sd
+    key.shadow.camera.right = sd
+    key.shadow.camera.top = sd
+    key.shadow.camera.bottom = -sd
+    scene3d.add(key)
+    const fill = new THREE.DirectionalLight(0xe4edfb, 0.7)
+    fill.position.set(-220, 120, -190)
+    scene3d.add(fill)
+    const rim = new THREE.DirectionalLight(0xffffff, 0.5)
+    rim.position.set(60, 160, -320)
+    scene3d.add(rim)
+    renderer3d = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+    // 程序化环境反射(RoomEnvironment):金属端帽/铜线/包边呈现真实高光;强度调低避免漫反射冲淡台面
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer3d)
+      scene3d.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+      scene3d.environmentIntensity = 0.42
+      pmrem.dispose()
+    } catch (err) {
+      console.error('[3D] 环境反射生成失败(不影响主场景):', err)
+    }
+    // 背景透明由 CSS 渐变底色呈现(见模板 class),配合柔和阴影提升立体质感
+    renderer3d.setClearColor(0x000000, 0)
+    renderer3d.shadowMap.enabled = true
+    renderer3d.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer3d.toneMapping = THREE.ACESFilmicToneMapping
+    renderer3d.toneMappingExposure = 1.1
+    camera3d = new THREE.PerspectiveCamera(38, 1, 1, 6000)
+    camera3d.position.set(500, 400, 650)
+    controls3d = new OrbitControls(camera3d, canvas)
+    controls3d.enableDamping = true
+    controls3d.dampingFactor = 0.08
+    controls3d.minDistance = 150
+    controls3d.maxDistance = 3000
+    // 禁止相机转到桌面以下(防止穿模导致桌面闪烁)
+    controls3d.maxPolarAngle = Math.PI / 2 - 0.04
+    controls3d.addEventListener('start', () => {
+      if (controls3d.autoRotate) {
+        autoRotate3D.value = false
+        controls3d.autoRotate = false
+      }
+    })
+    world3d = new THREE.Group()
+    scene3d.add(world3d)
+    ro3d = new ResizeObserver(() => resize3D())
+    ro3d.observe(canvas.parentElement)
+  } catch (err) {
+    console.error('[3D] WebGL 初始化失败:', err)
+    fallback3D()
+    ready3d = false
+    return
+  }
+  ready3d = true
+  resize3D()
+  try {
+    drawCircuit3D()
+  } catch (err) {
+    console.error('[3D] 场景构建异常:', err)
+  }
+  const loop = () => {
+    raf3d = requestAnimationFrame(loop)
+    controls3d.update()
+    try {
+      renderer3d.render(scene3d, camera3d)
+    } catch (err) {
+      console.error('[3D] 渲染异常:', err)
+    }
+  }
+  loop()
+}
+// WebGL 不可用时的降级画面(淡青网格 + 提示文字,保证 3D 区域不空白)
+function fallback3D() {
+  const canvas = canvas3dRef.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const dpr = window.devicePixelRatio || 1
+  const rect = canvas.getBoundingClientRect()
+  if (!rect.width || !rect.height) return
+  canvas.width = rect.width * dpr
+  canvas.height = rect.height * dpr
+  ctx.scale(dpr, dpr)
+  ctx.strokeStyle = '#dde4ee'
+  ctx.lineWidth = 1
+  for (let x = 40; x < rect.width; x += 40) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, rect.height)
+    ctx.stroke()
+  }
+  for (let y = 40; y < rect.height; y += 40) {
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(rect.width, y)
+    ctx.stroke()
+  }
+  ctx.fillStyle = '#94a7c6'
+  ctx.font = '13px sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('当前环境不支持 WebGL,3D 实体预览不可用(2D 搭建不受影响)', rect.width / 2, rect.height / 2)
+}
+function resize3D() {
+  const el = canvas3dRef.value?.parentElement
+  if (!el || !renderer3d) return
+  const w = el.clientWidth
+  const h = el.clientHeight
+  if (!w || !h) return
+  renderer3d.setSize(w, h)
+  camera3d.aspect = w / h
+  camera3d.updateProjectionMatrix()
+}
+function dispose3D() {
+  cancelAnimationFrame(raf3d)
+  if (ro3d) ro3d.disconnect()
+  if (controls3d) controls3d.dispose()
+  if (scene3d) clearWorld()
+  if (renderer3d) renderer3d.dispose()
+  ready3d = false
 }
 
 function updateComponentValue(index, value) {
@@ -690,20 +1506,31 @@ function updateComponentValue(index, value) {
 }
 
 function getComponentLabel(type) {
-  const labels = { R: '电阻 R', L: '电感 L', C: '电容 C', V: '电压 V' }
+  const labels = { R: '电阻 R', RV: '变阻器 RV', L: '电感 L', C: '电容 C', CV: '可调电容 CV', V: '电压 V' }
   return labels[type] || type
 }
 
 function getComponentUnit(type) {
-  const units = { R: 'Ω', L: 'mH', C: 'μF', V: 'V' }
+  const units = { R: 'Ω', RV: 'Ω', L: 'mH', C: 'μF', CV: 'μF', V: 'V' }
   return units[type] || ''
 }
 
 onMounted(() => {
   drawCircuit()
+  init3D()
 })
 
-watch([() => props.components, () => props.wires], () => {
-  drawCircuit()
-})
+onBeforeUnmount(dispose3D)
+
+watch(
+  [() => props.components, () => props.wires, () => props.junctions],
+  () => {
+    drawCircuit()
+    try {
+      drawCircuit3D()
+    } catch (err) {
+      console.error('[3D] 重建失败(2D 不受影响):', err)
+    }
+  }
+)
 </script>

@@ -5,8 +5,8 @@
       <!-- 列1: 示波器·李萨如图 -->
       <section class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">🟢 示波器 · 李萨如图</span>
-          <span class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded text-xs font-semibold">X-Y MODE</span>
+          <span class="text-sm font-semibold text-gray-800">示波器 · 李萨如图</span>
+          <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-semibold">X-Y MODE</span>
         </div>
         <div class="bg-gray-50 overflow-hidden relative flex-1 flex flex-col">
           <canvas ref="scopeCanvasRef" class="w-full block cursor-crosshair" :height="canvasHeight"></canvas>
@@ -17,7 +17,7 @@
       <!-- 列2: 幅频特性曲线 -->
       <section class="card flex flex-col h-full">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📈 幅频特性曲线 f-I</span>
+          <span class="text-sm font-semibold text-gray-800">幅频特性曲线 f-I</span>
           <span class="text-xs text-gray-500"></span>
         </div>
         <div class="flex gap-2 items-center px-4 py-2 text-xs text-gray-600 flex-wrap border-b border-gray-100">
@@ -26,7 +26,7 @@
           <span>~</span>
           <input type="number" v-model.number="freqMax" placeholder="最大" class="w-16 px-1.5 py-1 border border-gray-300 rounded text-xs" />
           <span>Hz</span>
-          <button @click="applyFreqRange" class="px-2.5 py-1 bg-indigo-500 text-white rounded text-xs hover:bg-indigo-600">应用</button>
+          <button @click="applyFreqRange" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">应用</button>
         </div>
         <div class="p-3 bg-gray-50 flex-1 flex items-center">
           <canvas ref="ampCanvasRef" class="w-full block cursor-crosshair" :height="canvasHeight"></canvas>
@@ -37,7 +37,7 @@
     <!-- 操作控制 (模仿 LCVoltageMethod 操作控制) -->
     <section class="card mb-4">
       <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-        <span class="text-sm font-semibold text-gray-800">🎛️ 操作控制</span>
+        <span class="text-sm font-semibold text-gray-800">操作控制</span>
       </div>
       <div class="flex gap-3 flex-wrap p-3">
         <button @click="toggleSweep" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="isSweeping ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
@@ -57,7 +57,7 @@
       <!-- 实验数据记录 -->
       <section class="card">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📋 实验数据记录</span>
+          <span class="text-sm font-semibold text-gray-800">实验数据记录</span>
           <span class="text-xs text-gray-500">{{ acquiredData.length }} 个数据点</span>
         </div>
         <div class="max-h-80 overflow-y-auto overflow-x-auto p-3">
@@ -93,13 +93,13 @@
       <!-- 实时数据面板 -->
       <section class="card">
         <div class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg">
-          <span class="text-sm font-semibold text-gray-800">📊 实时数据面板</span>
+          <span class="text-sm font-semibold text-gray-800">实时数据面板</span>
         </div>
         <div class="p-4 space-y-2">
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
               <div class="text-xs text-gray-600 mb-1">电阻电压 峰峰值 (Vpp)</div>
-              <div class="text-lg font-bold font-mono text-cyan-600">{{ measures.Urpp.toFixed(4) }}</div>
+              <div class="text-lg font-bold font-mono text-blue-600">{{ measures.Urpp.toFixed(4) }}</div>
             </div>
             <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
               <div class="text-xs text-gray-600 mb-1">电阻电压 有效值 (Vrms)</div>
@@ -111,7 +111,7 @@
             </div>
             <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
               <div class="text-xs text-gray-600 mb-1">阻抗 |Z| (Ω)</div>
-              <div class="text-lg font-bold font-mono text-cyan-600">{{ measures.Z.toFixed(4) }}</div>
+              <div class="text-lg font-bold font-mono text-blue-600">{{ measures.Z.toFixed(4) }}</div>
             </div>
             <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
               <div class="text-xs text-gray-600 mb-1">相位 φ (°)</div>
@@ -131,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 import { impedance, current, resonantFreq } from '../utils/physics'
 
 const props = defineProps({
@@ -145,7 +145,7 @@ const emit = defineEmits(['update-freq'])
 
 const scopeCanvasRef = ref(null)
 const ampCanvasRef = ref(null)
-const canvasHeight = ref(typeof window !== 'undefined' && window.innerWidth < 640 ? 280 : 420)
+const canvasHeight = ref(typeof window !== 'undefined' && window.innerWidth < 640 ? 320 : 540)
 
 // 状态
 const acquiredData = ref([])
@@ -164,6 +164,7 @@ let animPhase = 0
 let animFrame = 0
 const SKIP_FRAMES = 2
 let lastAmpDraw = 0
+let animId = null
 
 // 计算测量值
 const measures = computed(() => {
@@ -245,6 +246,7 @@ function drawStar(ctx, x, y, r, color) {
 function setupHiDPICanvas(canvas, height) {
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.parentElement.getBoundingClientRect()
+  if (rect.width < 2) return null // 组件隐藏(keep-alive 切走)期间布局为 0,跳过绘制以免画布缓冲被清零
   canvas.width = rect.width * dpr
   canvas.height = height * dpr
   canvas.style.height = height + 'px'
@@ -261,7 +263,9 @@ function setupHiDPICanvas(canvas, height) {
 function drawScope() {
   const canvas = scopeCanvasRef.value
   if (!canvas) return
-  const { ctx, W, H } = setupHiDPICanvas(canvas, canvasHeight.value)
+  const s = setupHiDPICanvas(canvas, canvasHeight.value)
+  if (!s) return
+  const { ctx, W, H } = s
   const cx = W / 2,
     cy = H / 2
   const pad = 40,
@@ -360,7 +364,7 @@ function drawScope() {
   ctx.fill()
 
   // 轴标签
-  ctx.fillStyle = '#6a7a8a'
+  ctx.fillStyle = '#7d8dab'
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   ctx.fillText('X: Us (激励电压)', cx, H - 6)
@@ -371,7 +375,7 @@ function drawScope() {
   ctx.restore()
 
   // 刻度
-  ctx.fillStyle = '#5a6a7a'
+  ctx.fillStyle = '#7d8dab'
   ctx.font = '10px Courier New'
   ctx.textAlign = 'center'
   for (let i = 0; i <= 4; i++) {
@@ -389,12 +393,14 @@ function drawScope() {
 function drawAmpChart() {
   const canvas = ampCanvasRef.value
   if (!canvas) return
-  const { ctx, W, H } = setupHiDPICanvas(canvas, canvasHeight.value)
+  const s = setupHiDPICanvas(canvas, canvasHeight.value)
+  if (!s) return
+  const { ctx, W, H } = s
   const pad = { l: 65, r: 25, t: 30, b: 50 }
   const gW = W - pad.l - pad.r,
     gH = H - pad.t - pad.b
 
-  ctx.fillStyle = '#fafbfd'
+  ctx.fillStyle = '#f4faf8'
   ctx.fillRect(0, 0, W, H)
 
   const f0 = measures.value.f0
@@ -414,7 +420,7 @@ function drawAmpChart() {
   const iMax = Imax * 1.2
 
   // 网格
-  ctx.strokeStyle = '#e0e4ea'
+  ctx.strokeStyle = '#e2e8f2'
   ctx.lineWidth = 0.5
   for (let i = 0; i <= 10; i++) {
     const x = pad.l + (gW * i) / 10,
@@ -430,7 +436,7 @@ function drawAmpChart() {
   }
 
   // 理论曲线
-  ctx.strokeStyle = '#b0bec5'
+  ctx.strokeStyle = '#8b9dc0'
   ctx.lineWidth = 1.5
   ctx.setLineDash([4, 3])
   ctx.beginPath()
@@ -450,7 +456,7 @@ function drawAmpChart() {
   // 采集数据曲线
   if (acquiredData.value.length > 1) {
     const sorted = [...acquiredData.value].sort((a, b) => a.freq - b.freq)
-    ctx.strokeStyle = '#27ae60'
+    ctx.strokeStyle = '#2563eb'
     ctx.lineWidth = 2.5
     ctx.beginPath()
     for (let i = 0; i < sorted.length; i++) {
@@ -466,8 +472,8 @@ function drawAmpChart() {
     if (i === resonanceIdx.value) return
     const x = pad.l + ((d.freq - fMin) / fRange) * gW
     const y = pad.t + gH * (1 - d.current / iMax)
-    ctx.fillStyle = '#27ae60'
-    ctx.shadowColor = '#27ae60'
+    ctx.fillStyle = '#2563eb'
+    ctx.shadowColor = '#2563eb'
     ctx.shadowBlur = 6
     ctx.beginPath()
     ctx.arc(x, y, 4.5, 0, Math.PI * 2)
@@ -482,8 +488,8 @@ function drawAmpChart() {
   // 当前频率标记
   const curX = pad.l + ((curFreq - fMin) / fRange) * gW
   const curY = pad.t + gH * (1 - measures.value.I / iMax)
-  ctx.fillStyle = '#e74c3c'
-  ctx.shadowColor = '#e74c3c'
+  ctx.fillStyle = '#e0523f'
+  ctx.shadowColor = '#e0523f'
   ctx.shadowBlur = 12
   ctx.beginPath()
   ctx.arc(curX, curY, 6, 0, Math.PI * 2)
@@ -494,7 +500,7 @@ function drawAmpChart() {
   ctx.arc(curX, curY, 2.5, 0, Math.PI * 2)
   ctx.fill()
   ctx.setLineDash([3, 3])
-  ctx.strokeStyle = 'rgba(231,76,60,0.3)'
+  ctx.strokeStyle = 'rgba(224,82,63,0.3)'
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(curX, curY)
@@ -505,16 +511,16 @@ function drawAmpChart() {
   ctx.lineTo(pad.l, curY)
   ctx.stroke()
   ctx.setLineDash([])
-  ctx.fillStyle = '#e74c3c'
+  ctx.fillStyle = '#e0523f'
   ctx.font = 'bold 11px Courier New'
   ctx.textAlign = 'left'
   ctx.fillText(`${measures.value.I.toFixed(4)} mA`, curX + 8, curY - 4)
-  ctx.fillStyle = '#5a6a7a'
+  ctx.fillStyle = '#7d8dab'
   ctx.font = '10px Courier New'
   ctx.fillText(`${curFreq} Hz`, curX + 8, curY + 10)
 
   // 轴标签
-  ctx.fillStyle = '#5a6a7a'
+  ctx.fillStyle = '#7d8dab'
   ctx.font = '12px system-ui'
   ctx.textAlign = 'center'
   ctx.fillText('频率 f (Hz)', pad.l + gW / 2, H - 8)
@@ -539,8 +545,8 @@ function drawAmpChart() {
     const d = acquiredData.value[resonanceIdx.value]
     const x = pad.l + ((d.freq - fMin) / fRange) * gW
     const y = pad.t + gH * (1 - d.current / iMax)
-    ctx.fillStyle = '#f59e0b'
-    ctx.shadowColor = '#f59e0b'
+    ctx.fillStyle = '#eaa23a'
+    ctx.shadowColor = '#eaa23a'
     ctx.shadowBlur = 12
     ctx.beginPath()
     ctx.arc(x, y, 7, 0, Math.PI * 2)
@@ -550,7 +556,7 @@ function drawAmpChart() {
     ctx.beginPath()
     ctx.arc(x, y, 3, 0, Math.PI * 2)
     ctx.fill()
-    ctx.fillStyle = '#f59e0b'
+    ctx.fillStyle = '#eaa23a'
     ctx.font = 'bold 11px system-ui'
     ctx.textAlign = 'center'
     ctx.fillText('★ 谐振 (' + d.freq.toFixed(4) + ' Hz, ' + d.current.toFixed(4) + ' mA)', x, y - 12)
@@ -559,8 +565,9 @@ function drawAmpChart() {
   canvas._plotInfo = { fMin, fRange, iMax, pad, gW, gH }
 }
 
-// 动画循环
+// 动画循环(先续接下帧再绘制,便于外部通过 animId 暂停/恢复)
 function animate() {
+  animId = requestAnimationFrame(animate)
   animFrame++
   const now = Date.now()
   if (animFrame % (SKIP_FRAMES + 1) !== 0) {
@@ -569,7 +576,6 @@ function animate() {
       drawAmpChart()
       lastAmpDraw = now
     }
-    requestAnimationFrame(animate)
     return
   }
   drawScope()
@@ -577,7 +583,6 @@ function animate() {
     drawAmpChart()
     lastAmpDraw = now
   }
-  requestAnimationFrame(animate)
 }
 
 
@@ -766,6 +771,24 @@ onMounted(() => {
   nextTick(() => {
     animate()
   })
+})
+
+// keep-alive 保活期间:切走(组件 DOM 移出文档、布局为 0)时暂停动画循环,
+// 切回时恢复循环并立即重绘幅频图,保证画面不因隐藏期的零尺寸绘制而空白
+onDeactivated(() => {
+  if (animId) {
+    cancelAnimationFrame(animId)
+    animId = null
+  }
+})
+
+onActivated(() => {
+  if (!animId) animate()
+  drawAmpChart()
+})
+
+onUnmounted(() => {
+  if (animId) cancelAnimationFrame(animId)
 })
 
 watch(() => props.params, () => {

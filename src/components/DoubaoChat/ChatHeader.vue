@@ -195,7 +195,7 @@ function buildOptions() {
 </script>
 
 <template>
-  <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white shrink-0">
+  <div class="flex items-center justify-between px-4 py-3 bg-blue-600 text-white shrink-0">
     <div class="flex items-center gap-2">
       <NButton quaternary circle size="small" style="color: white; background: rgba(255, 255, 255, 0.2)">
         🤖

@@ -9,7 +9,7 @@ const appStore = useAppStore()
 </script>
 
 <template>
-  <div class="min-h-100dvh bg-gradient-to-br from-indigo-400 to-purple-500">
+  <div class="min-h-100dvh bg-[#f3f5f9]">
     <HomeLock v-if="!appStore.otpPassed" />
     <HomeIndex v-else />
   </div>

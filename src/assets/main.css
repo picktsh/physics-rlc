@@ -13,22 +13,102 @@ html {
   text-size-adjust: 100%;
 }
 
+/* ========== 数字专用无衬线字体(unicode-range 仅覆盖数字/数值符号,不干扰中英文衬线排版) ========== */
+@font-face {
+  font-family: 'DigitsUI';
+  src:
+    local('Segoe UI'),
+    local('Helvetica Neue'),
+    local('Arial'),
+    local('PingFang SC'),
+    local('Microsoft YaHei');
+  unicode-range:
+    U+0025,
+    U+002B-0039,
+    U+00B0-00B3,
+    U+00D7,
+    U+2080-2089,
+    U+2212;
+  font-display: swap;
+}
+
+/* ========== 蓝白简约风设计变量 ========== */
+:root {
+  --paper: #f3f5f9;
+  --line: #e2e7f0;
+  --line-soft: #eef1f7;
+  --ink: #1c2534;
+  --muted: #56647a;
+  --faint: #8a97ab;
+  --navy: #2563eb;
+  --navy-deep: #1d4ed8;
+  --navy-mid: #3b82f6;
+  --font-body:
+    'DigitsUI',
+    'Segoe UI',
+    'Helvetica Neue',
+    Arial,
+    'PingFang SC',
+    'Microsoft YaHei',
+    'Noto Sans CJK SC',
+    sans-serif;
+  --font-head:
+    'DigitsUI',
+    'Segoe UI',
+    'Helvetica Neue',
+    Arial,
+    'PingFang SC',
+    'Microsoft YaHei',
+    'Noto Sans CJK SC',
+    sans-serif;
+}
+
+::selection {
+  background: #dbe6ff;
+  color: #1e3a8a;
+}
+
+html,
+body {
+  min-height: 100%;
+  background-color: var(--paper);
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    'Noto Sans',
-    sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-  color: #333;
+  line-height: 1.75;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+/* 极淡蓝氛围光:让大面积纸灰底产生空间层次,不引入任何彩色块 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 420px at 86% -8%, rgba(214, 227, 252, 0.65), transparent 62%),
+    radial-gradient(900px 420px at -6% 106%, rgba(214, 227, 252, 0.5), transparent 60%);
+}
+
+/* 极淡蓝氛围光:让大面积纸灰底产生空间层次,不引入任何彩色块 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 420px at 86% -8%, rgba(214, 227, 252, 0.65), transparent 62%),
+    radial-gradient(900px 420px at -6% 106%, rgba(214, 227, 252, 0.5), transparent 60%);
 }
 
 /* 移除默认边框 */
@@ -39,7 +119,7 @@ fieldset {
 /* 统一边框样式 */
 hr {
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--line);
 }
 
 /* 图片/媒体自适应 */
@@ -87,42 +167,48 @@ a {
 
 /* ========== 公共组件类 ========== */
 
-/* 通用卡片容器 */
+/* 通用卡片容器(白色细边卡片):双层阴影(硬投影 + 远距柔蓝光)让卡片从纸灰底上"浮"起 */
 .card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 18px 42px -22px rgba(37, 99, 235, 0.3);
 }
 
 /* 小卡片/子面板 */
 .card-inner {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px -8px rgba(37, 99, 235, 0.18);
 }
 
-/* 渐变按钮 */
+/* 主按钮 */
 .btn-primary {
-  background: linear-gradient(to right, #6366f1, #a855f7);
-  color: white;
+  background: var(--navy);
+  color: #fff;
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0.5px;
   transition: all 0.2s;
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-  transform: translateY(-1px);
+  background: var(--navy-deep);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
 }
 
 /* 次要按钮 */
 .btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
+  background: #fff;
+  color: #46536b;
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px 16px;
   font-size: 14px;
@@ -130,13 +216,14 @@ a {
 }
 
 .btn-secondary:hover {
-  background: #e5e7eb;
+  border-color: #b6c2d8;
+  background: #f5f7fb;
 }
 
 /* 危险按钮 */
 .btn-danger {
-  background: #fef2f2;
-  color: #dc2626;
+  background: #fdeeec;
+  color: #d14a3f;
   border-radius: 8px;
   padding: 8px 16px;
   font-size: 14px;
@@ -144,37 +231,409 @@ a {
 }
 
 .btn-danger:hover {
-  background: #fee2e2;
+  background: #fae0dc;
 }
 
 /* 区块标题 */
 .section-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+  font-family: var(--font-head);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
   margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* 滚动条美化 */
+/* ========== 学术排版组件 ========== */
+
+/* 论文式页眉(极简左对齐) */
+.paper-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+  padding: 4px 2px 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+.paper-head h1 {
+  font-family: var(--font-head);
+  font-size: clamp(21px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.paper-meta {
+  font-size: 12.5px;
+  letter-spacing: 1.2px;
+  color: var(--faint);
+}
+.paper-meta .sep {
+  margin: 0 8px;
+  color: var(--line);
+}
+
+/* 顶部横向导航 —— 仅窄屏显示(胶囊式) */
+.paper-tabs {
+  display: none;
+  gap: 2px;
+  border-bottom: none;
+  margin: 0 0 14px;
+  padding: 6px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.paper-tabs::-webkit-scrollbar {
+  display: none;
+}
+.ptab {
+  padding: 9px 15px;
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  border-radius: 8px;
+  white-space: nowrap;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease;
+}
+.ptab:hover {
+  color: var(--navy);
+  background: #e9f0fe;
+}
+.ptab.active {
+  background: #dbe7ff;
+  color: var(--navy-deep);
+  font-weight: 700;
+}
+
+/* ========== 应用外壳:左目录 + 右内容 ========== */
+.app-layout {
+  display: flex;
+  min-height: 100dvh;
+  background: var(--paper);
+}
+
+/* 主内容列 */
+.main-col {
+  flex: 1;
+  min-width: 0;
+  padding: 22px clamp(14px, 2vw, 32px) 64px;
+}
+
+/* 左侧竖排目录(桌面端) */
+.side-rail {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .side-rail {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    width: 324px;
+    flex-shrink: 0;
+    padding: 28px 22px 24px;
+    background: #ffffff;
+    border-right: 1px solid var(--line);
+  }
+  .paper-tabs {
+    display: none !important;
+  }
+}
+@media (max-width: 1023.98px) {
+  .paper-tabs {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--paper);
+  }
+}
+
+/* 侧栏品牌区 */
+.side-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 6px 20px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 18px;
+}
+.side-brand-cn {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+.side-brand-en {
+  font-size: 11px;
+  letter-spacing: 2.6px;
+  color: var(--faint);
+}
+
+/* 竖排章节目录 */
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.snav-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 16px;
+  border-radius: 8px;
+  text-align: left;
+  transition:
+    background-color 0.2s ease;
+}
+.snav-num {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+  color: #a5aec0;
+  transition: color 0.2s ease;
+}
+.snav-label {
+  display: inline-block;
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #46536b;
+  line-height: 1.35;
+  transition:
+    transform 0.22s ease,
+    color 0.2s ease,
+    font-size 0.22s ease,
+    font-weight 0.22s ease;
+}
+.snav-item:hover {
+  background: #e9f0fe;
+}
+.snav-item:hover .snav-label {
+  color: var(--navy);
+}
+.snav-item:hover .snav-num {
+  color: var(--navy);
+}
+.snav-item.active {
+  background: #dbe7ff;
+}
+.snav-item.active .snav-num {
+  color: var(--navy-deep);
+  font-weight: 700;
+}
+.snav-item.active .snav-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy-deep);
+}
+
+/* 侧栏页脚 */
+.side-foot {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--faint);
+  border-top: 1px solid var(--line-soft);
+  padding-top: 14px;
+  margin-top: 10px;
+}
+
+/* 面板标题条:浅蓝灰底 + 细线,与白色内容区形成区块层次 */
+[class~='card-hd'] {
+  background: #f6f8fc !important;
+  border-bottom: 1px solid var(--line) !important;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ========== 电路图纸式浅蓝坐标纸底(2D 画布/图表容器) ========== */
+.blueprint-grid {
+  background-color: #f9fbfe;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.055) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+
+
+@media (max-width: 640px) {
+  .main-col {
+    padding: 16px 10px 56px;
+  }
+  .ptab {
+    padding: 9px 12px 10px;
+    font-size: 14px;
+  }
+  .ptab.active {
+    font-size: 15px;
+  }
+}
+
+/* ========== 参数速览条(页眉下常驻,实时电路状态) ========== */
+.param-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 13px;
+  margin: -8px 0 16px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 10px 26px -18px rgba(37, 99, 235, 0.35);
+}
+.param-strip .ps-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  margin-right: 2px;
+}
+.ps-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #edf2fe;
+  font-size: 12px;
+  color: #46536b;
+  white-space: nowrap;
+}
+.ps-chip b {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy-deep);
+  font-size: 13.5px;
+}
+.ps-chip .u {
+  color: var(--faint);
+  font-size: 11px;
+}
+.ps-chip.ps-f0 {
+  background: #fff;
+  border: 1px solid #dce5f7;
+}
+.ps-chip.ps-f0 b {
+  color: var(--ink);
+}
+.ps-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line-soft);
+  margin: 0 2px;
+}
+.ps-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.ps-state i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c6cfdc;
+  box-shadow: 0 0 0 3px rgba(198, 207, 220, 0.18);
+}
+.ps-state.on {
+  color: #1f7a43;
+}
+.ps-state.on i {
+  background: #22a55c;
+  box-shadow: 0 0 0 3px rgba(34, 165, 92, 0.16);
+}
+
+/* ========== 实验器材条(原理演示卡底部) ========== */
+.lab-gear {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px dashed #d6e0ef;
+}
+.lab-gear-t {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  margin-right: 2px;
+}
+.mtrl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #dce4f2;
+  background: #fff;
+  font-size: 13px;
+  color: #46536b;
+  transition: all 0.18s;
+}
+.mtrl-chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #93a7cd;
+}
+.mtrl-chip:hover {
+  border-color: #b9c9e6;
+  color: var(--navy-deep);
+}
+
+/* 章条式区块标题 */
+.sec-title {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+  border-left: 3px solid var(--navy);
+  padding-left: 10px;
+  margin: 0 0 14px;
+}
+
+/* ========== 滚动条 ========== */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #c6cfdc;
   border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #98a4b8;
 }
 
 /* ========== 响应式增强 ========== */
@@ -218,10 +677,11 @@ a {
 /* 卡片在移动端减少内边距 */
 @media (max-width: 640px) {
   .card {
-    padding: 12px;
-    border-radius: 12px;
+    padding: 14px;
+    border-radius: 10px;
   }
   .card-inner {
     padding: 10px;
   }
 }
+

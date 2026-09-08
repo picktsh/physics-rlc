@@ -149,7 +149,7 @@ onMounted(() => {
       size="large"
       class="w-14 h-14 !w-14 !h-14 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
       :bordered="false"
-      style="background: linear-gradient(to right, #6366f1, #a855f7)"
+      style="background: #2563eb"
       @click="isOpen = !isOpen"
     >
       <template #icon>
