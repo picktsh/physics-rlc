@@ -1,4 +1,4 @@
-// 验证:动画演示独立 tab 在公式原理之后;formula 页无演示;demo 页完整可用
+// 验证:视频资源 tab(原动画演示)保留入口且内容为空;3D 演示(控制条+台面,无相量/示波器面板)整合在公式原理第一节,运行正常
 import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -63,7 +63,7 @@ async function main() {
   const now = new Date()
   const code = String(((now.getMonth() + 1) * 10000 + now.getDate() * 100 + now.getHours()) * 2)
   for (let i = 0; i < 24; i++) {
-    const s = await ev('document.querySelector(".hc-ctl") ? "ok" : "wait"')
+    const s = await ev('document.querySelector(".snav-item") ? "ok" : "wait"')
     if (s === 'ok') break
     await ev(`sessionStorage.setItem('otp-code', '${code}'); location.reload();`)
     await sleep(800)
@@ -71,45 +71,31 @@ async function main() {
   // 1) 侧栏顺序与编号
   const side = await ev('[...document.querySelectorAll(".snav-item")].map((x) => ({ n: x.querySelector(".snav-num").textContent, l: x.querySelector(".snav-label").textContent }))')
   log('side:', JSON.stringify(side))
-  const idxDemo = side.findIndex((x) => x.l === '动画演示')
+  const idxDemo = side.findIndex((x) => x.l === '视频资源')
   const idxFormula = side.findIndex((x) => x.l === '公式原理')
-  if (idxDemo !== idxFormula + 1) throw new Error('动画演示不在公式原理后: ' + idxFormula + ' / ' + idxDemo)
+  if (idxDemo !== idxFormula + 1) throw new Error('视频资源不在公式原理后: ' + idxFormula + ' / ' + idxDemo)
   if (side.length !== 7) throw new Error('侧栏应为 7 项: ' + side.length)
-  if (side[idxDemo].n !== '02') throw new Error('动画演示编号应 02: ' + side[idxDemo].n)
+  if (side[idxDemo].n !== '02') throw new Error('视频资源编号应 02: ' + side[idxDemo].n)
 
-  // 2) formula 页:无演示,有公式卡片
+  // 2) formula 页:3D 演示整合于第一节卡片(2D 电路图下方),公式内容齐全
   await ev('[...document.querySelectorAll(".snav-item")][0].click()')
-  await sleep(500)
+  await sleep(900)
   const formulaState = await ev(`({
     h1: document.querySelector('h1')?.textContent,
-    hasHero: !!document.querySelector('.hero3d-wrap, .hc-ctl'),
+    hasHero3d: !!document.querySelector('.hero3d-wrap'),
+    hasCtl: !!document.querySelector('.hc-ctl'),
+    hasPanels: !!document.querySelector('.hc-demos, .hc-ph-cv, .hc-os-cv'),
+    inFirstCard: !!document.querySelectorAll('.card')[0]?.querySelector('.hero3d-wrap'),
     cards: [...document.querySelectorAll('.sec-title')].map((x) => x.textContent).slice(0, 4)
   })`)
   log('formula:', JSON.stringify(formulaState))
-  if (formulaState.hasHero) throw new Error('formula 页不应含 HeroCircuit')
+  if (formulaState.h1 !== '公式原理') throw new Error('h1 应为公式原理: ' + formulaState.h1)
+  if (!formulaState.hasHero3d || !formulaState.hasCtl) throw new Error('formula 页 3D 演示区组件缺失')
+  if (formulaState.hasPanels) throw new Error('相量图/示波器面板应已移除')
+  if (!formulaState.inFirstCard) throw new Error('3D 演示应位于第一节(电路结构)卡片内')
   if (!formulaState.cards.some((c) => c.includes('电路结构'))) throw new Error('formula 页缺公式内容')
 
-  // 3) demo 页:完整演示区 + 器材条 + 标题
-  await ev('[...document.querySelectorAll(".snav-item")][1].click()')
-  await sleep(900)
-  const demoState = await ev(`({
-    h1: document.querySelector('h1')?.textContent,
-    secTitle: document.querySelector('.sec-title')?.textContent,
-    hasHero3d: !!document.querySelector('.hero3d-wrap'),
-    hasCtl: !!document.querySelector('.hc-ctl'),
-    hasPhasor: !!document.querySelector('.hc-ph-cv'),
-    hasOsc: !!document.querySelector('.hc-os-cv'),
-    chips: [...document.querySelectorAll('.mtrl-chip')].map((x) => x.textContent),
-    reads: [...document.querySelectorAll('.hc-rd b')].map((x) => x.textContent),
-    badge: document.querySelector('.hc-os-st')?.textContent
-  })`)
-  log('demo:', JSON.stringify(demoState))
-  if (demoState.h1 !== '动画演示') throw new Error('h1 应为动画演示: ' + demoState.h1)
-  if (!demoState.hasHero3d || !demoState.hasCtl || !demoState.hasPhasor || !demoState.hasOsc) throw new Error('demo 演示区组件缺失')
-  if (demoState.chips.length !== 6) throw new Error('器材 chips 应 6: ' + demoState.chips.length)
-  if (!/谐振|容性|感性/.test(demoState.badge || '')) throw new Error('三态徽章异常: ' + demoState.badge)
-
-  // 4) 动画在跑:整页截图两帧对比(WebGL preserveDrawingBuffer=false 时 readPixels 读不到内容)
+  // 3) 动画在跑:整页截图两帧对比(WebGL preserveDrawingBuffer=false 时 readPixels 读不到内容)
   const shots = []
   for (let k = 0; k < 2; k++) {
     await sleep(500)
@@ -123,19 +109,20 @@ async function main() {
     if (shots[0][i] !== shots[1][i]) diff++
   }
   log('shot sample diff:', diff)
-  const green = await ev(`(() => {
-    const cv = document.querySelector('.hc-os-cv')
-    const c = cv.getContext('2d')
-    const d = c.getImageData(0, 0, cv.width, cv.height).data
-    let g = 0, cy = 0
-    for (let i = 0; i < d.length; i += 16) {
-      if (Math.abs(d[i] - 125) < 42 && Math.abs(d[i + 1] - 255) < 42 && Math.abs(d[i + 2] - 168) < 42) g++
-      if (Math.abs(d[i] - 94) < 42 && Math.abs(d[i + 1] - 234) < 42 && Math.abs(d[i + 2] - 212) < 42) cy++
-    }
-    return { green: g, cyan: cy }
-  })()`)
-  log('osc pixels:', JSON.stringify(green))
-  if (!(green.green > 50 && green.cyan > 50)) throw new Error('示波器波形缺失: ' + JSON.stringify(green))
+
+  // 4) demo 页:内容已清空(仅保留 tab 入口与页头标题)
+  await ev('[...document.querySelectorAll(".snav-item")][1].click()')
+  await sleep(600)
+  const demoState = await ev(`({
+    h1: document.querySelector('h1')?.textContent,
+    hasHero: !!document.querySelector('.hero3d-wrap, .hc-ctl, .hc-demos'),
+    secTitle: !!document.querySelector('.sec-title')
+  })`)
+  log('demo:', JSON.stringify(demoState))
+  if (demoState.h1 !== '视频资源') throw new Error('h1 应为视频资源: ' + demoState.h1)
+  if (demoState.hasHero) throw new Error('demo 页 3D 演示应已清空')
+  if (demoState.secTitle) throw new Error('demo 页卡片内容应已清空')
+
   if (errors.length) throw new Error('console 错误: ' + errors.join('; '))
   log('PAGE ERRORS: 0')
   log('OK')

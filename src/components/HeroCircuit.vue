@@ -5,10 +5,8 @@
 //     Z=|R+j(ωL-1/ωC)|, I=V/Z, UR=I·R, UL=I·ωL, UC=I/(ωC)
 //   1) 电流光点亮度/大小 ∝ I(f)—— 谐振时最亮,两侧渐暗(谐振电流最大)
 //   2) R/L/C 台面三色电压光环:直径/亮度 ∝ 元件端电压 —— 谐振时 UL、UC 暴涨(过电压)
-//   3) 卡下方示波器面板:电源电压 u(t) 与回路电流 i(t) 实时波形 —— 谐振时同相重合且电流幅值最大
-//   4) 卡下方电压相量图:以电流 I 为参考轴,UR/UL/UC/U 随频率连续形变,谐振时 UL 与 UC 抵消
 // - 参数跟随全局 Store(L/R/C/V),与页眉参数速览条同一来源
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
@@ -16,19 +14,10 @@ import { useRLCCalculatorStore } from '../stores/rlcCalculator'
 
 const cvRef = ref(null)
 const sldRef = ref(null)
-const phasorRef = ref(null)
-const oscRef = ref(null)
 const glFailed = ref(false)
 const playing = ref(true) // 自动扫频开关
 // 10fps 节流的读数(3D/物理状态放非响应式变量,避免每帧触发 Vue 渲染)
 const ui = reactive({ f0: '—', f: '—', i: '—', phi: '—', zone: 'res', zoneText: '谐振' })
-// 示波器面板三态讲解文案(随谐振/容性/感性区切换)
-const oscState = computed(() => {
-  if (ui.zone === 'cap') return '容性区 · 电流 i 超前电压 u'
-  if (ui.zone === 'ind') return '感性区 · 电流 i 滞后电压 u'
-  return '谐振 · U_L 与 U_C 抵消 · i 与 u 同相且幅值最大'
-})
-
 // ===== 坐标系:桌面顶 y=0;防静电垫顶 y=1.8;导线层 y=3 =====
 const PAD_TOP = 1.8
 const WIRE_Y = 3
@@ -70,13 +59,13 @@ const pin = (g, cx, bx, bodyEnd, y, z, r, color) => {
   if (drop) g.add(drop)
 }
 
-let scene, renderer, camera, controls, ro, ro2
+let scene, renderer, camera, controls, ro
 let raf = 0, curDot = null, glowDot = null, ringR = null, ringL = null, ringC = null
 let pathPts = [], pathLens = [], pathTotal = 0, flowT = 0
 
 // ===== 演示物理状态(非响应式:每帧由 rAF 直接读写) =====
 let OhmR = 100, HenL = 0.1, FarC = 5e-8, Volt = 0.9, fZero = 2252, Qfact = 14.1
-let fHz = 300, sweepPos = 0, sweepDir = 1, tSec = 0, lastReadT = 0, lastT = 0, phRho = 0, oscPh = 0
+let fHz = 300, sweepPos = 0, sweepDir = 1, tSec = 0, lastReadT = 0, lastT = 0
 // 扫频对数坐标:f/f₀ ∈ 10^-0.82 … 10^+0.80 ≈ 0.15 … 6.3
 const LOG_LO = -0.82, LOG_HI = 0.8, LOG_SPAN = LOG_HI - LOG_LO
 const SWEEP_TIME = 8 // 单程全跨扫频秒数;接近 f₀ 时减速,让谐振状态驻留可辨
@@ -325,172 +314,6 @@ function buildPath() {
   return p
 }
 
-// ===== 原理讲解面板(3D 台下方):电压相量图 + 示波器双通道波形(u 电源电压 / i 回路电流) =====
-// 与 3D 场景同一 rAF、同一物理数据源驱动(physicsAt 每帧结果直接绘制)
-const PANEL_H = 232 // 两块 2D canvas 的逻辑高度(宽度随容器,由 ResizeObserver 校准)
-// 校准 canvas 像素尺寸(dpr + 跟随容器宽度),仅容器尺寸变化时调用
-function fit2D(cv) {
-  if (!cv) return
-  const dpr = Math.min(2, window.devicePixelRatio || 1)
-  const wpx = Math.max(140, cv.clientWidth || 320)
-  cv._w = wpx
-  cv.width = Math.round(wpx * dpr)
-  cv.height = Math.round(PANEL_H * dpr)
-}
-// 每帧绘制前:取 2D 上下文并按 dpr 建立逻辑坐标系(宽度 w=cv._w,高度 h=PANEL_H)
-function prep2D(cv) {
-  const dpr = Math.min(2, window.devicePixelRatio || 1)
-  const c = cv.getContext('2d')
-  c.setTransform(dpr, 0, 0, dpr, 0, 0)
-  c.lineCap = 'round'
-  return { c, w: cv._w || 320, h: PANEL_H }
-}
-// 电压相量图:整组矢量(UR/UL/UC/U)以慢速绕圆心旋转(相对关系不变,UL 恒超前 I 90°)
-// 幅值按当前量程线性缩放(量程=max(UR,UL,UC,V)),谐振时 UL、UC 等长反向、UX=UL+UC 消失
-// 可见性策略(让每条矢量都完整可见):线宽接近、颜色区分;U 白线最先垫底,
-// 与某分解线同向重合(如高频 U≈UL、谐振 U=UR)时由后画的分解线浮出盖白,成因线不丢;
-// U 端始终留白点收束,合成端位置仍可辨;U_X 细虚线仅作辅助;刻度仅外圈,端点仅 U 留点
-function drawPhasor(pv) {
-  const cv = phasorRef.value
-  if (!cv) return
-  const { c, w, h } = prep2D(cv)
-  const cx = w / 2, cy = h / 2
-  const r = Math.max(56, Math.min(w / 2, h / 2) - 15)
-  c.clearRect(0, 0, w, h)
-  c.fillStyle = '#0b1626'
-  c.fillRect(0, 0, w, h)
-  // 刻度圆与中心十字(不随矢量旋转,仅外圈留白参考)
-  c.strokeStyle = 'rgba(130,165,215,0.1)'
-  c.lineWidth = 1
-  c.beginPath()
-  c.arc(cx, cy, r, 0, Math.PI * 2)
-  c.stroke()
-  c.strokeStyle = 'rgba(130,165,215,0.06)'
-  c.beginPath()
-  c.moveTo(cx - r, cy); c.lineTo(cx + r, cy)
-  c.moveTo(cx, cy - r); c.lineTo(cx, cy + r)
-  c.stroke()
-  // 旋转参考:局部坐标 x 沿电流 I(参考轴),y 为超前 90° 方向
-  const co = Math.cos(phRho), si = Math.sin(phRho)
-  const rot = (lx, ly) => [cx + lx * co - ly * si, cy - (lx * si + ly * co)]
-  // I 参考轴虚线(随组旋转,弱化为背景参考)
-  c.strokeStyle = 'rgba(148,182,224,0.22)'
-  c.lineWidth = 1
-  c.setLineDash([3, 7])
-  const ia = rot(-r * 0.98, 0), ib = rot(r * 0.98, 0)
-  c.beginPath()
-  c.moveTo(ia[0], ia[1])
-  c.lineTo(ib[0], ib[1])
-  c.stroke()
-  c.setLineDash([])
-  // 线性量程:各相量长度 = r*0.86 * v/vScale(谐振时 UL/UC 远超信号源电压属物理真实,UR 相应变短)
-  const vScale = Math.max(pv.ur, pv.ul, pv.uc, Volt) * 1.06 || 1
-  const Lm = r * 0.86
-  const lr = (Lm * pv.ur) / vScale
-  const ll = (Lm * pv.ul) / vScale
-  const lc = (Lm * pv.uc) / vScale
-  const o = [cx, cy]
-  const a = rot(lr, 0) // UR 端点(沿 I)
-  const ul = rot(0, ll) // UL 端点(超前 I 90°)
-  const uc = rot(0, -lc) // UC 端点(滞后 I 90°)
-  const b = rot(lr, ll - lc) // U 端点 = UR + (UL+UC)
-  const drawVec = (p0, p1, color, width, dash) => {
-    const dx = p1[0] - p0[0], dy = p1[1] - p0[1]
-    const len = Math.hypot(dx, dy)
-    if (len < 0.4) return
-    c.strokeStyle = color
-    c.lineWidth = width
-    if (dash) c.setLineDash(dash)
-    c.beginPath()
-    c.moveTo(p0[0], p0[1])
-    c.lineTo(p1[0], p1[1])
-    c.stroke()
-    c.setLineDash([])
-    // 箭头
-    const ag = Math.atan2(dy, dx)
-    const as = Math.min(7, len * 0.7)
-    c.fillStyle = color
-    c.beginPath()
-    c.moveTo(p1[0], p1[1])
-    c.lineTo(p1[0] - as * Math.cos(ag - 0.5), p1[1] - as * Math.sin(ag - 0.5))
-    c.lineTo(p1[0] - as * Math.cos(ag + 0.5), p1[1] - as * Math.sin(ag + 0.5))
-    c.closePath()
-    c.fill()
-  }
-  const dot = (p, color, rad) => {
-    c.fillStyle = color
-    c.beginPath()
-    c.arc(p[0], p[1], rad, 0, Math.PI * 2)
-    c.fill()
-  }
-  // —— 线序即可见性规则:U 白垫底先画,分解线后画盖白,保证同向重合时成因线完整浮现 ——
-  // U_X = U_L + U_C 净电抗压降(紫细虚线,仅示意 U 端与 UR 端的差;谐振抵消后消失)
-  if (Math.abs(ll - lc) > 1.2) drawVec(a, b, 'rgba(183,156,255,0.62)', 1.3, [3, 5])
-  // U 电源电压(白,合成线垫底;不同向时全长可见,同向重合时让位给分解线)
-  drawVec(o, b, '#e9effc', 2.6)
-  // U_L(蓝)/U_C(青)分解相量:后画,重合段浮出盖白,始终完整可见
-  drawVec(o, ul, '#60a5fa', 2.1)
-  drawVec(o, uc, '#22d3ee', 2.1)
-  // U_R(琥珀)沿 I 轴:最后画,谐振与 U 同向时以琥珀浮现(U=UR 电压全在 R 上)
-  drawVec(o, a, '#fbbf24', 2.4)
-  // φ 相位弧(I 与 U 之间,随态出现;谐振时 φ=0 自然消失)
-  // aU/phRho 均为数学角(上为正),canvas 角与之差负号:起点取 -phRho(I 真身)、终点取 -aU(U);
-  // 感性 φ>0 → U 在 I 的逆时针侧 → 画布逆时针(ccw=true)走短弧;容性反之
-  const aU = Math.atan2(-(b[1] - cy), b[0] - cx)
-  let dA = aU - phRho
-  while (dA > Math.PI) dA -= Math.PI * 2
-  while (dA < -Math.PI) dA += Math.PI * 2
-  if (Math.abs(dA) > 0.035) {
-    c.strokeStyle = 'rgba(238,244,255,0.65)'
-    c.lineWidth = 1.4
-    c.beginPath()
-    c.arc(cx, cy, Math.max(13, Math.min(24, r * 0.22)), -phRho, -aU, dA > 0)
-    c.stroke()
-  }
-  // 端点:仅 U 端白点(最后画,醒目标示合成端;与分解端几乎重合时即代表 U 与它合一)
-  dot(b, '#e9effc', 4.5)
-}
-// 示波器波形:青色 u = 电源电压(幅值恒定);绿色 i = 回路电流(幅值 ∝ R/Z,谐振时满幅)
-// i 相对 u 的相位差即 φ:容性(φ<0)超前、感性(φ>0)滞后、谐振(φ=0)完全重合
-function drawOsc(ph, pv) {
-  const cv = oscRef.value
-  if (!cv) return
-  const { c, w, h } = prep2D(cv)
-  c.clearRect(0, 0, w, h)
-  c.fillStyle = '#0b1626'
-  c.fillRect(0, 0, w, h)
-  // 网格(竖虚线)与零轴
-  c.strokeStyle = 'rgba(120,170,230,0.1)'
-  c.lineWidth = 1
-  c.setLineDash([2, 6])
-  for (let i = 1; i < 12; i++) {
-    const x = (w / 12) * i
-    c.beginPath(); c.moveTo(x, 6); c.lineTo(x, h - 6); c.stroke()
-  }
-  c.setLineDash([])
-  const mid = h / 2
-  c.strokeStyle = 'rgba(94,234,212,0.2)'
-  c.beginPath(); c.moveTo(0, mid); c.lineTo(w, mid); c.stroke()
-  // 窗口固定 2.2 个周期(触发同步式慢滚动):疏密不随频率变化、画面稳定不闪;
-  // 若窗口随频率缩放且相位按 2π·f·t 推进,高频时每帧相位跳几十圈,波形会像乱码一样闪动
-  const winPh = 2.2 * Math.PI * 2
-  const ampU = h * 0.34
-  const ratio = pv.z > 0 ? OhmR / pv.z : 0
-  const ampI = ampU * Math.pow(ratio, 0.5)
-  const trace = (color, amp, shift) => {
-    c.strokeStyle = color
-    c.lineWidth = 1.9
-    c.beginPath()
-    for (let x = 0; x <= w; x += 2) {
-      const phX = ph - winPh * (1 - x / w)
-      const y = mid - amp * Math.sin(phX - shift)
-      x === 0 ? c.moveTo(x, y) : c.lineTo(x, y)
-    }
-    c.stroke()
-  }
-  trace('#5eead4', ampU, 0) // u 电源电压
-  trace('#7dffa8', ampI, pv.phiRad) // i 回路电流
-}
 function init3D() {
   const canvas = cvRef.value
   if (!canvas) return
@@ -616,15 +439,6 @@ function init3D() {
     camera.aspect = el0.clientWidth / el0.clientHeight
     camera.updateProjectionMatrix()
   }
-  // 下方两块讲解面板 canvas:跟随容器宽度校准像素尺寸(dpr)
-  ro2 = new ResizeObserver(() => {
-    fit2D(phasorRef.value)
-    fit2D(oscRef.value)
-  })
-  if (phasorRef.value) ro2.observe(phasorRef.value)
-  if (oscRef.value) ro2.observe(oscRef.value)
-  fit2D(phasorRef.value)
-  fit2D(oscRef.value)
   const tick = (now) => {
     raf = requestAnimationFrame(tick)
     const dt = Math.min(0.05, lastT ? (now - lastT) / 1000 : 0.016)
@@ -654,13 +468,6 @@ function init3D() {
       }
       d -= pathLens[i]
     }
-    // 下方讲解面板与 3D 同一数据源同步绘制
-    phRho = (phRho + dt * 0.55) % (Math.PI * 2)
-    // 示波器慢滚动相位:滚动速率固定(约 0.8 屏/秒),与信号频率解耦,
-    // 避免高频时每帧相位增量达几十圈、波形整体乱闪(不取模,防止窗口起点跳变)
-    oscPh += dt * 1.76 * Math.PI * 2
-    drawPhasor(pv)
-    drawOsc(oscPh, pv)
     // 滑杆随播放推进(直接写 DOM,不经 Vue)
     const sld = sldRef.value
     if (sld && playing.value) sld.value = String(Math.round(f2pos(fHz) * 1000))
@@ -698,7 +505,6 @@ function makeGlowTex() {
 function dispose3D() {
   cancelAnimationFrame(raf)
   if (ro) ro.disconnect()
-  if (ro2) ro2.disconnect()
   if (controls) controls.dispose()
   scene?.traverse((n) => {
     if (n.geometry) n.geometry.dispose()
@@ -771,34 +577,6 @@ onBeforeUnmount(dispose3D)
         当前环境不支持 WebGL,3D 实物示意不可用
       </div>
       <span v-if="!glFailed" class="hero3d-hint">拖拽旋转 · 滚轮缩放 · 光点亮度 ∝ 电流 I(f)</span>
-    </div>
-    <!-- 原理讲解面板:电压相量图 + 示波器波形(u 电源电压 / i 回路电流),与上方 3D 演示同一数据源同步 -->
-    <div v-if="!glFailed" class="hc-demos">
-      <section class="hc-panel">
-        <header class="hc-ph">
-          <span class="hc-pt">电压相量图</span>
-          <span class="hc-ps">以电流 I 为参考轴 · 矢量随扫频连续形变 · 谐振时 U_L 与 U_C 等长反向抵消</span>
-        </header>
-        <canvas ref="phasorRef" class="hc-ph-cv" />
-        <div class="hc-lg">
-          <span><i class="pl-r"></i>U_R 电阻压降</span>
-          <span><i class="pl-l"></i>U_L 电感压降</span>
-          <span><i class="pl-c"></i>U_C 电容压降</span>
-          <span><i class="pl-x"></i>U_X = U_L + U_C(虚线)</span>
-          <span><i class="pl-u"></i>U 电源电压</span>
-        </div>
-      </section>
-      <section class="hc-panel">
-        <header class="hc-ph">
-          <span class="hc-pt">示波器波形</span>
-          <span class="hc-os-st" :class="'st-' + ui.zone">{{ oscState }}</span>
-        </header>
-        <canvas ref="oscRef" class="hc-os-cv" />
-        <div class="hc-lg">
-          <span><i class="pl-u"></i>u 电源电压(幅值恒定)</span>
-          <span><i class="pl-i"></i>i 回路电流(幅值 ∝ 1/Z · 谐振时最大,与 u 同相重合)</span>
-        </div>
-      </section>
     </div>
   </div>
 </template>
@@ -974,104 +752,9 @@ onBeforeUnmount(dispose3D)
   pointer-events: none;
   user-select: none;
 }
-/* ---- 原理讲解面板(电压相量图 + 示波器波形) ---- */
-.hc-demos {
-  display: grid;
-  grid-template-columns: minmax(290px, 360px) minmax(0, 1fr);
-  gap: 12px;
-}
-.hc-panel {
-  min-width: 0;
-  background: #0b1626;
-  border: 1px solid rgba(120, 160, 220, 0.24);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 16px 32px -22px rgba(10, 24, 48, 0.6);
-  display: flex;
-  flex-direction: column;
-}
-.hc-ph {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  flex-wrap: wrap;
-  padding: 9px 13px 6px;
-}
-.hc-pt {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: #d9e8fb;
-}
-.hc-ps {
-  font-size: 10.5px;
-  color: #6f8db0;
-  min-width: 0;
-}
-.hc-os-st {
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  border: 1px solid transparent;
-}
-.hc-os-st.st-cap {
-  color: #a5c9ff;
-  background: rgba(59, 130, 246, 0.16);
-  border-color: rgba(96, 165, 250, 0.4);
-}
-.hc-os-st.st-res {
-  color: #86eeb2;
-  background: rgba(34, 197, 94, 0.15);
-  border-color: rgba(74, 222, 128, 0.38);
-}
-.hc-os-st.st-ind {
-  color: #ffd28f;
-  background: rgba(245, 158, 11, 0.16);
-  border-color: rgba(251, 191, 36, 0.42);
-}
-.hc-ph-cv,
-.hc-os-cv {
-  display: block;
-  width: 100%;
-  height: 232px;
-  flex: none;
-}
-.hc-lg {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 14px;
-  padding: 5px 13px 9px;
-  font-size: 11px;
-  color: #9db4cf;
-}
-.hc-lg span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.hc-lg i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex: none;
-}
-.hc-lg .pl-r { background: #fbbf24; }
-.hc-lg .pl-l { background: #60a5fa; }
-.hc-lg .pl-c { background: #22d3ee; }
-.hc-lg .pl-x { background: #b79cff; }
-.hc-lg .pl-u { background: #e9effc; }
-.hc-lg .pl-i { background: #7dffa8; }
 @media (max-width: 1080px) {
   .hero3d-wrap {
     height: 420px;
-  }
-  .hc-demos {
-    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 760px) {

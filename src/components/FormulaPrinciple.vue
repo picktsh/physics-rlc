@@ -47,6 +47,12 @@
           </p>
         </div>
       </div>
+
+      <!-- 交互式 3D 演示:整套演示模块迁自「视频资源」页(原「动画演示」),置于 2D 电路图下方 -->
+      <h3 class="flex items-center gap-2.5 text-[15px] font-bold text-[#1c2534] mt-8 mb-4">
+        <span class="inline-block w-[3px] h-[15px] rounded-full bg-[#2563eb]"></span>交互式 3D 演示
+      </h3>
+      <HeroCircuit />
     </section>
 
     <!-- ==================== 2. 基本公式与阻抗特性 ==================== -->
@@ -476,7 +482,7 @@
       <div class="rounded-xl border border-[#e2e7f0] overflow-x-auto">
         <table class="w-full text-[13.5px] border-collapse min-w-[760px]">
           <thead>
-            <tr class="bg-[#f1f4f9]">
+            <tr class="bg-[#e9eef5]">
               <th class="px-5 py-3 text-left text-[12px] font-semibold text-[#56647a] whitespace-nowrap">参数</th>
               <th class="px-5 py-3 text-left text-[12px] font-semibold text-[#56647a] whitespace-nowrap">符号</th>
               <th class="px-5 py-3 text-left text-[12px] font-semibold text-[#56647a] whitespace-nowrap">公式</th>
@@ -487,13 +493,13 @@
             <tr
               v-for="(row, idx) in paramTable"
               :key="idx"
-              :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#fafbfd]'"
-              class="hover:bg-[#eef4ff] transition-colors"
+              :class="idx % 2 === 0 ? 'bg-white' : 'bg-[#f2f5fa]'"
+              class="hover:bg-[#e3edfd] transition-colors"
             >
-              <td class="px-5 py-3 border-t border-[#eef1f7] font-medium text-[#1c2534] whitespace-nowrap">{{ row.name }}</td>
-              <td class="px-5 py-3 border-t border-[#eef1f7] text-[#1c2534] whitespace-nowrap formula-k" v-html="K(row.symbol)"></td>
-              <td class="px-5 py-3 border-t border-[#eef1f7] text-[#2563eb] whitespace-nowrap formula-k" v-html="K(row.formula)"></td>
-              <td class="px-5 py-3 border-t border-[#eef1f7] text-[#7d8aab] leading-6">{{ row.meaning }}</td>
+              <td class="px-5 py-3 border-t border-[#e6ebf3] font-medium text-[#1c2534] whitespace-nowrap">{{ row.name }}</td>
+              <td class="px-5 py-3 border-t border-[#e6ebf3] text-[#1c2534] whitespace-nowrap formula-k" v-html="K(row.symbol)"></td>
+              <td class="px-5 py-3 border-t border-[#e6ebf3] text-[#2563eb] whitespace-nowrap formula-k" v-html="K(row.formula)"></td>
+              <td class="px-5 py-3 border-t border-[#e6ebf3] text-[#7d8aab] leading-6">{{ row.meaning }}</td>
             </tr>
           </tbody>
         </table>
@@ -506,6 +512,7 @@
 import { ref } from 'vue'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
+import HeroCircuit from './HeroCircuit.vue'
 
 const activeQTab = ref(0)
 
