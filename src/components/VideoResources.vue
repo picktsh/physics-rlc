@@ -1,66 +1,58 @@
 <script setup>
-import { reactive } from 'vue'
-
 // ⚠️ 视频清单:未替换的条目均为占位(标题带「(示例)」,BV 用 B 站嵌入文档示例号)。
 // 换真实视频时只改这里:title 是卡片标题;bv 取 B 站视频地址中的 BV 号
 // (如 https://www.bilibili.com/video/BV1xx411c7mD 的 BV1xx411c7mD)。每类数量不限,自动三列换行。
 const rawCategories = [
   {
     id: 'principle',
-    title: '实验原理与公式讲解',
+    title: '基础原理',
     videos: [
       { title: '串联谐振和并联谐振分别有什么用？', bv: 'BV1ej421Q7tV' },
-      { title: '谐振频率 f₀ 的推导与物理意义(示例)', bv: 'BV1xx411c7mD' },
-      { title: '品质因数 Q 与通频带的关系(示例)', bv: 'BV11k4y167N2' },
-      { title: '感抗、容抗随频率的变化规律(示例)', bv: 'BV1xx411c7mD' },
-      { title: '电压与电流的相位关系图解(示例)', bv: 'BV1xx411c7mD' },
+      { title: '通俗易懂的动画，3分钟让你深度理解谐振！谐振的工作原理！', bv: 'BV1a24y1Q7DD' },
+      { title: '最简单的振荡电路 —— LC振荡的美妙演示！', bv: 'BV11k4y167N2' },
+      { title: '(只需30秒)让你了解RLC串联谐振的原理', bv: 'BV15m4y1H7sh' },
+      { title: '空中这么多信号，收音机怎么选出想要的？谐振电路超形象动画讲解!', bv: 'BV1gr3g6LEYy' },
     ],
   },
   {
     id: 'build',
-    title: '电路搭建与仪器使用',
+    title: '仿真演示',
     videos: [
-      { title: '实验器材清单与交流信号源使用(示例)', bv: 'BV1xx411c7mD' },
-      { title: '在实验箱上搭出 RLC 串联电路(示例)', bv: 'BV1xx411c7mD' },
-      { title: '示波器双通道接线与读数方法(示例)', bv: 'BV1xx411c7mD' },
-      { title: '交流毫伏表测量各元件电压(示例)', bv: 'BV1xx411c7mD' },
-      { title: '电路检查与常见接线错误排查(示例)', bv: 'BV1xx411c7mD' },
+      { title: 'multisim 电路仿真软件 初步使用 及R、L、C串联谐振电路仿真分析', bv: 'BV1tT4y1B7Zj' },
+      { title: '『模拟滤波器设计』一阶RC滤波器LTSPICE仿真验证', bv: 'BV1Se8dzaEto' },
+      { title: 'Multisim 14.0模拟回转器', bv: 'BV1dU4y1N7QP' },
+      { title: 'Matlab仿真RLC一阶电路实验', bv: 'BV1UD4y1L7zC' },
     ],
   },
   {
     id: 'operation',
-    title: '实验操作与现象观察',
+    title: '实物实操',
     videos: [
-      { title: '扫频观察电流峰值的完整流程(示例)', bv: 'BV1xx411c7mD' },
-      { title: '谐振点定位:调频寻找最大电流(示例)', bv: 'BV1xx411c7mD' },
-      { title: '不同 Q 值下的谐振曲线对比(示例)', bv: 'BV1xx411c7mD' },
-      { title: '李萨如图形法判断相位差(示例)', bv: 'BV1xx411c7mD' },
-      { title: 'LC 电压幅值法测品质因数(示例)', bv: 'BV1xx411c7mD' },
+      { title: '如何使用面包板搭建RC桥式振荡电路？', bv: 'BV13u4m1T77N' },
+      { title: '【案例示范】安装与调试555集成电路组成的多谐振荡器', bv: 'BV1B54y1u7Wf' },
+      { title: '基于单片机的脉搏测量仪设计—硬件电路原理', bv: 'BV18p4y187vW' },
+      { title: '利用示波器的光标手动模式读取RC一阶电路波形中的时间常数', bv: 'BV1nG411y7FF' },
+      { title: 'RLC串联谐振', bv: 'BV1Ze411N7zK' },
     ],
   },
   {
     id: 'analysis',
-    title: '数据处理与误差分析',
+    title: '故障与拓展',
     videos: [
-      { title: '实验数据记录表的填写规范(示例)', bv: 'BV1xx411c7mD' },
-      { title: '谐振曲线的数据处理与作图(示例)', bv: 'BV1xx411c7mD' },
-      { title: '品质因数三种测法的结果对比(示例)', bv: 'BV1xx411c7mD' },
-      { title: '常见误差来源与降低方法(示例)', bv: 'BV1xx411c7mD' },
-      { title: '实验报告撰写要点与评分标准(示例)', bv: 'BV1xx411c7mD' },
+      { title: '寄生参数对SiC MOSFET开关瞬态的影响01【双脉冲仿真】【LTspice】', bv: 'BV19M411s7ih' },
+      { title: 'STM32HAL库教程(ADC+TIM+DMA)波形采集', bv: 'BV1YmHtz6EFE' },
+      { title: '分类问题：故障诊断，故障识别，特征提取......', bv: 'BV1vZ4y1C7XQ' },
+      { title: '基于STM32单片机RLC检测仪 （程序＋原理图＋PCB＋设计报告）', bv: 'BV1kTr8BsE8b' },
     ],
   },
 ]
-
-// 运行时给每条视频附加 open 标记:false 时只渲染轻量封面门面(点击后才挂载播放器 iframe,
-// 避免 20 个 B 站播放器进页即初始化造成流量与卡顿)
-const categories = reactive(rawCategories.map((c) => ({ ...c, videos: c.videos.map((v) => ({ ...v, open: false })) })))
 
 // B 站官方嵌入式播放器:高清 + 默认关弹幕 + 不自动播放
 const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&page=1&high_quality=1&danmaku=0&autoplay=0`
 </script>
 
 <template>
-  <section v-for="cat in categories" :key="cat.id" class="card mb-4" data-vr="cat">
+  <section v-for="cat in rawCategories" :key="cat.id" class="card mb-4" data-vr="cat">
     <div class="flex items-center justify-between mb-3.5">
       <h2 class="sec-title !mb-0">{{ cat.title }}</h2>
       <span class="shrink-0 text-xs text-[#8a97ab] bg-[#f2f5fa] border border-[#e2e7f0] rounded-full px-2.5 py-[3px]">
@@ -74,9 +66,8 @@ const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&pag
         class="group border border-[#e2e7f0] rounded-[10px] overflow-hidden bg-white transition-all duration-200 hover:border-[#c9d6ec] hover:shadow-[0_6px_18px_rgba(28,42,80,0.10)]"
         data-vr="card"
       >
-        <div class="relative aspect-video bg-gradient-to-br from-[#e3ecfc] via-[#f3f7fe] to-[#dde8fa]">
+        <div class="relative aspect-video">
           <iframe
-            v-if="video.open"
             class="absolute inset-0 w-full h-full border-0"
             :src="embedUrl(video.bv)"
             scrolling="no"
@@ -84,25 +75,6 @@ const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&pag
             allowfullscreen="true"
             data-vr="frame"
           ></iframe>
-          <button
-            v-else
-            type="button"
-            class="absolute inset-0 w-full h-full flex items-center justify-center"
-            :aria-label="'播放视频:' + video.title"
-            data-vr="facade"
-            @click="video.open = true"
-          >
-            <span
-              class="w-12 h-12 rounded-full bg-white/90 text-[#2563eb] shadow-[0_2px_10px_rgba(28,42,80,0.18)] flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
-            >
-              <svg viewBox="0 0 24 24" class="w-5 h-5 translate-x-[1px]" fill="currentColor" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </span>
-            <span class="absolute right-2 bottom-2 text-[11px] leading-none text-white bg-black/45 rounded px-1.5 py-1">
-              哔哩哔哩
-            </span>
-          </button>
         </div>
         <p
           class="px-3 py-2.5 text-[13px] leading-snug text-[#33415e] line-clamp-2"
