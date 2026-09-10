@@ -442,16 +442,6 @@ a {
   color: var(--navy-deep);
 }
 
-/* 侧栏页脚 */
-.side-foot {
-  font-size: 12px;
-  line-height: 1.9;
-  color: var(--faint);
-  border-top: 1px solid var(--line-soft);
-  padding-top: 14px;
-  margin-top: 10px;
-}
-
 /* 面板标题条:浅蓝灰底 + 细线,与白色内容区形成区块层次 */
 [class~='card-hd'] {
   background: #f6f8fc !important;

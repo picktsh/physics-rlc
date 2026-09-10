@@ -194,10 +194,6 @@ async function handleImportMeasHistory(file) {
           <span class="snav-label">{{ tab.label }}</span>
         </button>
       </nav>
-      <div class="side-foot">
-        《大学物理》实验报告<br />
-        RLC 串联电路频率特性研究
-      </div>
     </aside>
 
     <!-- 右侧主内容 -->
