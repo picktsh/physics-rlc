@@ -14,6 +14,7 @@ import SimulationHistory from '../../components/SimulationHistory.vue'
 import FormulaPrinciple from '../../components/FormulaPrinciple.vue'
 import LCVoltageMethod from '../../components/LCVoltageMethod.vue'
 import TunerExperiment from '../../components/TunerExperiment.vue'
+import VideoResources from '../../components/VideoResources.vue'
 import DoubaoChat from '../../components/DoubaoChat.vue'
 
 const calcStore = useRLCCalculatorStore()
@@ -22,14 +23,16 @@ const historyStore = useHistoryStore()
 const { params, results, ampCurveData, phaseCurveData, impedanceCurveData } = storeToRefs(calcStore)
 const { simulationHistory, measuredHistory } = storeToRefs(historyStore)
 
-const activeTab = ref(sessionStorage.getItem('activeTab') || 'formula')
+// 会话记忆恢复当前页;兼容旧 key「demo」(tab 已更名为「video」),无记录时默认公式原理页
+const storedTab = sessionStorage.getItem('activeTab')
+const activeTab = ref(storedTab === 'demo' ? 'video' : storedTab || 'formula')
 watch(activeTab, (val) => {
   sessionStorage.setItem('activeTab', val)
 })
 
 const tabs = [
   { key: 'formula', label: '公式原理' },
-  { key: 'demo', label: '视频资源' },
+  { key: 'video', label: '视频资源' },
   { key: 'circuit', label: '电路搭建' },
   { key: 'analysis', label: '仿真分析' },
   { key: 'measure', label: '相位差判别法' },
@@ -38,7 +41,7 @@ const tabs = [
 ]
 
 // 当前导航项名称(内容区左上角标题随导航保持一致)
-const currentTabLabel = computed(() => tabs.find(t => t.key === activeTab.value)?.label || '')
+const currentTabLabel = computed(() => tabs.find((t) => t.key === activeTab.value)?.label || '')
 
 const chartPanelRef = ref(null)
 
@@ -80,15 +83,27 @@ function handlePlotMeasured() {
   }
   // 频率单位校验:表格单位为 kHz。若把 Hz 数值直接填入(如 2252 而不是 2.252),会超出常见量级,
   // 窗口被拉远后理论曲线在该频段电流趋近于 0,视觉上就是贴底的蓝色直线
-  const maxFreqK = Math.max(...data.map(d => Number(d.freq) || 0))
+  const maxFreqK = Math.max(...data.map((d) => Number(d.freq) || 0))
   if (maxFreqK > 500) {
-    alert('提示:实测最大频率约 ' + maxFreqK.toFixed(1) + ' kHz,远超本实验量级。\n若你输入的是 2252 这类 Hz 数值,请除以 1000 改为 2.252(频率单位是 kHz)。')
+    alert(
+      '提示:实测最大频率约 ' +
+        maxFreqK.toFixed(1) +
+        ' kHz,远超本实验量级。\n若你输入的是 2252 这类 Hz 数值,请除以 1000 改为 2.252(频率单位是 kHz)。',
+    )
   }
   // 电流量级校验:与当前仿真全域峰值比较,错配会把蓝色仿真曲线压缩成底部直线
-  const measMax = Math.max(...data.map(d => Number(d.current) || 0))
+  const measMax = Math.max(...data.map((d) => Number(d.current) || 0))
   const simPeak = calcStore.results.Imax
   if (measMax > 0 && simPeak > 0 && measMax > simPeak * 2.5) {
-    alert('提示:实测电流峰值 ' + measMax.toFixed(2) + ' mA,约为当前仿真峰值 ' + simPeak.toFixed(2) + ' mA 的 ' + (measMax / simPeak).toFixed(1) + ' 倍。\n请检查:1) 电流是否以 mA 为单位;2) 电路元件(R/L/C/V)修改后是否重新点过「开始仿真」。否则蓝色曲线会被压缩成底部直线。')
+    alert(
+      '提示:实测电流峰值 ' +
+        measMax.toFixed(2) +
+        ' mA,约为当前仿真峰值 ' +
+        simPeak.toFixed(2) +
+        ' mA 的 ' +
+        (measMax / simPeak).toFixed(1) +
+        ' 倍。\n请检查:1) 电流是否以 mA 为单位;2) 电路元件(R/L/C/V)修改后是否重新点过「开始仿真」。否则蓝色曲线会被压缩成底部直线。',
+    )
   }
   historyStore.saveMeasuredRecord(data)
   fitWindowToMeasured(data)
@@ -215,110 +230,109 @@ async function handleImportMeasHistory(file) {
           </button>
         </nav>
 
-      <!-- Tab 内容: 电路搭建 -->
-      <template v-if="activeTab === 'circuit'">
-        <section class="card mb-4">
-          <h2 class="sec-title">电路搭建与仿真</h2>
-          <CircuitBoard
-            v-model:components="calcStore.components"
-            v-model:wires="calcStore.wires"
-            v-model:junctions="calcStore.junctions"
-            v-model:mode="calcStore.circuitMode"
-            @simulate="handleSimulate"
-            @reset="calcStore.resetCircuit()"
-          />
-        </section>
-      </template>
+        <!-- Tab 内容: 电路搭建 -->
+        <template v-if="activeTab === 'circuit'">
+          <section class="card mb-4">
+            <h2 class="sec-title">电路搭建与仿真</h2>
+            <CircuitBoard
+              v-model:components="calcStore.components"
+              v-model:wires="calcStore.wires"
+              v-model:junctions="calcStore.junctions"
+              v-model:mode="calcStore.circuitMode"
+              @simulate="handleSimulate"
+              @reset="calcStore.resetCircuit()"
+            />
+          </section>
+        </template>
 
-      <!-- Tab 内容: 仿真分析 -->
-      <template v-if="activeTab === 'analysis'">
-        <section class="card mb-4">
-          <h2 class="sec-title">计算结果</h2>
-          <ResultCards :results="results" :simulated="calcStore.simulated" />
-          <SimulationHistory
-            :history="simulationHistory"
-            @export="historyStore.exportSimulationHistory()"
-            @import="handleImportSimHistory"
-            @clear="historyStore.clearSimulationHistory()"
-            @load="handleLoadSimHistory"
-            @delete="historyStore.deleteSimulationRecord"
-          />
-        </section>
+        <!-- Tab 内容: 仿真分析 -->
+        <template v-if="activeTab === 'analysis'">
+          <section class="card mb-4">
+            <h2 class="sec-title">计算结果</h2>
+            <ResultCards :results="results" :simulated="calcStore.simulated" />
+            <SimulationHistory
+              :history="simulationHistory"
+              @export="historyStore.exportSimulationHistory()"
+              @import="handleImportSimHistory"
+              @clear="historyStore.clearSimulationHistory()"
+              @load="handleLoadSimHistory"
+              @delete="historyStore.deleteSimulationRecord"
+            />
+          </section>
 
-        <section class="card mb-4">
-          <h2 class="sec-title">三大特性曲线</h2>
-          <ChartPanel
-            ref="chartPanelRef"
-            :params="params"
-            :amp-curve-data="ampCurveData"
-            :phase-curve-data="phaseCurveData"
-            :impedance-curve-data="impedanceCurveData"
-            :measured-data="calcStore.measuredData"
-            :simulated="calcStore.simulated"
-            @update-fstart="(val) => calcStore.updateParams({ fStart: val })"
-            @update-fend="(val) => calcStore.updateParams({ fEnd: val })"
-          />
-        </section>
+          <section class="card mb-4">
+            <h2 class="sec-title">三大特性曲线</h2>
+            <ChartPanel
+              ref="chartPanelRef"
+              :params="params"
+              :amp-curve-data="ampCurveData"
+              :phase-curve-data="phaseCurveData"
+              :impedance-curve-data="impedanceCurveData"
+              :measured-data="calcStore.measuredData"
+              :simulated="calcStore.simulated"
+              @update-fstart="(val) => calcStore.updateParams({ fStart: val })"
+              @update-fend="(val) => calcStore.updateParams({ fEnd: val })"
+            />
+          </section>
 
-        <section class="card mb-4">
-          <h2 class="sec-title">实测数据输入</h2>
-          <MeasuredDataInput
-            v-model:data="calcStore.measuredData"
-            :history="measuredHistory"
-            @plot="handlePlotMeasured"
-            @export-history="historyStore.exportMeasuredHistory()"
-            @import-history="handleImportMeasHistory"
-            @clear-history="historyStore.clearMeasuredHistory()"
-            @load-history="handleLoadMeasHistory"
-            @delete-history="historyStore.deleteMeasuredRecord"
-          />
-        </section>
+          <section class="card mb-4">
+            <h2 class="sec-title">实测数据输入</h2>
+            <MeasuredDataInput
+              v-model:data="calcStore.measuredData"
+              :history="measuredHistory"
+              @plot="handlePlotMeasured"
+              @export-history="historyStore.exportMeasuredHistory()"
+              @import-history="handleImportMeasHistory"
+              @clear-history="historyStore.clearMeasuredHistory()"
+              @load-history="handleLoadMeasHistory"
+              @delete-history="historyStore.deleteMeasuredRecord"
+            />
+          </section>
 
-        <section class="card mb-4">
-          <h2 class="sec-title">误差分析</h2>
-          <ErrorAnalysis :results="results" />
-        </section>
-      </template>
+          <section class="card mb-4">
+            <h2 class="sec-title">误差分析</h2>
+            <ErrorAnalysis :results="results" />
+          </section>
+        </template>
 
-      <!-- Tab 内容: 相位差判别法 / LC电压幅值法
+        <!-- Tab 内容: 相位差判别法 / LC电压幅值法
       用 KeepAlive 保活:两个页面的「自动扫频」由组件内定时链驱动,
       切到其它 tab 时不再卸载组件,扫频在后台继续,切回时进度不丢 -->
-      <KeepAlive>
-        <LissajousScope
-          v-if="activeTab === 'measure'"
-          :params="params"
-          @update-freq="handleLissaFreqUpdate"
-        />
-        <LCVoltageMethod v-else-if="activeTab === 'lc-voltage'" />
-      </KeepAlive>
+        <KeepAlive>
+          <LissajousScope v-if="activeTab === 'measure'" :params="params" @update-freq="handleLissaFreqUpdate" />
+          <LCVoltageMethod v-else-if="activeTab === 'lc-voltage'" />
+        </KeepAlive>
 
-      <!-- 频率扫描 (相位差判别法页内的一次性计算工具,无需保活) -->
-      <section v-if="activeTab === 'measure'" class="card mb-4">
-        <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
-        >
-          <span class="text-sm font-semibold text-gray-800">频率扫描</span>
-        </div>
-        <div class="p-3">
-          <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
-        </div>
-      </section>
+        <!-- 频率扫描 (相位差判别法页内的一次性计算工具,无需保活) -->
+        <section v-if="activeTab === 'measure'" class="card mb-4">
+          <div
+            class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          >
+            <span class="text-sm font-semibold text-gray-800">频率扫描</span>
+          </div>
+          <div class="p-3">
+            <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
+          </div>
+        </section>
 
-      <!-- Tab 内容: 公式原理(第一节内置迁自「视频资源」页的 3D 交互演示) -->
-      <template v-if="activeTab === 'formula'">
-        <FormulaPrinciple />
-      </template>
+        <!-- Tab 内容: 公式原理(第一节内置迁自「视频资源」页的 3D 交互演示) -->
+        <template v-if="activeTab === 'formula'">
+          <FormulaPrinciple />
+        </template>
 
-      <!-- Tab「视频资源」(原「动画演示」):演示模块已整体迁入「公式原理」第一节(2D 电路图下方),本 tab 按要求保留入口、内容已清空 -->
+        <!-- Tab「视频资源」(原「动画演示」):B 站视频清单页(4 类别 × 5 条占位,点击封面后才挂载播放器 iframe) -->
+        <template v-if="activeTab === 'video'">
+          <VideoResources />
+        </template>
 
-      <!-- Tab 内容: RLC工程应用(收音机选频) -->
-      <template v-if="activeTab === 'tuner'">
-        <TunerExperiment />
-      </template>
+        <!-- Tab 内容: RLC工程应用(收音机选频) -->
+        <template v-if="activeTab === 'tuner'">
+          <TunerExperiment />
+        </template>
       </div>
 
       <DoubaoChat />
-      </main>
+    </main>
   </div>
 </template>
 

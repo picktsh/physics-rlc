@@ -1,4 +1,4 @@
-// 验证:视频资源 tab(原动画演示)保留入口且内容为空;3D 演示(控制条+台面,无相量/示波器面板)整合在公式原理第一节,运行正常
+// 验证:视频资源 tab 的 B 站视频清单(4 类 × 5 条,封面点击后才挂载播放器);3D 演示(控制条+台面,无相量/示波器面板)整合在公式原理第一节,运行正常
 import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -49,7 +49,11 @@ async function main() {
   ws.addEventListener('message', (evt) => {
     let m
     try { m = JSON.parse(evt.data) } catch { return }
-    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails?.text || 'exception')
+    if (m.method === 'Runtime.exceptionThrown') {
+      const d = m.params.exceptionDetails || {}
+      // 只统计主文档(localhost)异常;B 站嵌入播放器子框架的第三方脚本异常不计入
+      if (!d.url || d.url.includes('localhost:5173')) errors.push(d.text || 'exception')
+    }
     const i = msgQ.findIndex((x) => x.id === m.id)
     if (i < 0) return
     const [q] = msgQ.splice(i, 1)
@@ -110,18 +114,35 @@ async function main() {
   }
   log('shot sample diff:', diff)
 
-  // 4) demo 页:内容已清空(仅保留 tab 入口与页头标题)
+  // 4) 视频资源页:4 类 × 5 条清单,初始仅渲染封面门面;点击后才挂载 B 站播放器 iframe
   await ev('[...document.querySelectorAll(".snav-item")][1].click()')
-  await sleep(600)
-  const demoState = await ev(`({
+  await sleep(700)
+  const vrState = await ev(`({
     h1: document.querySelector('h1')?.textContent,
     hasHero: !!document.querySelector('.hero3d-wrap, .hc-ctl, .hc-demos'),
-    secTitle: !!document.querySelector('.sec-title')
+    cats: document.querySelectorAll('[data-vr="cat"]').length,
+    cards: document.querySelectorAll('[data-vr="card"]').length,
+    perCat: [...document.querySelectorAll('[data-vr="cat"]')].map((c) => c.querySelectorAll('[data-vr="card"]').length),
+    facades: document.querySelectorAll('[data-vr="facade"]').length,
+    frames: document.querySelectorAll('[data-vr="frame"]').length
   })`)
-  log('demo:', JSON.stringify(demoState))
-  if (demoState.h1 !== '视频资源') throw new Error('h1 应为视频资源: ' + demoState.h1)
-  if (demoState.hasHero) throw new Error('demo 页 3D 演示应已清空')
-  if (demoState.secTitle) throw new Error('demo 页卡片内容应已清空')
+  log('video:', JSON.stringify(vrState))
+  if (vrState.h1 !== '视频资源') throw new Error('h1 应为视频资源: ' + vrState.h1)
+  if (vrState.hasHero) throw new Error('视频资源页不应再出现 3D 演示')
+  if (vrState.cats !== 4) throw new Error('应有 4 个视频类别: ' + vrState.cats)
+  if (vrState.cards !== 20) throw new Error('应有 20 个视频卡片: ' + vrState.cards)
+  if (vrState.perCat.some((n) => n !== 5)) throw new Error('每类应为 5 条: ' + JSON.stringify(vrState.perCat))
+  if (vrState.frames !== 0) throw new Error('初始不应挂载播放器 iframe: ' + vrState.frames)
+  if (vrState.facades !== 20) throw new Error('20 张封面应全部可点击: ' + vrState.facades)
+  await ev(`document.querySelectorAll('[data-vr="facade"]')[0].click()`)
+  await sleep(500)
+  const vrAfter = await ev(`({
+    frames: document.querySelectorAll('[data-vr="frame"]').length,
+    src: document.querySelector('[data-vr="frame"]')?.getAttribute('src') || ''
+  })`)
+  log('video after click:', JSON.stringify(vrAfter))
+  if (vrAfter.frames !== 1) throw new Error('点击封面后应挂载 1 个播放器: ' + vrAfter.frames)
+  if (!vrAfter.src.includes('player.bilibili.com') || !vrAfter.src.includes('bvid=')) throw new Error('播放器 src 异常: ' + vrAfter.src)
 
   if (errors.length) throw new Error('console 错误: ' + errors.join('; '))
   log('PAGE ERRORS: 0')
