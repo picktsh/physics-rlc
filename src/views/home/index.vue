@@ -15,7 +15,6 @@ import FormulaPrinciple from '../../components/FormulaPrinciple.vue'
 import LCVoltageMethod from '../../components/LCVoltageMethod.vue'
 import TunerExperiment from '../../components/TunerExperiment.vue'
 import DoubaoChat from '../../components/DoubaoChat.vue'
-import HeroCircuit from '../../components/HeroCircuit.vue'
 
 const calcStore = useRLCCalculatorStore()
 const historyStore = useHistoryStore()
@@ -30,7 +29,7 @@ watch(activeTab, (val) => {
 
 const tabs = [
   { key: 'formula', label: '公式原理' },
-  { key: 'demo', label: '动画演示' },
+  { key: 'demo', label: '视频资源' },
   { key: 'circuit', label: '电路搭建' },
   { key: 'analysis', label: '仿真分析' },
   { key: 'measure', label: '相位差判别法' },
@@ -38,33 +37,9 @@ const tabs = [
   { key: 'tuner', label: 'RLC工程应用' },
 ]
 
-// 原理演示卡底部保留的实验器材清单
-const mtrlList = ['信号发生器', '双踪示波器', '交流毫安表', '电阻 R', '标准电感 L', '标准电容 C']
-
 // 当前导航项名称(内容区左上角标题随导航保持一致)
 const currentTabLabel = computed(() => tabs.find(t => t.key === activeTab.value)?.label || '')
 
-// ===== 参数速览条:当前电路参数 + 理论谐振频率/品质因数(仅展示,不含任何仿真状态) =====
-const fmtVal = (v) => {
-  const n = Number(v)
-  if (!isFinite(n)) return '—'
-  return String(Math.round(n * 1e6) / 1e6)
-}
-// 理论谐振频率(kHz)与品质因数:由当前 L/C/R 直接算出,未仿真时同样有效
-const f0Display = computed(() => {
-  const L = Number(params.value.L) * 1e-3
-  const C = Number(params.value.C) * 1e-6
-  if (!(L > 0) || !(C > 0)) return '—'
-  return ((1 / (2 * Math.PI * Math.sqrt(L * C))) / 1000).toFixed(2)
-})
-const qDisplay = computed(() => {
-  const L = Number(params.value.L) * 1e-3
-  const C = Number(params.value.C) * 1e-6
-  const R = Number(params.value.R)
-  if (!(L > 0) || !(C > 0) || !(R > 0)) return '—'
-  const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C))
-  return ((2 * Math.PI * f0 * L) / R).toFixed(1)
-})
 const chartPanelRef = ref(null)
 
 // 实测点频率窗口自动适配:实测范围超出当前窗口时扩窗(各留 12% 边距);已在窗口内则尊重手动设置
@@ -232,19 +207,6 @@ async function handleImportMeasHistory(file) {
           </div>
         </header>
 
-        <!-- 电路参数速览条(电路搭建页内有完整编辑器,不重复展示) -->
-        <div v-if="activeTab !== 'circuit'" class="param-strip" aria-label="电路参数速览">
-          <span class="ps-label">电路参数</span>
-          <span class="ps-chip">R <b>{{ fmtVal(params.R) }}</b><span class="u">Ω</span></span>
-          <span class="ps-chip">L <b>{{ fmtVal(params.L) }}</b><span class="u">mH</span></span>
-          <span class="ps-chip">C <b>{{ fmtVal(params.C) }}</b><span class="u">μF</span></span>
-          <span class="ps-chip">V <b>{{ fmtVal(params.V) }}</b><span class="u">V</span></span>
-          <span class="ps-sep"></span>
-          <span class="ps-chip ps-f0" title="由当前 L、C 计算的理论谐振频率">f₀ <b>{{ f0Display }}</b><span class="u">kHz</span></span>
-          <span class="ps-chip ps-f0" title="由当前 R、L、C 计算的理论品质因数">Q <b>{{ qDisplay }}</b></span>
-          <span class="ps-state" :class="{ on: calcStore.simulated }"><i></i>{{ calcStore.simulated ? '已仿真' : '未仿真' }}</span>
-        </div>
-
         <!-- 窄屏目录(顶部横排) -->
         <nav class="paper-tabs" role="tablist">
           <button
@@ -346,22 +308,12 @@ async function handleImportMeasHistory(file) {
         </div>
       </section>
 
-      <!-- Tab 内容: 公式原理 -->
+      <!-- Tab 内容: 公式原理(第一节内置迁自「视频资源」页的 3D 交互演示) -->
       <template v-if="activeTab === 'formula'">
         <FormulaPrinciple />
       </template>
 
-      <!-- Tab 内容: 动画演示(3D 台面全息演示 RLC 串联谐振,卡底附实验器材清单) -->
-      <template v-if="activeTab === 'demo'">
-        <section class="card mb-4">
-          <h2 class="sec-title">RLC 串联谐振 · 原理演示</h2>
-          <HeroCircuit />
-          <div class="lab-gear" aria-label="实验器材">
-            <span class="lab-gear-t">所需器材</span>
-            <span v-for="m in mtrlList" :key="m" class="mtrl-chip">{{ m }}</span>
-          </div>
-        </section>
-      </template>
+      <!-- Tab「视频资源」(原「动画演示」):演示模块已整体迁入「公式原理」第一节(2D 电路图下方),本 tab 按要求保留入口、内容已清空 -->
 
       <!-- Tab 内容: RLC工程应用(收音机选频) -->
       <template v-if="activeTab === 'tuner'">
