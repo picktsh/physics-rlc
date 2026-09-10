@@ -86,4 +86,22 @@ const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&pag
       </div>
     </div>
   </section>
+  <a
+    href="https://search.bilibili.com/all?keyword=rlc%E4%B8%B2%E8%81%94%E8%B0%90%E6%8C%AF"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="card flex items-center justify-center gap-2 py-3.5 text-[15px] font-medium text-[#1d4ed8] bg-[#dbeafe] border border-[#93b4fd] rounded-xl transition-all duration-200 hover:bg-[#bfdbfe] hover:border-[#60a5fa] hover:shadow-[0_4px_14px_rgba(29,78,216,0.18)]"
+    data-vr="more-btn"
+  >
+    <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+    在哔哩哔哩发现更多 RLC 串联谐振视频
+    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  </a>
 </template>
