@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# AI 过程脚本与临时验证文件(不属于项目源码)
+.tmp-*
