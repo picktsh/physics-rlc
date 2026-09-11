@@ -13,7 +13,7 @@ import FrequencySweep from '../../components/FrequencySweep.vue'
 import SimulationHistory from '../../components/SimulationHistory.vue'
 import FormulaPrinciple from '../../components/FormulaPrinciple.vue'
 import LCVoltageMethod from '../../components/LCVoltageMethod.vue'
-import TunerExperiment from '../../components/TunerExperiment.vue'
+import EngineeringApplication from '../../components/EngineeringApplication.vue'
 import VideoResources from '../../components/VideoResources.vue'
 import DoubaoChat from '../../components/DoubaoChat.vue'
 
@@ -325,9 +325,9 @@ async function handleImportMeasHistory(file) {
           <VideoResources />
         </template>
 
-        <!-- Tab 内容: RLC工程应用(收音机选频) -->
+        <!-- Tab 内容: RLC工程应用(二级 tab:心率检测 / 收音机) -->
         <template v-if="activeTab === 'tuner'">
-          <TunerExperiment />
+          <EngineeringApplication />
         </template>
       </div>
 
