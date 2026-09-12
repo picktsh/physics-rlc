@@ -15,6 +15,7 @@ import FormulaPrinciple from '../../components/FormulaPrinciple.vue'
 import LCVoltageMethod from '../../components/LCVoltageMethod.vue'
 import EngineeringApplication from '../../components/EngineeringApplication.vue'
 import VideoResources from '../../components/VideoResources.vue'
+import DampingOscillation from '../../components/DampingOscillation.vue'
 import DoubaoChat from '../../components/DoubaoChat.vue'
 
 const calcStore = useRLCCalculatorStore()
@@ -38,6 +39,7 @@ const tabs = [
   { key: 'measure', label: '相位差判别法' },
   { key: 'lc-voltage', label: 'LC 电压幅值法' },
   { key: 'tuner', label: 'RLC工程应用' },
+  { key: 'damping', label: 'RLC阻尼振荡特性实验' },
 ]
 
 // 当前导航项名称(内容区左上角标题随导航保持一致)
@@ -328,6 +330,11 @@ async function handleImportMeasHistory(file) {
         <!-- Tab 内容: RLC工程应用(二级 tab:心率检测 / 收音机) -->
         <template v-if="activeTab === 'tuner'">
           <EngineeringApplication />
+        </template>
+
+        <!-- Tab 内容: RLC阻尼振荡特性实验(页面内容待补充) -->
+        <template v-if="activeTab === 'damping'">
+          <DampingOscillation />
         </template>
       </div>
 
