@@ -9,7 +9,6 @@ import ChartPanel from '../../components/ChartPanel.vue'
 import ErrorAnalysis from '../../components/ErrorAnalysis.vue'
 import MeasuredDataInput from '../../components/MeasuredDataInput.vue'
 import LissajousScope from '../../components/LissajousScope.vue'
-import FrequencySweep from '../../components/FrequencySweep.vue'
 import SimulationHistory from '../../components/SimulationHistory.vue'
 import FormulaPrinciple from '../../components/FormulaPrinciple.vue'
 import LCVoltageMethod from '../../components/LCVoltageMethod.vue'
@@ -127,12 +126,6 @@ function handleSimulate() {
     params: { ...calcStore.params },
     results: { ...calcStore.results },
   })
-}
-
-// 频率扫描完成(数据已按 kHz 约定下发;自动扩窗保证绿线可见)
-function handleSweepDone(data) {
-  calcStore.measuredData = data
-  fitWindowToMeasured(data)
 }
 
 // 李萨如幅频图点击更新频率
@@ -304,18 +297,6 @@ async function handleImportMeasHistory(file) {
           <LissajousScope v-if="activeTab === 'measure'" :params="params" @update-freq="handleLissaFreqUpdate" />
           <LCVoltageMethod v-else-if="activeTab === 'lc-voltage'" />
         </KeepAlive>
-
-        <!-- 频率扫描 (相位差判别法页内的一次性计算工具,无需保活) -->
-        <section v-if="activeTab === 'measure'" class="card mb-4">
-          <div
-            class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
-          >
-            <span class="text-sm font-semibold text-gray-800">频率扫描</span>
-          </div>
-          <div class="p-3">
-            <FrequencySweep :params="params" @sweep-done="handleSweepDone" />
-          </div>
-        </section>
 
         <!-- Tab 内容: 公式原理(第一节内置迁自「视频资源」页的 3D 交互演示) -->
         <template v-if="activeTab === 'formula'">
