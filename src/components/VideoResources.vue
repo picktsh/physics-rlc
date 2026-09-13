@@ -1,7 +1,11 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+
 // ⚠️ 视频清单:未替换的条目均为占位(标题带「(示例)」,BV 用 B 站嵌入文档示例号)。
 // 换真实视频时只改这里:title 是卡片标题;bv 取 B 站视频地址中的 BV 号
-// (如 https://www.bilibili.com/video/BV1xx411c7mD 的 BV1xx411c7mD)。每类数量不限,自动三列换行。
+// (如 https://www.bilibili.com/video/BV1xx411c7mD 的 BV1xx411c7mD)。
+// dy 填抖音视频 ID(从 https://www.douyin.com/video/xxxxx 地址中提取纯数字)。
+// 每类数量不限,自动三列换行。
 const rawCategories = [
   {
     id: 'principle',
@@ -45,10 +49,84 @@ const rawCategories = [
       { title: '基于STM32单片机RLC检测仪 （程序＋原理图＋PCB＋设计报告）', bv: 'BV1kTr8BsE8b' },
     ],
   },
+  {
+    id: 'damping-experiment',
+    title: 'RLC阻尼振荡特性实验',
+    videos: [
+      { title: '高中物理｜电磁震荡 学校里听不懂？一个视频教会你', bv: 'BV1bWt26nER5' },
+      { title: 'LC振荡电路：两个基本元器件组合起来的神奇效果（抖音）', dy: '7399551676325137718' },
+      { title: '高中物理｜电磁震荡（抖音）', dy: '7673399153272424315' },
+      { title: '动画详解：LC振荡电路（抖音）', dy: '7334945798523784498' },
+      { title: 'RC滤波器的原理（抖音）', dy: '7627760068842462922' },
+      { title: 'LC振荡电路，实验+动画讲解（抖音）', dy: '7225415947413196092' },
+      { title: '实验分享 | LC振荡电路原理讲解+示波器波形演示（抖音）', dy: '7164317164315364612' },
+      { title: '电路实验：观察RLC二阶电路阻尼振荡波形和RC一阶（抖音）', dy: '7232148499352030519' },
+      { title: '汽车减震器的结构作用及避震原理（抖音）', dy: '7655672984815848756' },
+    ],
+  },
 ]
 
 // B 站官方嵌入式播放器:高清 + 默认关弹幕 + 不自动播放
 const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&page=1&high_quality=1&danmaku=0&autoplay=0`
+// 抖音开放平台 iframe 播放器
+const douyinEmbedUrl = (dy) => `https://open.douyin.com/player/video?vid=${dy}&autoplay=0`
+
+// 抖音视频缩放:以 1280px 宽度渲染播放器(桌面端布局),再 CSS 缩小到容器宽度
+const dyWrappers = ref([])
+const dyScale = ref(1)
+let ro = null
+
+function setDyWrapper(el) {
+  if (el && !dyWrappers.value.includes(el)) {
+    dyWrappers.value.push(el)
+  }
+}
+
+function updateScale() {
+  const w = dyWrappers.value[0]?.clientWidth
+  if (w > 0) dyScale.value = w / 1280
+}
+
+onMounted(() => {
+  updateScale()
+  if (dyWrappers.value[0]) {
+    ro = new ResizeObserver(updateScale)
+    ro.observe(dyWrappers.value[0])
+  }
+})
+
+onBeforeUnmount(() => {
+  ro?.disconnect()
+})
+
+// ── 视频放大/缩小 ──
+const expandedVideo = ref(null)
+
+function expandVideo(video) {
+  expandedVideo.value = video
+}
+
+function closeExpand() {
+  expandedVideo.value = null
+}
+
+function onModalKeydown(e) {
+  if (e.key === 'Escape') closeExpand()
+}
+
+watch(expandedVideo, (v) => {
+  document.body.style.overflow = v ? 'hidden' : ''
+  if (v) {
+    window.addEventListener('keydown', onModalKeydown)
+  } else {
+    window.removeEventListener('keydown', onModalKeydown)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onModalKeydown)
+  document.body.style.overflow = ''
+})
 </script>
 
 <template>
@@ -66,23 +144,58 @@ const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&pag
         class="group border border-[#e2e7f0] rounded-[10px] overflow-hidden bg-white transition-all duration-200 hover:border-[#c9d6ec] hover:shadow-[0_6px_18px_rgba(28,42,80,0.10)]"
         data-vr="card"
       >
-        <div class="relative aspect-video">
+        <!-- B 站 iframe 嵌入 -->
+        <div v-if="video.bv" class="relative aspect-video">
           <iframe
             class="absolute inset-0 w-full h-full border-0"
             :src="embedUrl(video.bv)"
             scrolling="no"
             frameborder="0"
             allowfullscreen="true"
+            loading="lazy"
             data-vr="frame"
           ></iframe>
         </div>
-        <p
-          class="px-3 py-2.5 text-[13px] leading-snug text-[#33415e] line-clamp-2"
-          :title="video.title"
-          data-vr="title"
+        <!-- 抖音 iframe 嵌入:大尺寸渲染 + CSS 缩放,避免比例问题 -->
+        <div
+          v-else-if="video.dy"
+          :ref="setDyWrapper"
+          class="relative overflow-hidden aspect-video"
         >
-          {{ video.title }}
-        </p>
+          <iframe
+            class="dy-player"
+            :src="douyinEmbedUrl(video.dy)"
+            :style="{ transform: `scale(${dyScale})`, transformOrigin: 'top left' }"
+            width="1280"
+            height="720"
+            scrolling="no"
+            frameborder="0"
+            allowfullscreen="true"
+            loading="lazy"
+            data-vr="frame"
+          ></iframe>
+        </div>
+        <div class="relative flex items-start gap-1 px-3 py-2.5">
+          <p
+            class="flex-1 text-[13px] leading-snug text-[#33415e] line-clamp-2"
+            :title="video.title"
+            data-vr="title"
+          >
+            {{ video.title }}
+          </p>
+          <button
+            class="expand-btn shrink-0 mt-0.5"
+            @click="expandVideo(video)"
+            title="放大播放"
+          >
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -104,4 +217,105 @@ const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&pag
       <line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   </a>
+
+  <!-- 视频放大弹窗 -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="expandedVideo"
+        class="fixed inset-0 z-[9999] flex items-center justify-center"
+      >
+        <!-- 背景遮罩 -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeExpand"></div>
+        <!-- 内容卡片 -->
+        <div class="relative z-10 w-[94vw] max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+            <h3 class="text-[15px] font-semibold text-gray-800 truncate pr-4">{{ expandedVideo.title }}</h3>
+            <button
+              class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              @click="closeExpand"
+              title="缩小"
+            >
+              <svg viewBox="0 0 24 24" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div class="relative aspect-video bg-black">
+            <iframe
+              v-if="expandedVideo.bv"
+              class="absolute inset-0 w-full h-full border-0"
+              :src="embedUrl(expandedVideo.bv)"
+              scrolling="no"
+              frameborder="0"
+              allowfullscreen="true"
+            ></iframe>
+            <iframe
+              v-else-if="expandedVideo.dy"
+              class="absolute inset-0 w-full h-full border-0"
+              :src="douyinEmbedUrl(expandedVideo.dy)"
+              scrolling="no"
+              frameborder="0"
+              allowfullscreen="true"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
+
+<style scoped>
+.dy-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+}
+
+/* 放大按钮 */
+.expand-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.group:hover .expand-btn {
+  opacity: 1;
+}
+
+.expand-btn:hover {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+/* 弹窗动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-active .relative {
+  transition: transform 0.25s ease;
+}
+
+.modal-enter-from .relative {
+  transform: scale(0.92);
+}
+</style>
