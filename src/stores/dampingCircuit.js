@@ -18,6 +18,15 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
   const DEFAULT_VALUES = { R: 100, RV: 100, L: 100, C: 0.05, CV: 0.05, V: 0.9 }
   const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
 
+  // 信号源默认参数(波形/频率/占空比/周期ms/脉宽ms)与量程
+  const DEFAULT_SIGNAL = { frequency: 100, waveform: 'sine', dutyCycle: 50, period: 10, pulseWidth: 5 }
+  const SIGNAL_RANGE = {
+    frequency: { min: 1, max: 10000 },
+    dutyCycle: { min: 10, max: 90 },
+    period: { min: 0.1, max: 1000 },
+    pulseWidth: { min: 0.01, max: 999 },
+  }
+
   // ===== 公差设置(独立一份) =====
   const toleranceEnabled = ref(false)
   const tolerancePercent = ref(5)
@@ -68,6 +77,14 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
       id: Date.now() + Math.random(),
       value: DEFAULT_VALUES[type] || 0,
       endpoints: makeEndpoints(x, y),
+    }
+    // 信号源附加波形参数(振幅复用 value,频率/波形/占空比/周期/脉宽独立存储)
+    if (type === 'V') {
+      comp.signalFrequency = DEFAULT_SIGNAL.frequency
+      comp.signalWaveform = DEFAULT_SIGNAL.waveform
+      comp.signalDutyCycle = DEFAULT_SIGNAL.dutyCycle
+      comp.signalPeriod = DEFAULT_SIGNAL.period
+      comp.signalPulseWidth = DEFAULT_SIGNAL.pulseWidth
     }
     components.value = [...components.value, comp]
     return components.value.length - 1
@@ -175,6 +192,31 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
     const range = VALUE_RANGE[comp.type]
     const v = range ? Math.min(Math.max(num, range.min), range.max) : num
     components.value = components.value.map((c, i) => (i === index ? { ...c, value: v } : c))
+  }
+
+  /** 修改信号源波形参数(频率/波形类型/占空比/周期/脉宽,周期与频率/脉宽与占空比双向同步) */
+  function updateComponentSignal(index, prop, value) {
+    const comp = components.value[index]
+    if (!comp || comp.type !== 'V') return
+    const updates = {}
+    if (prop === 'frequency') {
+      updates.signalFrequency = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.frequency, SIGNAL_RANGE.frequency.min), SIGNAL_RANGE.frequency.max)
+      updates.signalPeriod = +(1000 / updates.signalFrequency).toFixed(4)
+    } else if (prop === 'dutyCycle') {
+      updates.signalDutyCycle = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.dutyCycle, SIGNAL_RANGE.dutyCycle.min), SIGNAL_RANGE.dutyCycle.max)
+      const period = comp.signalPeriod || DEFAULT_SIGNAL.period
+      updates.signalPulseWidth = +(period * updates.signalDutyCycle / 100).toFixed(4)
+    } else if (prop === 'waveform') {
+      updates.signalWaveform = value
+    } else if (prop === 'period') {
+      updates.signalPeriod = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.period, SIGNAL_RANGE.period.min), SIGNAL_RANGE.period.max)
+      updates.signalFrequency = +Math.min(Math.max(1000 / updates.signalPeriod, SIGNAL_RANGE.frequency.min), SIGNAL_RANGE.frequency.max).toFixed(4)
+    } else if (prop === 'pulseWidth') {
+      const period = comp.signalPeriod || DEFAULT_SIGNAL.period
+      updates.signalPulseWidth = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.pulseWidth, SIGNAL_RANGE.pulseWidth.min), Math.min(period * 0.9, SIGNAL_RANGE.pulseWidth.max))
+      updates.signalDutyCycle = +Math.min(Math.max((updates.signalPulseWidth / period) * 100, SIGNAL_RANGE.dutyCycle.min), SIGNAL_RANGE.dutyCycle.max).toFixed(1)
+    }
+    components.value = components.value.map((c, i) => (i === index ? { ...c, ...updates } : c))
   }
 
   /** 清空电路(元件/导线/仿真结果/公差缓存) */
@@ -417,9 +459,12 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
     removeWire,
     connectEndpoints,
     updateComponentValue,
+    updateComponentSignal,
     resetCircuit,
     validateCircuit,
     extractCircuitParams,
     simulate,
+    DEFAULT_SIGNAL,
+    SIGNAL_RANGE,
   }
 })

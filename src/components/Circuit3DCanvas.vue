@@ -75,7 +75,7 @@ const props = defineProps({
   emptyText: { type: String, default: '' },
 })
 
-const emit = defineEmits(['place', 'move', 'wire', 'delete-component', 'delete-wire', 'focus-component'])
+const emit = defineEmits(['place', 'move', 'wire', 'delete-component', 'delete-wire', 'focus-component', 'wire-click'])
 
 const canvas3dRef = ref(null)
 const autoRotate3D = ref(false)
@@ -262,10 +262,16 @@ function onPointerDown(event) {
     }
     return
   }
-  // 3) 空白:有待放置类型则点击摆放;否则取消接线选中
+  // 3) 空白:有待放置类型则点击摆放;否则尝试拾取导线(上抛 wire-click);最后取消接线选中
   if (props.pendingType) {
     const hit = intersectAt(event)
     if (hit) emit('place', { type: props.pendingType, x: hit.x + midX3, y: hit.z + midZ3 })
+    return
+  }
+  // 尝试拾取导线:点击导线展示阻尼/波形
+  const hitWire = pickWire(event)
+  if (hitWire) {
+    emit('wire-click', hitWire.userData.wireIndex)
     return
   }
   clearWireSel()

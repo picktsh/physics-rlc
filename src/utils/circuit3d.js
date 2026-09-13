@@ -244,37 +244,55 @@ export function addVarCap(g, comp, ctx) {
 }
 
 // 信号源:圆角白面板+荧光波形屏+双旋钮+红黑输出端子(呼应页面卡片风)
-let waveTex = null
-function getWaveTex() {
-  if (!waveTex) {
-    const cv = document.createElement('canvas')
-    cv.width = 256
-    cv.height = 128
-    const c = cv.getContext('2d')
-    c.clearRect(0, 0, 256, 128)
-    // 屏幕内框与刻度
-    c.strokeStyle = 'rgba(255,255,255,0.16)'
-    c.lineWidth = 1.5
-    c.strokeRect(8, 8, 240, 112)
-    c.setLineDash([6, 8])
-    c.beginPath()
-    c.moveTo(128, 8)
-    c.lineTo(128, 120)
-    c.stroke()
-    c.setLineDash([])
-    // 荧光青正弦波形
-    c.strokeStyle = '#57e8c9'
-    c.lineWidth = 3
-    c.beginPath()
-    for (let i = 8; i <= 248; i++) {
-      const y = 64 - 40 * Math.sin(((i - 8) / 240) * Math.PI * 4)
-      i === 8 ? c.moveTo(i, y) : c.lineTo(i, y)
+// 波形屏纹理缓存(按波形参数组合键值缓存,参数变化时自动生成新纹理)
+const waveTexCache = new Map()
+function getWaveTex(waveform = 'sine', frequency = 100, dutyCycle = 50) {
+  const key = `${waveform}|${frequency}|${dutyCycle}`
+  if (waveTexCache.has(key)) return waveTexCache.get(key)
+  const cv = document.createElement('canvas')
+  cv.width = 256
+  cv.height = 128
+  const c = cv.getContext('2d')
+  c.clearRect(0, 0, 256, 128)
+  // 屏幕内框与刻度
+  c.strokeStyle = 'rgba(255,255,255,0.16)'
+  c.lineWidth = 1.5
+  c.strokeRect(8, 8, 240, 112)
+  c.setLineDash([6, 8])
+  c.beginPath()
+  c.moveTo(128, 8)
+  c.lineTo(128, 120)
+  c.stroke()
+  c.setLineDash([])
+  // 根据波形参数绘制对应波形(频率越高周期数越多)
+  const cycles = Math.max(1, Math.min(8, Math.round(Math.log10(frequency) * 1.5 + 1)))
+  c.strokeStyle = '#57e8c9'
+  c.lineWidth = 3
+  c.beginPath()
+  for (let i = 8; i <= 248; i++) {
+    const t = (i - 8) / 240
+    let y
+    if (waveform === 'square') {
+      const phase = (t * cycles) % 1
+      const high = phase < dutyCycle / 100
+      y = high ? 24 : 104
+      // 过渡边缘抗锯齿(2px 渐变)
+      const edgeWidth = 2 / 240 * cycles
+      if (phase < edgeWidth) y = 104 - (104 - 24) * (phase / edgeWidth)
+      else if (phase > dutyCycle / 100 - edgeWidth && phase < dutyCycle / 100 + edgeWidth) {
+        const blend = (phase - dutyCycle / 100 + edgeWidth) / (2 * edgeWidth)
+        y = 24 + (104 - 24) * blend
+      }
+    } else {
+      y = 64 - 40 * Math.sin(t * cycles * Math.PI * 2)
     }
-    c.stroke()
-    waveTex = new THREE.CanvasTexture(cv)
-    waveTex.colorSpace = THREE.SRGBColorSpace
+    i === 8 ? c.moveTo(i, y) : c.lineTo(i, y)
   }
-  return waveTex
+  c.stroke()
+  const tex = new THREE.CanvasTexture(cv)
+  tex.colorSpace = THREE.SRGBColorSpace
+  waveTexCache.set(key, tex)
+  return tex
 }
 export function addSource(g, comp, ctx) {
   const hx = ctx.wx(comp.x)
@@ -282,13 +300,13 @@ export function addSource(g, comp, ctx) {
   const body = new THREE.Mesh(new THREE.BoxGeometry(46, 18, 28), cmat('#f4f8f6', 0.6, 0.02))
   body.position.set(hx, 9, z0)
   g.add(body)
-  // 荧光屏(深青底 + 波形亮层)
+  // 荧光屏(深青底 + 波形亮层,波形随信号源参数动态渲染)
   const scr = new THREE.Mesh(new THREE.BoxGeometry(24, 1, 14), cmat('#12253f', 0.5, 0.05))
   scr.position.set(hx, 18.55, z0 - 1)
   g.add(scr)
   const wave = new THREE.Mesh(
     new THREE.BoxGeometry(22, 0.24, 12.4),
-    new THREE.MeshBasicMaterial({ map: getWaveTex(), transparent: true })
+    new THREE.MeshBasicMaterial({ map: getWaveTex(comp.signalWaveform, comp.signalFrequency, comp.signalDutyCycle), transparent: true })
   )
   wave.position.set(hx, 19.1, z0 - 1)
   g.add(wave)

@@ -808,7 +808,7 @@ function drawCircuit() {
       ctx.textAlign = 'center'
       ctx.fillText('CV', 0, -19)
     } else if (comp.type === 'V') {
-      // 交流电压源:两端引线 + 圆环内正弦波
+      // 交流电压源:两端引线 + 圆环内波形(随信号源波形参数动态切换)
       ctx.beginPath()
       ctx.moveTo(-30, 0)
       ctx.lineTo(-16, 0)
@@ -816,11 +816,24 @@ function drawCircuit() {
       ctx.beginPath()
       ctx.arc(0, 0, 16, 0, 2 * Math.PI)
       ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(-8, 0)
-      ctx.quadraticCurveTo(-4, -8, 0, 0)
-      ctx.quadraticCurveTo(4, 8, 8, 0)
-      ctx.stroke()
+      if (comp.signalWaveform === 'square') {
+        // 方波符号
+        ctx.beginPath()
+        ctx.moveTo(-8, 4)
+        ctx.lineTo(-8, -4)
+        ctx.lineTo(0, -4)
+        ctx.lineTo(0, 4)
+        ctx.lineTo(8, 4)
+        ctx.lineTo(8, -4)
+        ctx.stroke()
+      } else {
+        // 正弦波符号(默认)
+        ctx.beginPath()
+        ctx.moveTo(-8, 0)
+        ctx.quadraticCurveTo(-4, -8, 0, 0)
+        ctx.quadraticCurveTo(4, 8, 8, 0)
+        ctx.stroke()
+      }
       ctx.beginPath()
       ctx.moveTo(16, 0)
       ctx.lineTo(30, 0)
@@ -879,7 +892,7 @@ function updateComponentValue(index, value) {
 }
 
 function getComponentLabel(type) {
-  const labels = { R: '电阻 R', RV: '变阻器 RV', L: '电感 L', C: '电容 C', CV: '可调电容 CV', V: '电压 V' }
+  const labels = { R: '电阻 R', RV: '变阻器 RV', L: '电感 L', C: '电容 C', CV: '可调电容 CV', V: '信号源 V' }
   return labels[type] || type
 }
 
