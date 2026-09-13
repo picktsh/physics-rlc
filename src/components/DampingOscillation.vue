@@ -236,7 +236,7 @@
           <span class="text-xs font-semibold" :class="dampingStateColor">{{ dampingStateLabel }}</span>
           <button class="text-[11px] text-gray-400 hover:text-gray-600" @click="wireClicked = false">✕ 关闭</button>
         </div>
-        <canvas ref="dampingCanvasRef" class="w-full h-[220px] sm:h-[280px] rounded-xl border border-gray-700 bg-[#1a1a2e] cursor-crosshair" @mousemove="onCanvasMove($event, 'damping')" @mouseleave="cursorTime = null; redrawAll()"></canvas>
+        <canvas ref="dampingCanvasRef" class="w-full h-[220px] sm:h-[280px] rounded-xl border border-gray-700 bg-[#1a1a2e] cursor-crosshair" @mousemove="onCanvasMove($event, 'damping')" @mouseleave="dampingCursor = null; redrawAll()"></canvas>
         <!-- 坐标轴范围调节器 -->
         <div class="mt-2 flex items-center gap-3 flex-wrap">
           <span class="text-[10px] text-gray-500 font-semibold">📐 坐标范围</span>
@@ -273,35 +273,35 @@
     </section>
 
     <!-- ============ LTspice 瞬态分析参数 (.tran) ============ -->
-    <div v-if="simulation?.success" class="mb-3 rounded-xl border border-gray-700 bg-[#1a1a2e] px-4 py-3">
+    <div v-if="simulation?.success" class="mb-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
       <div class="flex items-center gap-2 mb-2">
-        <span class="text-xs font-semibold text-gray-300">📊 编辑仿真命令</span>
-        <span class="font-mono text-[10px] text-gray-500">.tran</span>
+        <span class="text-xs font-semibold text-gray-700">📊 编辑仿真命令</span>
+        <span class="font-mono text-[10px] text-gray-400">.tran</span>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div>
-          <label class="text-[10px] text-gray-400 block mb-0.5">Stop Time</label>
+          <label class="text-[10px] text-gray-500 block mb-0.5">Stop Time</label>
           <div class="flex items-center gap-1">
-            <input type="number" step="any" min="0.001" v-model.number="simStopTime" class="w-full px-2 py-1 bg-[#0d0d1a] border border-gray-600 rounded text-xs text-green-400 font-mono focus:border-green-500 focus:outline-none" />
+            <input type="number" step="any" min="0.001" v-model.number="simStopTime" class="w-full px-2 py-1 bg-gray-50 border border-gray-300 rounded text-xs text-gray-700 font-mono focus:border-blue-500 focus:outline-none" />
             <span class="text-[10px] text-gray-500 whitespace-nowrap">s</span>
           </div>
         </div>
         <div>
-          <label class="text-[10px] text-gray-400 block mb-0.5">开始保存数据的延迟 (Tdelay)</label>
+          <label class="text-[10px] text-gray-500 block mb-0.5">开始保存数据的延迟 (Tdelay)</label>
           <div class="flex items-center gap-1">
-            <input type="number" step="any" min="0" v-model.number="simTdelay" class="w-full px-2 py-1 bg-[#0d0d1a] border border-gray-600 rounded text-xs text-green-400 font-mono focus:border-green-500 focus:outline-none" />
+            <input type="number" step="any" min="0" v-model.number="simTdelay" class="w-full px-2 py-1 bg-gray-50 border border-gray-300 rounded text-xs text-gray-700 font-mono focus:border-blue-500 focus:outline-none" />
             <span class="text-[10px] text-gray-500 whitespace-nowrap">s</span>
           </div>
         </div>
         <div>
-          <label class="text-[10px] text-gray-400 block mb-0.5">最大步长</label>
+          <label class="text-[10px] text-gray-500 block mb-0.5">最大步长</label>
           <div class="flex items-center gap-1">
-            <input type="number" step="any" min="0" :value="simStopTime / 1000" disabled class="w-full px-2 py-1 bg-[#0d0d1a]/50 border border-gray-700 rounded text-xs text-gray-500 font-mono" />
-            <span class="text-[10px] text-gray-600 whitespace-nowrap">s</span>
+            <input type="number" step="any" min="0" :value="simStopTime / 1000" disabled class="w-full px-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs text-gray-400 font-mono" />
+            <span class="text-[10px] text-gray-400 whitespace-nowrap">s</span>
           </div>
         </div>
         <div class="flex items-end">
-          <button class="w-full px-3 py-1 bg-green-700 hover:bg-green-600 text-white rounded text-xs font-semibold transition-all" @click="redrawAll">▶ 运行</button>
+          <button class="w-full px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold transition-all" @click="redrawAll">▶ 运行</button>
         </div>
       </div>
     </div>
@@ -313,7 +313,7 @@
         ⚡ 请先完成电路搭建并点击「仿真」,仿真成功后点击导线查看波形
       </div>
       <div v-else class="mt-3">
-        <canvas ref="capacitorCanvasRef" class="w-full h-[220px] sm:h-[280px] rounded-xl border border-gray-700 bg-[#1a1a2e] cursor-crosshair" @mousemove="onCanvasMove($event, 'cap')" @mouseleave="cursorTime = null; redrawAll()"></canvas>
+        <canvas ref="capacitorCanvasRef" class="w-full h-[220px] sm:h-[280px] rounded-xl border border-gray-700 bg-[#1a1a2e] cursor-crosshair" @mousemove="onCanvasMove($event, 'cap')" @mouseleave="capCursor = null; redrawAll()"></canvas>
         <!-- 电容电压波形坐标轴范围调节器 -->
         <div class="mt-2 flex items-center gap-3 flex-wrap">
           <span class="text-[10px] text-gray-500 font-semibold">📐 坐标范围</span>
@@ -452,7 +452,8 @@ const instSliderValue = ref(500)
 // LTspice 风格瞬态分析参数
 const simStopTime = ref(0.01) // Stop Time (s)
 const simTdelay = ref(0) // Time to start saving data (s)
-const cursorTime = ref(null) // 光标位置对应的时间值(s)
+const dampingCursor = ref(null) // { time, x, y } 阻尼状态画布光标
+const capCursor = ref(null)     // { time, x, y } 电容电压画布光标
 
 // 阻尼状态曲线坐标轴范围调节
 const axisYMinMul = ref(-0.1) // Y轴下限倍数(×V₀)
@@ -582,18 +583,30 @@ function formatTimeLabel(t) {
   return t.toFixed(3) + 's'
 }
 
-// Canvas 光标跟踪
+// Canvas 光标跟踪(各画布独立:仅当前悬停画布显示光标,光标与波形交点即为查询数据点)
 function onCanvasMove(event, canvasId) {
   if (!dampingParams.value) return
   const canvas = canvasId === 'damping' ? dampingCanvasRef.value : capacitorCanvasRef.value
   if (!canvas) return
   const rect = canvas.getBoundingClientRect()
-  const padLeft = 60, padRight = 20
+  const padLeft = 60, padRight = 20, padTop = 24, padBottom = 36
   const plotW = rect.width - padLeft - padRight
-  const x = event.clientX - rect.left
-  const ratio = (x - padLeft) / plotW
-  if (ratio >= 0 && ratio <= 1) {
-    cursorTime.value = simTdelay.value + ratio * getTimeScale()
+  const mx = event.clientX - rect.left
+  const my = event.clientY - rect.top
+  const ratio = (mx - padLeft) / plotW
+  if (ratio >= 0 && ratio <= 1 && my >= padTop && my <= rect.height - padBottom) {
+    // 使用各画布实际显示的时间轴范围计算光标时间,确保交点与波形一致
+    const displayTMax = canvasId === 'damping'
+      ? (axisXScale.value > 0 ? axisXScale.value : getTimeScale())
+      : (capXScale.value > 0 ? capXScale.value : getTimeScale())
+    const t = simTdelay.value + ratio * displayTMax
+    if (canvasId === 'damping') {
+      dampingCursor.value = { time: t }
+      capCursor.value = null
+    } else {
+      capCursor.value = { time: t }
+      dampingCursor.value = null
+    }
     redrawAll()
   }
 }
@@ -844,26 +857,27 @@ function drawDampingCurve() {
     ctx.fillText('V₀(1±e⁻ᵅᵗ)', W - pad.right - 4, pad.top + 14)
   }
 
-  // 光标(LTspice 风格黄色虚线 + 读数)
-  if (cursorTime.value !== null) {
-    const cx = toX(cursorTime.value)
-    if (cx >= pad.left && cx <= W - pad.right) {
-      const cv = calcDampingCurve(dp, cursorTime.value)
-      const cy = toY(cv)
-      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1; ctx.setLineDash([3, 3])
-      ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(pad.left, cy); ctx.lineTo(W - pad.right, cy); ctx.stroke()
-      ctx.setLineDash([])
-      // 光标点
-      ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill()
-      // 读数框
-      const txt = `(${formatTimeLabel(cursorTime.value)}, ${cv.toFixed(4)}V)`
-      const tx = cx + 10 > W - pad.right - 120 ? cx - 120 : cx + 10
-      const ty = cy - 10 < pad.top + 16 ? cy + 20 : cy - 10
-      ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(tx - 2, ty - 11, ctx.measureText(txt).width + 6, 14)
-      ctx.fillStyle = '#ffd700'; ctx.font = '10px monospace'; ctx.textAlign = 'left'
-      ctx.fillText(txt, tx, ty)
-    }
+  // 光标(仅当本画布处于悬停状态时显示,吸附到曲线数据点)
+  if (dampingCursor.value !== null) {
+    const ct = dampingCursor.value.time
+    const cx = toX(ct)
+    const cv = calcDampingCurve(dp, ct)
+    const cy = toY(cv)
+    // 竖直虚线(跟随光标 x)
+    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1; ctx.setLineDash([3, 3])
+    ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke()
+    // 水平虚线(吸附到曲线 y)
+    ctx.beginPath(); ctx.moveTo(pad.left, cy); ctx.lineTo(W - pad.right, cy); ctx.stroke()
+    ctx.setLineDash([])
+    // 曲线上的数据点
+    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill()
+    // 读数框
+    const txt = `(${formatTimeLabel(ct)}, ${cv.toFixed(4)}V)`
+    const tx = cx + 10 > W - pad.right - 120 ? cx - 120 : cx + 10
+    const ty = cy - 10 < pad.top + 16 ? cy + 20 : cy - 10
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(tx - 2, ty - 11, ctx.measureText(txt).width + 6, 14)
+    ctx.fillStyle = '#ffd700'; ctx.font = '10px monospace'; ctx.textAlign = 'left'
+    ctx.fillText(txt, tx, ty)
   }
 }
 
@@ -957,24 +971,27 @@ function drawCapacitorWaveform() {
   ctx.fillStyle = '#00e4a0'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'left'
   ctx.fillText('Uc', pad.left + 6, pad.top + 14)
 
-  // 光标
-  if (cursorTime.value !== null) {
-    const cx = toX(cursorTime.value)
-    if (cx >= pad.left && cx <= W - pad.right) {
-      const cv = calcCapacitorVoltage(dp, cursorTime.value)
-      const cy = toY(cv)
-      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1; ctx.setLineDash([3, 3])
-      ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(pad.left, cy); ctx.lineTo(W - pad.right, cy); ctx.stroke()
-      ctx.setLineDash([])
-      ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill()
-      const txt = `(${formatTimeLabel(cursorTime.value)}, ${cv.toFixed(4)}V)`
-      const tx = cx + 10 > W - pad.right - 120 ? cx - 120 : cx + 10
-      const ty = cy - 10 < pad.top + 16 ? cy + 20 : cy - 10
-      ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(tx - 2, ty - 11, ctx.measureText(txt).width + 6, 14)
-      ctx.fillStyle = '#ffd700'; ctx.font = '10px monospace'; ctx.textAlign = 'left'
-      ctx.fillText(txt, tx, ty)
-    }
+  // 光标(仅当本画布处于悬停状态时显示,吸附到曲线数据点)
+  if (capCursor.value !== null) {
+    const ct = capCursor.value.time
+    const cx = toX(ct)
+    const cv = calcCapacitorVoltage(dp, ct)
+    const cy = toY(cv)
+    // 竖直虚线(跟随光标 x)
+    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1; ctx.setLineDash([3, 3])
+    ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke()
+    // 水平虚线(吸附到曲线 y)
+    ctx.beginPath(); ctx.moveTo(pad.left, cy); ctx.lineTo(W - pad.right, cy); ctx.stroke()
+    ctx.setLineDash([])
+    // 曲线上的数据点
+    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2 * Math.PI); ctx.fill()
+    // 读数框
+    const txt = `(${formatTimeLabel(ct)}, ${cv.toFixed(4)}V)`
+    const tx = cx + 10 > W - pad.right - 120 ? cx - 120 : cx + 10
+    const ty = cy - 10 < pad.top + 16 ? cy + 20 : cy - 10
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(tx - 2, ty - 11, ctx.measureText(txt).width + 6, 14)
+    ctx.fillStyle = '#ffd700'; ctx.font = '10px monospace'; ctx.textAlign = 'left'
+    ctx.fillText(txt, tx, ty)
   }
 }
 
