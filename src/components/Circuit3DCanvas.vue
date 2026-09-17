@@ -11,7 +11,7 @@
         <canvas
           ref="canvas3dRef"
           :class="zoomed3D ? 'cb3d-canvas-zoomed' : ''"
-          class="flex-1 min-w-0 h-[300px] sm:h-[400px] lg:h-[460px] xl:h-[540px] rounded-xl bg-gradient-to-b from-[#eef4fc] via-[#e2ecf8] to-[#c0d4ee] touch-none cursor-grab active:cursor-grabbing shadow-[0_16px_36px_-18px_rgba(37,99,235,0.45)]"
+          class="c3d-stage flex-1 min-w-0 h-[300px] sm:h-[400px] lg:h-[460px] xl:h-[540px] rounded-xl bg-gradient-to-b from-[#eef4fc] via-[#e2ecf8] to-[#c0d4ee] touch-none cursor-grab active:cursor-grabbing shadow-[0_16px_36px_-18px_rgba(37,99,235,0.45)]"
           @dragover="onDragOver"
           @drop="onDrop"
           @dblclick="onDblClick"
@@ -59,6 +59,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { YWIRE, cmat, addBoard, addRoutes, addJunctions, addPads, buildComponentModel } from '../utils/circuit3d'
+import { canvasTheme } from '../utils/canvasTheme'
 
 // 共享 3D 电路场景组件:
 // - 只读模式(默认):与 03 tab「电路搭建」原 3D 预览行为一致,数据由父级 props 驱动,视角可旋转/缩放/放大观察
@@ -75,7 +76,7 @@ const props = defineProps({
   emptyText: { type: String, default: '' },
 })
 
-const emit = defineEmits(['place', 'move', 'wire', 'delete-component', 'delete-wire', 'focus-component', 'wire-click'])
+const emit = defineEmits(['place', 'move', 'wire', 'delete-component', 'delete-wire', 'focus-component', 'wire-click', 'zoom-change'])
 
 const canvas3dRef = ref(null)
 const autoRotate3D = ref(false)
@@ -94,6 +95,8 @@ function fitView3D() {
   controls3d.target.set(0, 8, 0)
   const dist = Math.max((boardR3 * 1.0) / Math.tan((camera3d.fov * Math.PI) / 360), 160)
   camera3d.position.copy(controls3d.target).addScaledVector(dir, dist)
+  // 放大观察中电路重建:重新落回当前构图偏移,保持元件位于画布上方
+  if (zoomShiftAmount3D) controls3d.target.y -= zoomShiftAmount3D
   controls3d.update()
 }
 function reset3DView() {
@@ -109,6 +112,13 @@ function toggle3DRotate() {
 // 画布 DOM 不移动(避免 Vue 重渲染重建 <canvas> 丢失 WebGL 上下文),仅切换 CSS 定位与尺寸
 const zoomed3D = ref(false)
 let prevBodyOverflow = ''
+// 放大构图:轨道目标缓动下移 → 整组元件(连同底板)跟随上移至画布上方,下方留出全屏观察空间;
+// zoomShiftAmount3D=已下移量(世界单位),退出时缓动归零精确回位,与场景重建互不残留
+let zoomShiftAmount3D = 0
+let zoomShiftTarget3D = 0
+function setZoomComposition(up) {
+  zoomShiftTarget3D = up ? boardR3 * 0.4 : 0
+}
 function toggleZoom3D() {
   if (zoomed3D.value) exitZoom3D()
   else enterZoom3D()
@@ -118,19 +128,19 @@ function enterZoom3D() {
   zoomed3D.value = true
   prevBodyOverflow = document.body.style.overflow
   document.body.style.overflow = 'hidden' // 放大期间锁住页面滚动,更像全屏
+  setZoomComposition(true) // 元件缓动上移至画布上方
   // 等 fixed 布局生效后再同步画布缓冲尺寸(ResizeObserver 亦会触发,此处双保险)
   requestAnimationFrame(() => {
     resize3D()
-    if (controls3d) controls3d.update()
   })
 }
 function exitZoom3D() {
   if (!zoomed3D.value) return
   zoomed3D.value = false
   document.body.style.overflow = prevBodyOverflow
+  setZoomComposition(false) // 元件缓动回位
   requestAnimationFrame(() => {
     resize3D()
-    if (controls3d) controls3d.update()
   })
 }
 function onZoomKeydown(e) {
@@ -485,6 +495,13 @@ function init3D() {
   }
   const loop = () => {
     raf3d = requestAnimationFrame(loop)
+    // 放大构图缓动:元件跟随上移/回位(指数逼近,末段吸附消除浮点尾差)
+    if (controls3d && zoomShiftAmount3D !== zoomShiftTarget3D) {
+      const diff = zoomShiftTarget3D - zoomShiftAmount3D
+      const step = Math.abs(diff) < 0.5 ? diff : diff * 0.12
+      zoomShiftAmount3D += step
+      controls3d.target.y -= step
+    }
     controls3d.update()
     try {
       renderer3d.render(scene3d, camera3d)
@@ -494,10 +511,11 @@ function init3D() {
   }
   loop()
 }
-// WebGL 不可用时的降级画面(淡青网格 + 提示文字,保证 3D 区域不空白)
+// WebGL 不可用时的降级画面(主题色网格 + 提示文字,保证 3D 区域不空白)
 function fallback3D() {
   const canvas = canvas3dRef.value
   if (!canvas) return
+  const ct = canvasTheme()
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   const dpr = window.devicePixelRatio || 1
@@ -506,7 +524,7 @@ function fallback3D() {
   canvas.width = rect.width * dpr
   canvas.height = rect.height * dpr
   ctx.scale(dpr, dpr)
-  ctx.strokeStyle = '#dde4ee'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 1
   for (let x = 40; x < rect.width; x += 40) {
     ctx.beginPath()
@@ -520,10 +538,14 @@ function fallback3D() {
     ctx.lineTo(rect.width, y)
     ctx.stroke()
   }
-  ctx.fillStyle = '#94a7c6'
+  ctx.fillStyle = ct.label
   ctx.font = '13px sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('当前环境不支持 WebGL,3D 实体预览不可用', rect.width / 2, rect.height / 2)
+}
+// 主题切换:WebGL 不可用的降级画面需按新配色重绘(WebGL 场景背景透明,由 CSS 渐变兜底)
+function onThemeChange3D() {
+  if (!ready3d) fallback3D()
 }
 function resize3D() {
   const el = canvas3dRef.value
@@ -549,10 +571,12 @@ function dispose3D() {
 onMounted(() => {
   init3D()
   window.addEventListener('keydown', onZoomKeydown)
+  window.addEventListener('themechange', onThemeChange3D)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onZoomKeydown)
+  window.removeEventListener('themechange', onThemeChange3D)
   if (zoomed3D.value) {
     zoomed3D.value = false
     document.body.style.overflow = prevBodyOverflow
@@ -568,6 +592,9 @@ watch(
     if (!n && zoomed3D.value) exitZoom3D()
   }
 )
+
+// 放大状态同步给父组件:父级据此把元件库浮层搬到放大画布上方,放大期间仍可拖入元件搭建
+watch(zoomed3D, (v) => emit('zoom-change', v))
 
 watch(
   [() => props.components, () => props.wires, () => props.junctions],

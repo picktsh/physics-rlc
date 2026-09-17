@@ -34,9 +34,9 @@
     >
       ⚠ 实测电流峰值 {{ ampPeaks.meas.toFixed(2) }} mA,高于仿真峰值 {{ ampPeaks.theory.toFixed(2) }} mA:蓝色仿真曲线被压缩变矮,请核对电流单位(mA)与仿真参数(R/L/C/V,元件修改后需重新仿真)
     </div>
-    <!-- 图表Canvas -->
+    <!-- 图表Canvas(bg-transparent:保留容器 blueprint-grid 图纸底,画布不遮挡网格) -->
     <div class="chart-container blueprint-grid rounded-xl p-3 border border-gray-200 relative">
-      <canvas ref="chartCanvasRef" class="w-full cursor-crosshair" :style="{ height: chartHeight + 'px' }" @click="handleChartClick" @mousemove="handleChartHover" @mouseleave="hideTooltip"></canvas>
+      <canvas ref="chartCanvasRef" class="w-full cursor-crosshair bg-transparent" :style="{ height: chartHeight + 'px' }" @click="handleChartClick" @mousemove="handleChartHover" @mouseleave="hideTooltip"></canvas>
       <div v-if="tooltip.show" class="chart-tooltip absolute bg-white/95 border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-lg pointer-events-none whitespace-nowrap" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }" v-html="tooltip.content"></div>
     </div>
 
@@ -59,8 +59,9 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { impedance, calculateRLC } from '../utils/physics'
+import { canvasTheme } from '../utils/canvasTheme'
 
 const props = defineProps({
   params: { type: Object, required: true },
@@ -122,7 +123,17 @@ function setupHiDPICanvas() {
   return { ctx, W: rect.width, H: chartHeight.value }
 }
 
+// 主题绘制色:每次绘制前从 CSS 变量同步(黑配色下网格/坐标轴/文字自动转浅色,曲线色与图例色块同源)
+let ct = canvasTheme()
+let chartAccent = ct.accent
+
+function syncChartTheme() {
+  ct = canvasTheme()
+  chartAccent = ct.accent
+}
+
 function drawChart() {
+  syncChartTheme()
   const info = setupHiDPICanvas()
   if (!info) return
   const { ctx, W, H } = info
@@ -144,7 +155,7 @@ function drawChart() {
   const N = SAMPLE_COUNT
 
   // 网格
-  ctx.strokeStyle = '#e6ecf4'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 1
   for (let i = 0; i <= 5; i++) {
     ctx.beginPath(); ctx.moveTo(pad.left, pad.top + (height / 5) * i); ctx.lineTo(W - pad.right, pad.top + (height / 5) * i); ctx.stroke()
@@ -174,7 +185,7 @@ function drawPlaceholder(ctx, W, H, pad) {
   const cy = H / 2
 
   // 浅色网格
-  ctx.strokeStyle = '#e6ecf4'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 1
   const gH = H - pad.top - pad.bottom
   const gW = W - pad.left - pad.right
@@ -184,7 +195,7 @@ function drawPlaceholder(ctx, W, H, pad) {
   }
 
   // 坐标轴装饰线
-  ctx.strokeStyle = '#c9d3e2'
+  ctx.strokeStyle = ct.axis
   ctx.lineWidth = 1.5
   ctx.beginPath()
   ctx.moveTo(pad.left, pad.top)
@@ -193,7 +204,7 @@ function drawPlaceholder(ctx, W, H, pad) {
   ctx.stroke()
 
   // 占位主图标 —— 三条虚线示意曲线
-  ctx.strokeStyle = '#d3dbe8'
+  ctx.strokeStyle = ct.axis
   ctx.lineWidth = 2
   ctx.setLineDash([6, 6])
   // 示意幅频曲线
@@ -205,18 +216,18 @@ function drawPlaceholder(ctx, W, H, pad) {
   ctx.setLineDash([])
 
   // 中央提示文字
-  ctx.fillStyle = '#9db0c8'
+  ctx.fillStyle = ct.label
   ctx.font = 'bold 16px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('请搭建 RLC 电路并点击「开始仿真」', cx, cy - 24)
 
-  ctx.fillStyle = '#b3c1d4'
+  ctx.fillStyle = ct.labelDim
   ctx.font = '13px system-ui'
   ctx.fillText('以查看幅频 / 相频 / 阻抗特性曲线', cx, cy + 12)
 
   // 小箭头提示
-  ctx.fillStyle = '#d3dbe8'
+  ctx.fillStyle = ct.axis
   ctx.font = '20px system-ui'
   ctx.fillText('👆', cx, cy + 58)
   ctx.font = '12px system-ui'
@@ -246,7 +257,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ampPeaks.value = { theory: theoryPeakInWindow, meas: measPeak }
 
   // 理论曲线
-  ctx.strokeStyle = '#2563eb'
+  ctx.strokeStyle = chartAccent
   ctx.lineWidth = 2.5
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -265,7 +276,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
 
   // Imax/√2截止线
   const halfPowerY = pad.top + height * (1 - theory.halfPower / maxI)
-  ctx.strokeStyle = '#7d93b8'
+  ctx.strokeStyle = ct.axis
   ctx.lineWidth = 1
   ctx.setLineDash([5, 3])
   ctx.beginPath()
@@ -277,11 +288,11 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   // Imax标记
   const resX = pad.left + ((theory.fr - fStart) / (fEnd - fStart)) * width
   const resY = pad.top + height * (1 - theory.Imax / maxI)
-  ctx.fillStyle = '#2563eb'
+  ctx.fillStyle = chartAccent
   ctx.beginPath()
   ctx.arc(resX, resY, 6, 0, 2 * Math.PI)
   ctx.fill()
-  ctx.fillStyle = '#2563eb'
+  ctx.fillStyle = chartAccent
   ctx.font = 'bold 11px system-ui'
   ctx.fillText('Imax=' + theory.Imax.toFixed(4) + 'mA', resX - 35, resY - 10)
 
@@ -372,7 +383,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
 
 // 相频特性
 function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N) {
-  ctx.strokeStyle = '#2563eb'
+  ctx.strokeStyle = chartAccent
   ctx.lineWidth = 2.5
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -458,7 +469,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   }
 
   // Y轴刻度（相位映射）
-  ctx.fillStyle = '#7d8aa6'
+  ctx.fillStyle = ct.label
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   for (let i = 0; i <= 5; i++) {
@@ -472,7 +483,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   }
   ctx.font = 'bold 13px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#3f4c63'
+  ctx.fillStyle = ct.ink
   ctx.fillText('频率 f (Hz)', W / 2, H - 5)
   ctx.save()
   ctx.translate(25, H / 2)
@@ -492,7 +503,7 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   }
   maxZ *= 1.1
 
-  ctx.strokeStyle = '#2563eb'
+  ctx.strokeStyle = chartAccent
   ctx.lineWidth = 2.5
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
@@ -509,9 +520,9 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   const theory = calcTheory(R, L, C, props.params.V || 5)
   const resX = pad.left + ((theory.fr - fStart) / (fEnd - fStart)) * width
   const resY = pad.top + height * (1 - R / maxZ)
-  ctx.fillStyle = '#2563eb'
+  ctx.fillStyle = chartAccent
   ctx.beginPath(); ctx.arc(resX, resY, 6, 0, 2 * Math.PI); ctx.fill()
-  ctx.fillStyle = '#2563eb'
+  ctx.fillStyle = chartAccent
   ctx.font = 'bold 11px system-ui'
   ctx.textAlign = 'center'
   ctx.fillText('Zmin=' + R + 'Ω', resX, resY - 12)
@@ -530,7 +541,7 @@ function formatAxisNum(v) {
 
 // 通用坐标轴绘制
 function drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxVal, xLabel, yLabel) {
-  ctx.fillStyle = '#7d8aa6'
+  ctx.fillStyle = ct.label
   ctx.font = '11px system-ui'
   ctx.textAlign = 'center'
   for (let i = 0; i <= 5; i++) {
@@ -542,7 +553,7 @@ function drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxVal, xLabel, y
   }
   ctx.font = 'bold 13px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#3f4c63'
+  ctx.fillStyle = ct.ink
   ctx.fillText(xLabel, W / 2, H - 5)
   ctx.save()
   ctx.translate(25, H / 2)
@@ -734,6 +745,12 @@ onMounted(() => {
     chartHeight.value = window.innerWidth < 640 ? 280 : window.innerWidth <= 768 ? 350 : 450
     drawChart()
   })
+  // 页面配色切换后按新强调色重绘曲线
+  window.addEventListener('themechange', drawChart)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('themechange', drawChart)
 })
 
 defineExpose({ drawChart })

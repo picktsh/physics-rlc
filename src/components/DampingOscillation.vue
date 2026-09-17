@@ -6,8 +6,13 @@
 
       <!-- 三栏布局(桌面):左=3D 元件库 / 中=3D 实验台 / 右=元件参数与公差;窄屏退化为单列堆叠 -->
       <div class="mt-3 lg:grid lg:grid-cols-[150px_minmax(0,1fr)_240px] lg:gap-4">
-        <!-- 左栏:3D 元件库(货架式,每项为同源 3D 商品图缩略图) -->
-        <div class="flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0">
+        <!-- 左栏:3D 元件库(货架式,每项为同源 3D 商品图缩略图;3D 放大观察期间浮层化搬到放大画布上方) -->
+        <div
+          :class="[
+            'flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0',
+            zoom3dActive ? 'palette-float' : '',
+          ]"
+        >
           <div
             v-for="comp in componentTypes"
             :key="comp.type"
@@ -68,6 +73,7 @@
             @delete-wire="onDeleteWire"
             @focus-component="onFocusComponent"
             @wire-click="onWireClick"
+            @zoom-change="zoom3dActive = $event"
           />
           <!-- 仿真状态条:校验失败给出原因,成功展示提取的等效参数与阻尼特征 -->
           <div
@@ -433,6 +439,8 @@ const thumbs = ref(null)
 let thumbTimer = null
 
 const pendingPlaceType = ref(null) // 触摸端:点选元件后等待点台面放置
+// 3D 放大观察态同步:放大期间元件库浮层搬到放大画布上方(仍可拖入/点选元件搭建)
+const zoom3dActive = ref(false)
 const focusedCompIndex = ref(null) // 双击 3D 元件定位的参数项高亮
 const compInputValues = ref({}) // 输入中间态(避免 parseFloat 吞掉 "0." 等小数输入过程)
 
@@ -1034,5 +1042,35 @@ watch([capYMinMul, capYMaxMul, capXScale], () => {
 <style scoped>
 .damping-canvas-wrap canvas {
   image-rendering: auto;
+}
+
+/* 3D 放大观察期间:元件库浮层搬到放大画布上方(左缘对齐放大层,层级高于放大层 z-2100),
+   保证放大态仍可从库中拖入/点选元件继续搭建;退出放大后恢复原左栏位置 */
+.palette-float {
+  position: fixed;
+  top: 10px;
+  left: 336px;
+  right: 12px;
+  z-index: 2200;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  background: var(--card-bg-95);
+  border: 1px solid var(--chip-border);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+.palette-float .component-item {
+  flex: 0 0 auto;
+  width: 86px;
+}
+@media (max-width: 1023.98px) {
+  .palette-float {
+    top: 58px;
+    left: 10px;
+    right: 10px;
+    justify-content: center;
+  }
 }
 </style>

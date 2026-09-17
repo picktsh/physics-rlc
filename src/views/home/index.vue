@@ -30,6 +30,12 @@ watch(activeTab, (val) => {
   sessionStorage.setItem('activeTab', val)
 })
 
+// 侧栏收起状态(桌面端,会话记忆):收起后目录滑出视口,右侧内容区自动拓满
+const railCollapsed = ref(sessionStorage.getItem('railCollapsed') === '1')
+watch(railCollapsed, (val) => {
+  sessionStorage.setItem('railCollapsed', val ? '1' : '0')
+})
+
 const tabs = [
   { key: 'formula', label: '公式原理' },
   { key: 'video', label: '视频资源' },
@@ -179,12 +185,22 @@ async function handleImportMeasHistory(file) {
 </script>
 
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'rail-collapsed': railCollapsed }">
     <!-- 左侧竖排目录(≥1024px 显示) -->
     <aside class="side-rail">
       <div class="side-brand">
-        <span class="side-brand-cn">RLC 串联谐振电路实验</span>
-        <span class="side-brand-en">SERIES RESONANCE · LAB</span>
+        <span class="side-brand-cn">基于Web栈的RLC电路虚仿平台</span>
+        <div class="side-brand-sub">
+          <span class="side-brand-en">SERIES RESONANCE · LAB</span>
+          <button
+            class="rail-toggle"
+            type="button"
+            title="收起目录"
+            aria-label="收起左侧目录"
+            :aria-expanded="!railCollapsed"
+            @click="railCollapsed = !railCollapsed"
+          ></button>
+        </div>
       </div>
       <nav class="side-nav" role="tablist" aria-label="实验章节">
         <button
@@ -208,7 +224,18 @@ async function handleImportMeasHistory(file) {
         <!-- 论文题头 -->
         <header>
           <div class="paper-head">
-            <h1>{{ currentTabLabel }}</h1>
+            <div class="paper-head-row">
+              <button
+                v-if="railCollapsed"
+                class="rail-toggle"
+                type="button"
+                title="展开目录"
+                aria-label="展开左侧目录"
+                :aria-expanded="!railCollapsed"
+                @click="railCollapsed = !railCollapsed"
+              ></button>
+              <h1>{{ currentTabLabel }}</h1>
+            </div>
             <p class="paper-meta">RLC 串联谐振电路实验 · 理论仿真 · 实测比对 · 误差分析</p>
           </div>
         </header>

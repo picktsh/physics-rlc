@@ -115,13 +115,13 @@ defineExpose({ scrollToBottom })
   line-height: 1.6;
 }
 :deep(.prose pre) {
-  background: #f5f5f5;
+  background: var(--panel-bg);
   padding: 0.75rem;
   border-radius: 0.5rem;
   overflow-x: auto;
 }
 :deep(.prose code) {
-  background: #f0f0f0;
+  background: var(--panel-bg);
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
@@ -137,18 +137,18 @@ defineExpose({ scrollToBottom })
 }
 :deep(.prose th),
 :deep(.prose td) {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--line);
   padding: 0.5rem;
   text-align: left;
 }
 :deep(.prose th) {
-  background: #f9fafb;
+  background: var(--soft-bg);
   font-weight: 600;
 }
 :deep(.prose blockquote) {
-  border-left: 4px solid #2563eb;
+  border-left: 4px solid var(--navy);
   padding-left: 1rem;
-  color: #6b7280;
+  color: var(--muted);
   font-style: italic;
 }
 </style>

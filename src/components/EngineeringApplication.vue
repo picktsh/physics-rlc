@@ -50,7 +50,7 @@ watch(subTab, (val) => {
   padding: 4px;
   margin-bottom: 16px;
   border-radius: 10px;
-  background: #eaeef6;
+  background: var(--panel-bg);
   border: 1px solid var(--line);
 }
 .sub-tab {
@@ -68,11 +68,11 @@ watch(subTab, (val) => {
 }
 .sub-tab:hover {
   color: var(--navy);
-  background: #edf2fd;
+  background: var(--tab-hover-bg);
 }
 .sub-tab.active,
 .sub-tab.active:hover {
-  background: #dbe7ff;
+  background: var(--tab-active-bg);
   color: var(--navy-deep);
   font-weight: 700;
 }

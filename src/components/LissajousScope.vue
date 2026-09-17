@@ -133,6 +133,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 import { impedance, current, resonantFreq } from '../utils/physics'
+import { canvasTheme } from '../utils/canvasTheme'
 
 const props = defineProps({
   params: {
@@ -393,6 +394,7 @@ function drawScope() {
 function drawAmpChart() {
   const canvas = ampCanvasRef.value
   if (!canvas) return
+  const ct = canvasTheme()
   const s = setupHiDPICanvas(canvas, canvasHeight.value)
   if (!s) return
   const { ctx, W, H } = s
@@ -400,7 +402,7 @@ function drawAmpChart() {
   const gW = W - pad.l - pad.r,
     gH = H - pad.t - pad.b
 
-  ctx.fillStyle = '#f4faf8'
+  ctx.fillStyle = ct.bg
   ctx.fillRect(0, 0, W, H)
 
   const f0 = measures.value.f0
@@ -420,7 +422,7 @@ function drawAmpChart() {
   const iMax = Imax * 1.2
 
   // 网格
-  ctx.strokeStyle = '#e2e8f2'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 0.5
   for (let i = 0; i <= 10; i++) {
     const x = pad.l + (gW * i) / 10,
@@ -436,7 +438,7 @@ function drawAmpChart() {
   }
 
   // 理论曲线
-  ctx.strokeStyle = '#8b9dc0'
+  ctx.strokeStyle = ct.axis
   ctx.lineWidth = 1.5
   ctx.setLineDash([4, 3])
   ctx.beginPath()
@@ -515,12 +517,12 @@ function drawAmpChart() {
   ctx.font = 'bold 11px Courier New'
   ctx.textAlign = 'left'
   ctx.fillText(`${measures.value.I.toFixed(4)} mA`, curX + 8, curY - 4)
-  ctx.fillStyle = '#7d8dab'
+  ctx.fillStyle = ct.label
   ctx.font = '10px Courier New'
   ctx.fillText(`${curFreq} Hz`, curX + 8, curY + 10)
 
   // 轴标签
-  ctx.fillStyle = '#7d8dab'
+  ctx.fillStyle = ct.label
   ctx.font = '12px system-ui'
   ctx.textAlign = 'center'
   ctx.fillText('频率 f (Hz)', pad.l + gW / 2, H - 8)
@@ -771,6 +773,9 @@ onMounted(() => {
   nextTick(() => {
     animate()
   })
+
+  // 主题切换:幅频图按新配色重绘(示波器为固定深色风格,无需重绘)
+  window.addEventListener('themechange', drawAmpChart)
 })
 
 // keep-alive 保活期间:切走(组件 DOM 移出文档、布局为 0)时暂停动画循环,
@@ -789,6 +794,7 @@ onActivated(() => {
 
 onUnmounted(() => {
   if (animId) cancelAnimationFrame(animId)
+  window.removeEventListener('themechange', drawAmpChart)
 })
 
 watch(() => props.params, () => {

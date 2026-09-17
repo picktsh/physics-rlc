@@ -572,7 +572,8 @@ onBeforeUnmount(dispose3D)
       </span>
     </div>
     <div class="hero3d-wrap">
-      <canvas ref="cvRef" v-if="!glFailed" class="hero3d-canvas" />
+      <!-- bg-transparent:WebGL 画布保持透明,露出容器的浅色渐变"演示台"背景 -->
+      <canvas ref="cvRef" v-if="!glFailed" class="hero3d-canvas bg-transparent" />
       <div v-else class="hero3d-fallback">
         当前环境不支持 WebGL,3D 实物示意不可用
       </div>
@@ -594,16 +595,16 @@ onBeforeUnmount(dispose3D)
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 10px;
-  background: #fff;
+  background: var(--card-bg);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 7px 11px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 26px -18px rgba(37, 99, 235, 0.35);
 }
 .hc-btn {
-  border: 1px solid #d7e1f1;
-  background: #f4f8ff;
-  color: #2c3e63;
+  border: 1px solid var(--chip-border);
+  background: var(--soft-blue);
+  color: var(--ink);
   border-radius: 8px;
   padding: 5px 13px;
   font-size: 12.5px;
@@ -614,12 +615,12 @@ onBeforeUnmount(dispose3D)
   white-space: nowrap;
 }
 .hc-btn:hover {
-  border-color: #b9c9e6;
-  background: #edf3fd;
+  border-color: var(--line-strong);
+  background: var(--soft-blue-strong);
 }
 .hc-btn.on {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
   color: #fff;
   box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
 }
@@ -629,10 +630,10 @@ onBeforeUnmount(dispose3D)
   gap: 4px;
   padding: 3px 10px;
   border-radius: 999px;
-  background: #fff;
-  border: 1px dashed #c3d3ef;
+  background: var(--card-bg);
+  border: 1px dashed var(--soft-blue-strong);
   font-size: 12px;
-  color: #5b6a85;
+  color: var(--muted);
   white-space: nowrap;
 }
 .hc-f0 b {
@@ -644,7 +645,7 @@ onBeforeUnmount(dispose3D)
 .hc-sld {
   flex: 1 1 170px;
   min-width: 130px;
-  accent-color: #2563eb;
+  accent-color: var(--accent-solid);
   cursor: pointer;
 }
 .hc-reads {
@@ -655,16 +656,16 @@ onBeforeUnmount(dispose3D)
 }
 .hc-rd {
   font-size: 12px;
-  color: #6d7b93;
-  background: #f4f7fc;
-  border: 1px solid #e6ecf6;
+  color: var(--muted);
+  background: var(--soft-bg);
+  border: 1px solid var(--line-soft);
   padding: 3px 9px;
   border-radius: 999px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .hc-rd b {
-  color: #15233b;
+  color: var(--ink);
   font-weight: 700;
   margin-left: 2px;
 }
@@ -678,26 +679,26 @@ onBeforeUnmount(dispose3D)
   letter-spacing: 0.04em;
 }
 .hc-zone.z-cap {
-  color: #1d4ed8;
-  background: #eef4ff;
-  border-color: #cdddfb;
+  color: var(--navy-deep);
+  background: var(--soft-blue);
+  border-color: var(--soft-blue-strong);
 }
 .hc-zone.z-res {
-  color: #1f7a43;
-  background: #e9f8ef;
-  border-color: #bfe8cd;
+  color: var(--success-ink);
+  background: var(--success-bg);
+  border-color: var(--success-border);
 }
 .hc-zone.z-ind {
-  color: #b45309;
-  background: #fdf4e7;
-  border-color: #f3dfbd;
+  color: var(--warn-ink);
+  background: var(--warn-bg);
+  border-color: var(--warn-bg);
 }
 .hc-legend {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   font-size: 11.5px;
-  color: #7d8aa6;
+  color: var(--faint);
   white-space: nowrap;
   letter-spacing: 0.03em;
 }
@@ -736,7 +737,7 @@ onBeforeUnmount(dispose3D)
   width: 100%;
   height: 100%;
   font-size: 13px;
-  color: #8a97ab;
+  color: var(--faint);
 }
 .hero3d-hint {
   position: absolute;
@@ -744,11 +745,11 @@ onBeforeUnmount(dispose3D)
   bottom: 10px;
   padding: 3px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(194, 207, 230, 0.8);
+  background: var(--card-bg-80);
+  border: 1px solid var(--line);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: #7d8aa6;
+  color: var(--faint);
   pointer-events: none;
   user-select: none;
 }
