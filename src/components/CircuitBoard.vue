@@ -84,7 +84,7 @@
         @dragover="allowDrop"
         @mousedown="handlePointerDown"
         @mousemove="handlePointerMove"
-        @touchstart="handleTouchStart"
+        @touchstart.prevent="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
       />
@@ -332,10 +332,13 @@ function setCircuitMode(mode) {
   drawCircuit()
 }
 
-function handleCanvasClick(event) {
+function handleCanvasClick(event, isTouch = false) {
   const rect = canvasRef.value.getBoundingClientRect()
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
+
+  // 手指点击精度远低于鼠标，触摸时放大各命中半径
+  const hitScale = isTouch ? 1.6 : 1
 
   if (circuitMode.value === 'wire') {
     // 检测端点点击
@@ -343,7 +346,7 @@ function handleCanvasClick(event) {
     for (let i = 0; i < props.components.length; i++) {
       for (let j = 0; j < props.components[i].endpoints.length; j++) {
         const ep = props.components[i].endpoints[j]
-        if (Math.sqrt((x - ep.x) ** 2 + (y - ep.y) ** 2) < 15) {
+        if (Math.sqrt((x - ep.x) ** 2 + (y - ep.y) ** 2) < 15 * hitScale) {
           clickedEp = { compIndex: i, epIndex: j }
           break
         }
@@ -356,7 +359,7 @@ function handleCanvasClick(event) {
     if (!clickedEp) {
       for (let ji = 0; ji < props.junctions.length; ji++) {
         const j = props.junctions[ji]
-        if (Math.sqrt((x - j.x) ** 2 + (y - j.y) ** 2) < 12) {
+        if (Math.sqrt((x - j.x) ** 2 + (y - j.y) ** 2) < 12 * hitScale) {
           clickedJunction = { junctionIndex: ji }
           break
         }
@@ -397,7 +400,7 @@ function handleCanvasClick(event) {
 
     // 检测点击导线中间 → 创建junction节点
     if (selectedEndpoint.value === null) {
-      const hitWire = findNearestWire(x, y)
+      const hitWire = findNearestWire(x, y, 10 * hitScale)
       if (hitWire !== null) {
         // 在点击位置创建junction
         const projPt = projectPointOnWire(x, y, hitWire)
@@ -467,7 +470,7 @@ function handleCanvasClick(event) {
       } else {
         minDist = pointToLineDistance(x, y, wire.x1, wire.y1, wire.x2, wire.y2)
       }
-      if (minDist < 8) {
+      if (minDist < 8 * hitScale) {
         const newWires = props.wires.filter((_, idx) => idx !== i)
         emit('update:wires', newWires)
         drawCircuit()
@@ -486,6 +489,8 @@ function getCanvasCoords(event) {
 }
 
 function handlePointerDown(event) {
+  // 移动端触摸已在 touchend 处理；touchstart.prevent 在部分浏览器仍会补发合成鼠标事件，这里一并屏蔽，避免点击被重复触发抵消
+  if (Date.now() - lastTouchTime < 400) return
   // PC端：如果有待放置的元件，先放置
   if (pendingPlaceType.value) {
     const { x, y } = getCanvasCoords(event)
@@ -523,20 +528,24 @@ function handlePointerMove(event) {
 // === 触摸事件桥接 ===
 let touchStartTime = 0
 let touchMoved = false
+let touchStartX = 0
+let touchStartY = 0
+let lastTouchTime = 0
 
 function handleTouchStart(event) {
   touchStartTime = Date.now()
+  lastTouchTime = touchStartTime
   touchMoved = false
-  // 如果有待放置元件，在 touchend 时处理
-  if (pendingPlaceType.value) return
-  // 接线模式下预览线跟随手指
-  if (circuitMode.value === 'wire' && selectedEndpoint.value !== null) {
-    event.preventDefault()
-  }
+  const t = event.touches[0]
+  touchStartX = t.clientX
+  touchStartY = t.clientY
+  // touchstart 已在模板上 .prevent：屏蔽合成鼠标事件；画布 touch-none 本身已禁止滚动
 }
 
 function handleTouchMove(event) {
-  touchMoved = true
+  const t = event.touches[0]
+  // 轻点时手指会有 1~2px 抖动，位移超阈值才算真移动，否则 touchend 的 tap 判定永远失败导致点击失效
+  if (Math.hypot(t.clientX - touchStartX, t.clientY - touchStartY) > 10) touchMoved = true
   if (circuitMode.value === 'wire' && selectedEndpoint.value !== null) {
     event.preventDefault() // 防止页面滚动
     handlePointerMove(event)
@@ -544,9 +553,10 @@ function handleTouchMove(event) {
 }
 
 function handleTouchEnd(event) {
-  // 模拟 click：短按且未移动
-  const elapsed = Date.now() - touchStartTime
-  if (elapsed < 300 && !touchMoved) {
+  // 模拟 click：短按且未明显移动
+  lastTouchTime = Date.now()
+  const elapsed = lastTouchTime - touchStartTime
+  if (elapsed < 500 && !touchMoved) {
     // 使用 changedTouches 获取最终坐标
     const rect = canvasRef.value.getBoundingClientRect()
     const touch = event.changedTouches[0]
@@ -557,7 +567,7 @@ function handleTouchEnd(event) {
       const y = touch.clientY - rect.top
       placeComponentAt(x, y)
     } else {
-      handleCanvasClick(fakeEvent)
+      handleCanvasClick(fakeEvent, true)
     }
   }
 }
@@ -599,8 +609,8 @@ function getEndpointPos(ep) {
   return props.components[ep.compIndex].endpoints[ep.epIndex]
 }
 
-function findNearestWire(x, y) {
-  let bestIdx = null, bestDist = 10 // 10px threshold
+function findNearestWire(x, y, threshold = 10) {
+  let bestIdx = null, bestDist = threshold // 命中阈值由调用方按鼠标/触摸场景传入
   for (let i = 0; i < props.wires.length; i++) {
     const wire = props.wires[i]
     let minD = Infinity

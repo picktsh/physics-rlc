@@ -8,9 +8,14 @@
         class="w-full p-3 border border-gray-300 rounded-lg text-sm resize-y min-h-[80px]"
       ></textarea>
       <div class="text-xs text-gray-500 mt-1">格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=100mH、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252 kHz）</div>
-      <button @click="parsePasteData" class="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all">
-        解析并导入
-      </button>
+      <div class="mt-2 flex gap-2">
+        <button @click="pasteFromClipboard" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold shadow-sm transition-all">
+          粘贴
+        </button>
+        <button @click="parsePasteData" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all">
+          解析并导入
+        </button>
+      </div>
     </div>
 
     <!-- 数据表格 -->
@@ -133,6 +138,16 @@ watch(
 
 function toFixed4(val) {
   return (typeof val === 'number' && !isNaN(val)) ? val.toFixed(4) : '0.0000'
+}
+
+// 从系统剪贴板读取文本填入粘贴区；浏览器权限拒绝时提示用户手动粘贴
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText()
+    if (text) pasteText.value = text
+  } catch {
+    alert('无法访问剪贴板，请手动粘贴到输入框')
+  }
 }
 
 function parsePasteData() {

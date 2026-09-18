@@ -1,16 +1,23 @@
 <script setup>
 import { ref, watch, nextTick, onMounted } from 'vue'
-import { NButton, useMessage } from 'naive-ui'
+import { NButton, NModal, useMessage } from 'naive-ui'
 import { cloneDeep } from 'lodash-es'
-import ChatHeader from './DoubaoChat/ChatHeader.vue'
-import ChatMessageList from './DoubaoChat/ChatMessageList.vue'
-import ChatInputArea from './DoubaoChat/ChatInputArea.vue'
+import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
+import DoubaoChatWindow from './DoubaoChat/DoubaoChatWindow.vue'
 import { useChatSession } from './DoubaoChat/composables/useChatSession.js'
 import { useChatMessage } from './DoubaoChat/composables/useChatMessage.js'
 
 const isOpen = ref(false)
-const messageListRef = ref(null)
-const chatInputRef = ref(null)
+// 移动端（< sm 640px，与 unocss sm: 断点一致）用 NModal 全屏渲染并锁定背景滚动；PC 端保持右下角悬浮弹窗
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isMobile = breakpoints.smaller('sm')
+
+// PC / 移动端各一个窗口实例（互斥渲染），操作时取当前生效的实例
+const pcWindowRef = ref(null)
+const mobileWindowRef = ref(null)
+function activeWindow() {
+  return isMobile.value ? mobileWindowRef.value : pcWindowRef.value
+}
 
 // 会话管理
 const {
@@ -35,7 +42,7 @@ const { loading, handleFileUpload, copyToClipboard, stopGeneration, sendMessage 
 // 滚动到底部
 function scrollToBottom() {
   nextTick(() => {
-    messageListRef.value?.scrollToBottom()
+    activeWindow()?.scrollToBottom()
   })
 }
 
@@ -65,7 +72,7 @@ function handleSend({ text, attachedFiles, thinkingDepth }) {
 // 文件上传
 async function handleFileUploadEvent(event) {
   const attachments = await handleFileUpload(event)
-  chatInputRef.value?.addAttachments(attachments)
+  activeWindow()?.addAttachments(attachments)
 }
 
 // 复制消息
@@ -100,19 +107,20 @@ onMounted(() => {
 
 <template>
   <div class="fixed bottom-0 sm:bottom-5 right-0 sm:right-5 z-[1999] flex flex-col items-end gap-3">
-    <!-- 聊天窗口 -->
+    <!-- PC 端：右下角悬浮弹窗（保持原行为，背景不锁滚动） -->
     <Transition name="chat-pop">
       <div
-        v-if="isOpen"
-        class="w-[92vw] sm:w-[480px] h-[480px] sm:h-[640px] max-h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-200"
+        v-if="isOpen && !isMobile"
+        class="w-[480px] h-[640px] max-h-[85vh] rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-200"
       >
-        <!-- 头部 -->
-        <ChatHeader
+        <DoubaoChatWindow
+          ref="pcWindowRef"
           :sessions="sessions"
           :current-session-index="currentSessionIndex"
           :renaming-index="renamingIndex"
           :renaming-title="renamingTitle"
           :loading="loading"
+          :messages="currentMessages"
           @switch="handleSwitchSession"
           @create="handleCreateSession"
           @start-rename="startRename"
@@ -121,20 +129,7 @@ onMounted(() => {
           @update:renaming-title="renamingTitle = $event"
           @delete="deleteSession"
           @close="isOpen = false"
-        />
-
-        <!-- 消息列表 -->
-        <ChatMessageList
-          ref="messageListRef"
-          :messages="currentMessages"
-          :loading="loading"
           @copy="handleCopyMessage"
-        />
-
-        <!-- 输入区 -->
-        <ChatInputArea
-          ref="chatInputRef"
-          :loading="loading"
           @send="handleSend"
           @stop="stopGeneration"
           @file-upload="handleFileUploadEvent"
@@ -142,12 +137,47 @@ onMounted(() => {
       </div>
     </Transition>
 
-    <!-- 浮动按钮 -->
+    <!-- 移动端：naive-ui 全屏弹窗，block-scroll 自动锁定背景滚动 -->
+    <NModal
+      :show="isOpen && isMobile"
+      :block-scroll="true"
+      :auto-focus="false"
+      @update:show="isOpen = $event"
+    >
+      <div class="w-screen h-[100dvh] bg-white overflow-hidden">
+        <DoubaoChatWindow
+          ref="mobileWindowRef"
+          :sessions="sessions"
+          :current-session-index="currentSessionIndex"
+          :renaming-index="renamingIndex"
+          :renaming-title="renamingTitle"
+          :loading="loading"
+          :messages="currentMessages"
+          @switch="handleSwitchSession"
+          @create="handleCreateSession"
+          @start-rename="startRename"
+          @confirm-rename="confirmRename"
+          @cancel-rename="cancelRename"
+          @update:renaming-title="renamingTitle = $event"
+          @delete="deleteSession"
+          @close="isOpen = false"
+          @copy="handleCopyMessage"
+          @send="handleSend"
+          @stop="stopGeneration"
+          @file-upload="handleFileUploadEvent"
+        />
+      </div>
+    </NModal>
+
+    <!-- 浮动按钮：移动端打开时由 NModal 接管（头部已有关闭按钮），故移动端打开态隐藏；PC 端保留切换 -->
     <NButton
       type="primary"
       circle
       size="large"
-      class="w-14 h-14 !w-14 !h-14 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+      :class="[
+        'w-14 h-14 !w-14 !h-14 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200',
+        isOpen ? 'max-sm:hidden' : '',
+      ]"
       :bordered="false"
       style="background: #2563eb"
       @click="isOpen = !isOpen"

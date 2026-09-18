@@ -216,9 +216,9 @@ function buildOptions() {
         :style="{ maxHeight: '320px', overflowY: 'auto' }"
         width="280"
       >
-        <NButton quaternary circle size="small" style="color: white; background: rgba(255, 255, 255, 0.1)">
+        <NButton quaternary circle size="medium" style="color: white; background: rgba(255, 255, 255, 0.1)">
           <template #icon>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
           </template>
@@ -226,9 +226,9 @@ function buildOptions() {
       </NDropdown>
 
       <!-- 关闭按钮 -->
-      <NButton quaternary circle size="small" style="color: white" @click="$emit('close')">
+      <NButton quaternary circle size="medium" style="color: white" @click="$emit('close')">
         <template #icon>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </template>

@@ -1,5 +1,8 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, watch } from 'vue'
+import { useEventListener } from '@vueuse/core'
+import VideoCard from './VideoResources/VideoCard.vue'
+import { bilibiliEmbedUrl, douyinEmbedUrl } from './VideoResources/composables/useVideoEmbed'
 
 // ⚠️ 视频清单:未替换的条目均为占位(标题带「(示例)」,BV 用 B 站嵌入文档示例号)。
 // 换真实视频时只改这里:title 是卡片标题;bv 取 B 站视频地址中的 BV 号
@@ -66,38 +69,7 @@ const rawCategories = [
   },
 ]
 
-// B 站官方嵌入式播放器:高清 + 默认关弹幕 + 不自动播放
-const embedUrl = (bv) => `https://player.bilibili.com/player.html?bvid=${bv}&page=1&high_quality=1&danmaku=0&autoplay=0`
-// 抖音开放平台 iframe 播放器
-const douyinEmbedUrl = (dy) => `https://open.douyin.com/player/video?vid=${dy}&autoplay=0`
-
-// 抖音视频缩放:以 1280px 宽度渲染播放器(桌面端布局),再 CSS 缩小到容器宽度
-const dyWrappers = ref([])
-const dyScale = ref(1)
-let ro = null
-
-function setDyWrapper(el) {
-  if (el && !dyWrappers.value.includes(el)) {
-    dyWrappers.value.push(el)
-  }
-}
-
-function updateScale() {
-  const w = dyWrappers.value[0]?.clientWidth
-  if (w > 0) dyScale.value = w / 1280
-}
-
-onMounted(() => {
-  updateScale()
-  if (dyWrappers.value[0]) {
-    ro = new ResizeObserver(updateScale)
-    ro.observe(dyWrappers.value[0])
-  }
-})
-
-onBeforeUnmount(() => {
-  ro?.disconnect()
-})
+// 卡片渲染与可视区域懒加载逻辑见 VideoResources/VideoCard.vue 与 composables/useVideoEmbed.js
 
 // ── 视频放大/缩小 ──
 const expandedVideo = ref(null)
@@ -114,18 +86,13 @@ function onModalKeydown(e) {
   if (e.key === 'Escape') closeExpand()
 }
 
-watch(expandedVideo, (v) => {
-  document.body.style.overflow = v ? 'hidden' : ''
-  if (v) {
-    window.addEventListener('keydown', onModalKeydown)
-  } else {
-    window.removeEventListener('keydown', onModalKeydown)
-  }
+// 弹窗打开期间才响应 Esc,卸载时 VueUse 自动移除监听
+useEventListener(window, 'keydown', (e) => {
+  if (expandedVideo.value) onModalKeydown(e)
 })
 
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onModalKeydown)
-  document.body.style.overflow = ''
+watch(expandedVideo, (v) => {
+  document.body.style.overflow = v ? 'hidden' : ''
 })
 </script>
 
@@ -138,65 +105,12 @@ onBeforeUnmount(() => {
       </span>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5" data-vr="grid">
-      <div
-        v-for="(video, vi) in cat.videos"
-        :key="vi"
-        class="group border border-[#e2e7f0] rounded-[10px] overflow-hidden bg-white transition-all duration-200 hover:border-[#c9d6ec] hover:shadow-[0_6px_18px_rgba(28,42,80,0.10)]"
-        data-vr="card"
-      >
-        <!-- B 站 iframe 嵌入 -->
-        <div v-if="video.bv" class="relative aspect-video">
-          <iframe
-            class="absolute inset-0 w-full h-full border-0"
-            :src="embedUrl(video.bv)"
-            scrolling="no"
-            frameborder="0"
-            allowfullscreen="true"
-            loading="lazy"
-            data-vr="frame"
-          ></iframe>
-        </div>
-        <!-- 抖音 iframe 嵌入:大尺寸渲染 + CSS 缩放,避免比例问题 -->
-        <div
-          v-else-if="video.dy"
-          :ref="setDyWrapper"
-          class="relative overflow-hidden aspect-video"
-        >
-          <iframe
-            class="dy-player"
-            :src="douyinEmbedUrl(video.dy)"
-            :style="{ transform: `scale(${dyScale})`, transformOrigin: 'top left' }"
-            width="1280"
-            height="720"
-            scrolling="no"
-            frameborder="0"
-            allowfullscreen="true"
-            loading="lazy"
-            data-vr="frame"
-          ></iframe>
-        </div>
-        <div class="relative flex items-start gap-1 px-3 py-2.5">
-          <p
-            class="flex-1 text-[13px] leading-snug text-[#33415e] line-clamp-2"
-            :title="video.title"
-            data-vr="title"
-          >
-            {{ video.title }}
-          </p>
-          <button
-            class="expand-btn shrink-0 mt-0.5"
-            @click="expandVideo(video)"
-            title="放大播放"
-          >
-            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 3 21 3 21 9" />
-              <polyline points="9 21 3 21 3 15" />
-              <line x1="21" y1="3" x2="14" y2="10" />
-              <line x1="3" y1="21" x2="10" y2="14" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <VideoCard
+        v-for="video in cat.videos"
+        :key="video.bv || video.dy"
+        :video="video"
+        @expand="expandVideo"
+      />
     </div>
   </section>
   <a
@@ -206,12 +120,30 @@ onBeforeUnmount(() => {
     class="card flex items-center justify-center gap-2 py-3.5 text-[15px] font-medium text-[#1d4ed8] bg-[#dbeafe] border border-[#93b4fd] rounded-xl transition-all duration-200 hover:bg-[#bfdbfe] hover:border-[#60a5fa] hover:shadow-[0_4px_14px_rgba(29,78,216,0.18)]"
     data-vr="more-btn"
   >
-    <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      class="w-[18px] h-[18px]"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.3-4.3" />
     </svg>
     在哔哩哔哩发现更多 RLC 串联谐振视频
-    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      class="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" y1="14" x2="21" y2="3" />
@@ -221,10 +153,7 @@ onBeforeUnmount(() => {
   <!-- 视频放大弹窗 -->
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="expandedVideo"
-        class="fixed inset-0 z-[9999] flex items-center justify-center"
-      >
+      <div v-if="expandedVideo" class="fixed inset-0 z-[9999] flex items-center justify-center">
         <!-- 背景遮罩 -->
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeExpand"></div>
         <!-- 内容卡片 -->
@@ -236,7 +165,15 @@ onBeforeUnmount(() => {
               @click="closeExpand"
               title="缩小"
             >
-              <svg viewBox="0 0 24 24" class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                class="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -246,7 +183,7 @@ onBeforeUnmount(() => {
             <iframe
               v-if="expandedVideo.bv"
               class="absolute inset-0 w-full h-full border-0"
-              :src="embedUrl(expandedVideo.bv)"
+              :src="bilibiliEmbedUrl(expandedVideo.bv)"
               scrolling="no"
               frameborder="0"
               allowfullscreen="true"
@@ -267,39 +204,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.dy-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: 0;
-}
-
-/* 放大按钮 */
-.expand-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: transparent;
-  color: #94a3b8;
-  border: 1px solid transparent;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s, background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.group:hover .expand-btn {
-  opacity: 1;
-}
-
-.expand-btn:hover {
-  background: #f1f5f9;
-  color: #475569;
-  border-color: #e2e8f0;
-}
-
 /* 弹窗动画 */
 .modal-enter-active,
 .modal-leave-active {
