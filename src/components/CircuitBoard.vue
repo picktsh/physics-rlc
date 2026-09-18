@@ -2,7 +2,12 @@
   <div class="card">
     <!-- 三栏布局(桌面):左=2D 元件库(竖排) / 中=2D+3D 画布 / 右=元件参数与公差;窄屏自动退化为单列上下堆叠 -->
     <div class="lg:grid lg:grid-cols-[136px_minmax(0,1fr)_228px] lg:gap-4">
-    <div class="components-palette flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0">
+    <div
+      :class="[
+        'components-palette flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0',
+        zoom3dActive ? 'palette-float' : '',
+      ]"
+    >
       <div
         v-for="comp in componentTypes"
         :key="comp.type"
@@ -113,15 +118,24 @@
       拖拽元件到画布上搭建RLC电路 | 点击元件可编辑参数 | 接线模式: 点击端点→点击添加拐点→点击目标端点完成折线 | 💡 点击导线中间可创建节点实现并联 | 删除模式: 点击元件/导线删除
     </div>
 
-    <!-- 3D 实体模型(共享 Circuit3DCanvas 组件,只读模式,与上方 2D 电路实时同步) -->
+    <!-- 3D 实体模型(共享 Circuit3DCanvas 组件,交互模式:与上方 2D 电路双向同步,2D/3D 均可搭建) -->
     <div class="mt-3">
       <Circuit3DCanvas
         :components="components"
         :wires="wires"
         :junctions="junctions"
+        interactive
+        :pending-type="pendingPlaceType"
         header-title="🧊 3D 实体模型"
-        header-tip="🖱 拖拽旋转 · 滚轮缩放 · 自动同步上方 2D 布局"
-        empty-text="先在 2D 画布拖入元件并接线,此处自动生成 3D 实体模型"
+        header-tip="🖱 拖拽旋转 · 滚轮缩放 · 与 2D 电路实时同步,也可直接在 3D 台面搭建"
+        empty-text="从左侧拖入元件,在 2D 画布或 3D 台面均可搭建电路"
+        @place="on3dPlace"
+        @move="on3dMove"
+        @wire="on3dWire"
+        @delete-component="on3dDeleteComponent"
+        @delete-wire="on3dDeleteWire"
+        @focus-component="on3dFocusComponent"
+        @zoom-change="zoom3dActive = $event"
       />
     </div>
     </div>
@@ -132,7 +146,7 @@
     <div v-if="components.length > 0" class="mt-3">
       <div class="text-xs sm:text-sm font-semibold text-gray-700 mb-2">📝 元件参数编辑</div>
       <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-1 gap-2">
-        <div v-for="(comp, idx) in components" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-blue-500' : '']">
+        <div v-for="(comp, idx) in components" :id="'cb-comp-' + idx" :key="idx" :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-blue-500' : '']">
           <label class="text-xs text-gray-600">{{ getComponentLabel(comp.type) }} #{{ idx + 1 }}</label>
           <div class="flex gap-1 items-center mt-1">
             <input
@@ -174,9 +188,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRLCCalculatorStore } from '../stores/rlcCalculator'
 import Circuit3DCanvas from './Circuit3DCanvas.vue'
+import { canvasTheme } from '../utils/canvasTheme'
 
 const calcStore = useRLCCalculatorStore()
 
@@ -225,6 +240,7 @@ const selectedEndpoint = ref(null) // { compIndex, epIndex } or { junctionIndex 
 const wireIntermediatePoints = ref([])
 const selectedComponentIndex = ref(null)
 const pendingPlaceType = ref(null) // 移动端：点击元件面板后等待放置的类型
+const zoom3dActive = ref(false) // 3D 放大观察态:放大期间元件库浮层搬到放大画布上方(仍可搭建)
 
 // 元件输入编辑状态（解决输入小数时 parseFloat 吞掉中间状态的问题）
 const compInputValues = ref({})
@@ -690,6 +706,7 @@ function drawCircuit() {
   const canvas = canvasRef.value
   if (!canvas) return
 
+  const ct = canvasTheme()
   const ctx = canvas.getContext('2d')
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
@@ -699,8 +716,8 @@ function drawCircuit() {
 
   ctx.clearRect(0, 0, rect.width, rect.height)
 
-  // 绘制导线(墨色细线)
-  ctx.strokeStyle = '#2563eb'
+  // 绘制导线(主题色细线,黑配色下自动转亮蓝)
+  ctx.strokeStyle = ct.wire
   ctx.lineWidth = 2
   for (const wire of props.wires) {
     ctx.beginPath()
@@ -719,7 +736,7 @@ function drawCircuit() {
     const comp = props.components[i]
     ctx.save()
     ctx.translate(comp.x, comp.y)
-    ctx.strokeStyle = '#2563eb'
+    ctx.strokeStyle = ct.wire
     ctx.lineWidth = 2
 
     if (comp.type === 'R') {
@@ -731,7 +748,7 @@ function drawCircuit() {
       ctx.lineTo(30, 0)
       ctx.stroke()
       ctx.strokeRect(-18, -9, 36, 18)
-      ctx.fillStyle = '#1c2534'
+      ctx.fillStyle = ct.ink
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('R', 0, 4)
@@ -746,7 +763,7 @@ function drawCircuit() {
       }
       ctx.lineTo(30, 0)
       ctx.stroke()
-      ctx.fillStyle = '#1c2534'
+      ctx.fillStyle = ct.ink
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('L', 0, -10)
@@ -768,7 +785,7 @@ function drawCircuit() {
       ctx.moveTo(4, 0)
       ctx.lineTo(30, 0)
       ctx.stroke()
-      ctx.fillStyle = '#1c2534'
+      ctx.fillStyle = ct.ink
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('C', 0, -19)
@@ -786,7 +803,7 @@ function drawCircuit() {
       ctx.lineTo(8.5, -6.5)
       ctx.stroke()
       arrowHead(ctx, -8.5, 6.5, 8.5, -6.5, 3.4)
-      ctx.fillStyle = '#1c2534'
+      ctx.fillStyle = ct.ink
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('RV', 0, -16)
@@ -813,7 +830,7 @@ function drawCircuit() {
       ctx.lineTo(3.2, -8.6)
       ctx.stroke()
       arrowHead(ctx, -3.2, 8.6, 3.2, -8.6, 3)
-      ctx.fillStyle = '#1c2534'
+      ctx.fillStyle = ct.ink
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('CV', 0, -19)
@@ -848,7 +865,7 @@ function drawCircuit() {
       ctx.moveTo(16, 0)
       ctx.lineTo(30, 0)
       ctx.stroke()
-      ctx.fillStyle = '#1c2534'
+      ctx.fillStyle = ct.ink
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
       ctx.fillText('V', 0, -24)
@@ -860,7 +877,7 @@ function drawCircuit() {
     for (let j = 0; j < comp.endpoints.length; j++) {
       const ep = comp.endpoints[j]
       const isSelected = selectedEndpoint.value && selectedEndpoint.value.compIndex === i && selectedEndpoint.value.epIndex === j
-      ctx.fillStyle = isSelected ? '#2563eb' : '#9fb2d1'
+      ctx.fillStyle = isSelected ? ct.wire : '#9fb2d1'
       ctx.beginPath()
       ctx.arc(ep.x, ep.y, 6.5, 0, 2 * Math.PI)
       ctx.fill()
@@ -874,7 +891,7 @@ function drawCircuit() {
     for (let ji = 0; ji < props.junctions.length; ji++) {
       const j = props.junctions[ji]
       const isSelected = selectedEndpoint.value && selectedEndpoint.value.junctionIndex === ji
-      ctx.fillStyle = isSelected ? '#2563eb' : '#2563eb'
+      ctx.fillStyle = ct.wire
       ctx.beginPath()
       ctx.arc(j.x, j.y, 4, 0, 2 * Math.PI)
       ctx.fill()
@@ -882,7 +899,7 @@ function drawCircuit() {
 
     // 选中框
     if (i === selectedComponentIndex.value) {
-      ctx.strokeStyle = '#2563eb'
+      ctx.strokeStyle = ct.wire
       ctx.lineWidth = 1.5
       ctx.setLineDash([5, 4])
       ctx.strokeRect(comp.x - 34, comp.y - 24, 68, 48)
@@ -894,6 +911,122 @@ function drawCircuit() {
 // ===== 3D 场景代码已抽取为共享模块:建模函数 → utils/circuit3d.js;场景渲染与交互 → Circuit3DCanvas.vue =====
 // (原 YWIRE/cmat/cylX/seg/lead/wx/wz/CFG/addAxial/addInductor/addFilmCap/addRheostat/addVarCap/addSource/addRoutes 等实现已迁移)
 
+// ===== 3D 交互事件:与 2D 画布共用同一套数据结构(props 读取 + emit 回写),2D/3D 实时同步 =====
+function on3dPlace({ type, x, y }) {
+  const newComp = {
+    type,
+    x,
+    y,
+    id: Date.now() + Math.random(),
+    value: DEFAULT_VALUES[type] || 0,
+    endpoints: [
+      { x: x - 30, y, id: Date.now() + Math.random(), side: 'left' },
+      { x: x + 30, y, id: Date.now() + Math.random() + 1, side: 'right' },
+    ],
+  }
+  emit('update:components', [...props.components, newComp])
+  pendingPlaceType.value = null
+  drawCircuit()
+}
+
+// 拖动移动:端点(±30)跟随,关联导线端点坐标同步吸附(仿真按坐标就近解析端点;折线中间拐点保留)
+function on3dMove({ index, x, y }) {
+  const old = props.components[index]
+  if (!old) return
+  const endpoints = [
+    { x: x - 30, y, id: Date.now() + Math.random(), side: 'left' },
+    { x: x + 30, y, id: Date.now() + Math.random() + 1, side: 'right' },
+  ]
+  const snapEp = (refX, refY) => {
+    const d0 = Math.hypot(refX - old.endpoints[0].x, refY - old.endpoints[0].y)
+    const d1 = Math.hypot(refX - old.endpoints[1].x, refY - old.endpoints[1].y)
+    return endpoints[d0 <= d1 ? 0 : 1]
+  }
+  const newWires = props.wires.map((w) => {
+    const touchA = w.comp1 === index
+    const touchB = w.comp2 === index
+    if (!touchA && !touchB) return w
+    let { x1, y1, x2, y2 } = w
+    if (touchA) {
+      const ep = snapEp(w.x1, w.y1)
+      x1 = ep.x
+      y1 = ep.y
+    }
+    if (touchB) {
+      const ep = snapEp(w.x2, w.y2)
+      x2 = ep.x
+      y2 = ep.y
+    }
+    const mid = w.points && w.points.length > 2 ? w.points.slice(1, -1) : []
+    return { ...w, x1, y1, x2, y2, points: [{ x: x1, y: y1 }, ...mid, { x: x2, y: y2 }] }
+  })
+  emit('update:components', props.components.map((c, i) => (i === index ? { ...c, x, y, endpoints } : c)))
+  emit('update:wires', newWires)
+  drawCircuit()
+}
+
+// 端点接线:a/b = { compIndex, epIndex };拒绝同元件同端点自连,同对端点重复连线去重
+function on3dWire({ a, b }) {
+  const compA = props.components[a.compIndex]
+  const compB = props.components[b.compIndex]
+  if (!compA || !compB) return
+  if (a.compIndex === b.compIndex && a.epIndex === b.epIndex) return
+  const epA = compA.endpoints[a.epIndex]
+  const epB = compB.endpoints[b.epIndex]
+  if (!epA || !epB) return
+  const near = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by) < 1
+  const dup = props.wires.some(
+    (w) =>
+      (w.comp1 === a.compIndex && w.comp2 === b.compIndex && near(w.x1, w.y1, epA.x, epA.y) && near(w.x2, w.y2, epB.x, epB.y)) ||
+      (w.comp1 === b.compIndex && w.comp2 === a.compIndex && near(w.x1, w.y1, epB.x, epB.y) && near(w.x2, w.y2, epA.x, epA.y))
+  )
+  if (dup) return
+  emit('update:wires', [
+    ...props.wires,
+    {
+      x1: epA.x, y1: epA.y, x2: epB.x, y2: epB.y,
+      points: [{ x: epA.x, y: epA.y }, { x: epB.x, y: epB.y }],
+      comp1: a.compIndex, comp2: b.compIndex,
+      junc1: -1, junc2: -1,
+    },
+  ])
+  drawCircuit()
+}
+
+// 右键删除元件:清理关联导线并前移后续索引引用,同步 2D 选中态
+function on3dDeleteComponent(index) {
+  emit('update:components', props.components.filter((_, i) => i !== index))
+  emit('update:wires', props.wires
+    .filter((w) => w.comp1 !== index && w.comp2 !== index)
+    .map((w) => ({
+      ...w,
+      comp1: w.comp1 > index ? w.comp1 - 1 : w.comp1,
+      comp2: w.comp2 > index ? w.comp2 - 1 : w.comp2,
+    })))
+  if (selectedComponentIndex.value === index) selectedComponentIndex.value = null
+  else if (selectedComponentIndex.value > index) selectedComponentIndex.value--
+  drawCircuit()
+}
+
+// 右键删除导线
+function on3dDeleteWire(index) {
+  emit('update:wires', props.wires.filter((_, i) => i !== index))
+  drawCircuit()
+}
+
+// 双击 3D 元件:右栏参数面板滚动定位并聚焦,2D 画布同步选中框
+function on3dFocusComponent(index) {
+  selectedComponentIndex.value = index
+  drawCircuit()
+  nextTick(() => {
+    const el = document.getElementById('cb-comp-' + index)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      const input = el.querySelector('input')
+      if (input) input.focus({ preventScroll: true })
+    }
+  })
+}
 
 function updateComponentValue(index, value) {
   const newComponents = [...props.components]
@@ -913,6 +1046,11 @@ function getComponentUnit(type) {
 
 onMounted(() => {
   drawCircuit()
+  window.addEventListener('themechange', drawCircuit)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('themechange', drawCircuit)
 })
 
 watch(
@@ -922,3 +1060,35 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+/* 3D 放大观察期间:元件库浮层搬到放大画布上方(左缘对齐放大层,层级高于放大层 z-2100),
+   保证放大态仍可从库中拖入/点选元件继续搭建;退出放大后恢复原左栏位置 */
+.palette-float {
+  position: fixed;
+  top: 10px;
+  left: 336px;
+  right: 12px;
+  z-index: 2200;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  background: var(--card-bg-95);
+  border: 1px solid var(--chip-border);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+.palette-float .component-item {
+  flex: 0 0 auto;
+  width: 80px;
+}
+@media (max-width: 1023.98px) {
+  .palette-float {
+    top: 58px;
+    left: 10px;
+    right: 10px;
+    justify-content: center;
+  }
+}
+</style>

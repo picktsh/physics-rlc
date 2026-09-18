@@ -176,6 +176,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import katex from 'katex'
+import { canvasTheme } from '../utils/canvasTheme'
 import {
   STATIONS,
   INTERFERER,
@@ -281,10 +282,11 @@ function setupCanvas(canvas, wrap, h) {
 }
 
 function grid(ctx, w, h, padL, padR, padT, padB, xTicks, yTicks, xFmt, yFmt, yLabel) {
+  const ct = canvasTheme()
   ctx.save()
-  ctx.strokeStyle = '#e2e8f2'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 1
-  ctx.fillStyle = '#8a97ab'
+  ctx.fillStyle = ct.label
   ctx.font = '10.5px sans-serif'
   for (const [tx, v] of xTicks) {
     ctx.beginPath()
@@ -417,6 +419,7 @@ function drawCurve() {
 
 function drawSpec(mode) {
   const isIn = mode === 'in'
+  const ct = canvasTheme()
   const canvas = isIn ? inSpecCanvasRef.value : outSpecCanvasRef.value
   const wrap = isIn ? inSpecWrapRef.value : outSpecWrapRef.value
   const c = setupCanvas(canvas, wrap, 108)
@@ -434,7 +437,7 @@ function drawSpec(mode) {
   const stepX = (w - padL - padR) / n
 
   ctx.save()
-  ctx.fillStyle = '#8a97ab'
+  ctx.fillStyle = ct.label
   ctx.font = '10.5px sans-serif'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
@@ -442,7 +445,7 @@ function drawSpec(mode) {
   ctx.fillText(isIn ? '强度' : '相对', padL - 6, padT + 6)
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  ctx.strokeStyle = '#e2e8f2'
+  ctx.strokeStyle = ct.grid
   ctx.beginPath()
   ctx.moveTo(padL, padT + 8)
   ctx.lineTo(padL, h - padB)
@@ -468,7 +471,7 @@ function drawSpec(mode) {
     const label = isIn ? s.name : s.dBText
     const ty = h - padB - bh - (isIn ? 4 : 13)
     if (ty > padT) ctx.fillText(label, cx, ty)
-    ctx.fillStyle = '#8a97ab'
+    ctx.fillStyle = ct.label
     ctx.textBaseline = 'top'
     ctx.fillText(s.freq + ' Hz', cx, h - padB + 3)
     ctx.restore()
@@ -476,6 +479,7 @@ function drawSpec(mode) {
 }
 
 function drawWaves() {
+  const ct = canvasTheme()
   const wf = tunerWaveforms(f0Tune.value, R.value, interfOn.value)
   const pair = [
     { canvas: inWaveCanvasRef.value, wrap: inWaveWrapRef.value, data: wf.vin, color: '#7c8ca5', title: '天线输入' },
@@ -493,7 +497,7 @@ function drawWaves() {
     const amp = (h - padT - padB) * 0.44
     // 中线与上下参考
     ctx.save()
-    ctx.strokeStyle = '#e2e8f2'
+    ctx.strokeStyle = ct.grid
     ctx.lineWidth = 1
     ctx.beginPath()
     ctx.moveTo(padL, mid)
@@ -530,11 +534,13 @@ function onResize() {
 
 onMounted(() => {
   window.addEventListener('resize', onResize)
+  window.addEventListener('themechange', schedule)
   schedule()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('themechange', schedule)
   if (rafId) cancelAnimationFrame(rafId)
 })
 </script>
@@ -552,9 +558,9 @@ onBeforeUnmount(() => {
 }
 .chip-flow {
   display: inline-block;
-  background: #eaf1ff;
-  color: #1d4ed8;
-  border: 1px solid #cfe0ff;
+  background: var(--soft-blue);
+  color: var(--navy-deep);
+  border: 1px solid var(--soft-blue-strong);
   border-radius: 999px;
   padding: 3px 12px;
   font-weight: 600;
@@ -565,23 +571,23 @@ onBeforeUnmount(() => {
   align-items: center;
   padding: 5px 14px;
   border-radius: 999px;
-  border: 1px solid #d5dde7;
-  background: #fff;
-  color: #56647a;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--muted);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 .sta-chip:hover {
-  border-color: #2563eb;
-  color: #1d4ed8;
+  border-color: var(--navy);
+  color: var(--navy-deep);
 }
 .sta-chip-on,
 .sta-chip-on:hover {
-  background: #eaf1ff;
-  border-color: #2563eb;
-  color: #1d4ed8;
+  background: var(--soft-blue);
+  border-color: var(--navy);
+  color: var(--navy-deep);
   font-weight: 600;
 }
 .tun-slider {
@@ -589,7 +595,7 @@ onBeforeUnmount(() => {
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: #d7dee8;
+  background: var(--line-strong);
   outline: none;
   cursor: pointer;
 }
@@ -599,8 +605,8 @@ onBeforeUnmount(() => {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #fff;
-  border: 2px solid #2563eb;
+  background: var(--card-bg);
+  border: 2px solid var(--navy);
   box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
   cursor: pointer;
 }
@@ -608,15 +614,15 @@ onBeforeUnmount(() => {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #fff;
-  border: 2px solid #2563eb;
+  background: var(--card-bg);
+  border: 2px solid var(--navy);
   cursor: pointer;
 }
 .meter {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: #e4e9f1;
+  background: var(--panel-bg);
   overflow: hidden;
 }
 .meter-fill {

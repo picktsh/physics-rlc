@@ -278,6 +278,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
+import { canvasTheme } from '../utils/canvasTheme'
 
 // ---- 参数状态 ----
 const R = ref(100)
@@ -399,12 +400,13 @@ function calcAll() {
 
 // ---- 波形绘制 ----
 function drawWaveform(ctx, w, h, amp, phaseOffset, color) {
+  const ct = canvasTheme()
   ctx.clearRect(0, 0, w, h)
   const mL = 70, pw = w - mL - 12, ph = h - 34
   const sc = ph * 0.45 / Math.max(UL_peak.value, UC_peak.value, 0.001)
   const mid = 22 + ph / 2
 
-  ctx.strokeStyle = '#d9e2ee'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 0.8
   ctx.beginPath()
   ctx.moveTo(mL, mid)
@@ -439,7 +441,7 @@ function drawWaveform(ctx, w, h, amp, phaseOffset, color) {
   ctx.setLineDash([])
   ctx.globalAlpha = 1
 
-  ctx.fillStyle = '#7d8dab'
+  ctx.fillStyle = ct.label
   ctx.font = '10px sans-serif'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
@@ -740,6 +742,7 @@ function generateSweepData(n) {
 function drawAmpChart() {
   const canvas = ampCanvasRef.value
   if (!canvas) return
+  const ct = canvasTheme()
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
   if (rect.width < 2) return // 隐藏期间跳过,避免把幅频图画布缓冲清零
@@ -777,7 +780,7 @@ function drawAmpChart() {
   const yh = my(Ih)
 
   // grid
-  ctx.strokeStyle = '#e2e8f2'
+  ctx.strokeStyle = ct.grid
   ctx.lineWidth = 0.5
   for (let i = 0; i <= 5; i++) {
     const y = 18 + i / 5 * ph
@@ -792,10 +795,10 @@ function drawAmpChart() {
   }
 
   // border & labels
-  ctx.strokeStyle = '#7d8dab'
+  ctx.strokeStyle = ct.axis
   ctx.lineWidth = 1.5
   ctx.strokeRect(mL, 18, pw, ph)
-  ctx.fillStyle = '#6d81a3'
+  ctx.fillStyle = ct.label
   ctx.font = '10px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
@@ -1235,6 +1238,7 @@ onMounted(() => {
     refreshAll()
     animId = requestAnimationFrame(animate)
   })
+  window.addEventListener('themechange', refreshAll)
 })
 
 // keep-alive 保活期间:切走(组件 DOM 移出文档、布局为 0)时暂停动画,
@@ -1253,6 +1257,7 @@ onActivated(() => {
 
 onUnmounted(() => {
   if (animId) cancelAnimationFrame(animId)
+  window.removeEventListener('themechange', refreshAll)
 })
 </script>
 
