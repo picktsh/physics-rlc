@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { dateZhCN, darkTheme, NConfigProvider, NMessageProvider, zhCN } from 'naive-ui'
 import IndexVue from './views/index.vue'
-import ThemeSwitcher from './components/ThemeSwitcher.vue'
 import { useTheme } from './composables/useTheme'
 
 const { theme } = useTheme()
@@ -49,8 +48,6 @@ const themeOverrides = computed(() => {
   >
     <NMessageProvider>
       <IndexVue />
-      <!-- 右上角页面背景配色开关(白 / 黑 / 马卡龙) -->
-      <ThemeSwitcher />
     </NMessageProvider>
   </NConfigProvider>
 </template>

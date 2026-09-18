@@ -1,5 +1,6 @@
 <script setup>
-// 右上角页面背景配色开关:白配色 / 黑配色 / 马卡龙配色 三选一胶囊
+// 页面背景配色开关:白配色 / 黑配色 / 马卡龙配色 三选一胶囊
+// 内联于左侧目录栏(见 home/index.vue),不再悬浮固定,避免遮挡豆包窗口
 import { useTheme } from '../composables/useTheme'
 
 const { theme, themes, setTheme } = useTheme()
@@ -25,13 +26,12 @@ const { theme, themes, setTheme } = useTheme()
 
 <style scoped>
 .theme-switch {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 2600;
   display: flex;
   align-items: center;
   gap: 6px;
+  align-self: center;
+  flex-shrink: 0;
+  margin-bottom: 14px;
   padding: 5px 7px;
   border-radius: 999px;
   background: var(--card-bg);

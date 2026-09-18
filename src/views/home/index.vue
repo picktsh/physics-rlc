@@ -16,6 +16,7 @@ import EngineeringApplication from '../../components/EngineeringApplication.vue'
 import VideoResources from '../../components/VideoResources.vue'
 import DampingOscillation from '../../components/DampingOscillation.vue'
 import DoubaoChat from '../../components/DoubaoChat.vue'
+import ThemeSwitcher from '../../components/ThemeSwitcher.vue'
 
 const calcStore = useRLCCalculatorStore()
 const historyStore = useHistoryStore()
@@ -203,6 +204,8 @@ async function handleImportMeasHistory(file) {
         </div>
       </div>
       <nav class="side-nav" role="tablist" aria-label="实验章节">
+        <!-- 页面背景配色开关(白 / 黑 / 马卡龙):迁自右上角悬浮,避免遮挡豆包窗口 -->
+        <ThemeSwitcher />
         <button
           v-for="(tab, i) in tabs"
           :key="'s' + tab.key"
