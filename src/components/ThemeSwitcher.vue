@@ -1,6 +1,6 @@
 <script setup>
 // 页面背景配色开关:白配色 / 黑配色 / 马卡龙配色 三选一胶囊
-// 内联于左侧目录栏(见 home/index.vue),不再悬浮固定,避免遮挡豆包窗口
+// 内联于页眉行右侧(见 home/index.vue),全屏幕可见且不再悬浮遮挡豆包窗口
 import { useTheme } from '../composables/useTheme'
 
 const { theme, themes, setTheme } = useTheme()
@@ -29,9 +29,8 @@ const { theme, themes, setTheme } = useTheme()
   display: flex;
   align-items: center;
   gap: 6px;
-  align-self: center;
+  margin-left: auto;
   flex-shrink: 0;
-  margin-bottom: 14px;
   padding: 5px 7px;
   border-radius: 999px;
   background: var(--card-bg);

@@ -204,8 +204,6 @@ async function handleImportMeasHistory(file) {
         </div>
       </div>
       <nav class="side-nav" role="tablist" aria-label="实验章节">
-        <!-- 页面背景配色开关(白 / 黑 / 马卡龙):迁自右上角悬浮,避免遮挡豆包窗口 -->
-        <ThemeSwitcher />
         <button
           v-for="(tab, i) in tabs"
           :key="'s' + tab.key"
@@ -227,7 +225,7 @@ async function handleImportMeasHistory(file) {
         <!-- 论文题头 -->
         <header>
           <div class="paper-head">
-            <div class="paper-head-row">
+            <div class="paper-head-row w-full">
               <button
                 v-if="railCollapsed"
                 class="rail-toggle"
@@ -238,6 +236,8 @@ async function handleImportMeasHistory(file) {
                 @click="railCollapsed = !railCollapsed"
               ></button>
               <h1>{{ currentTabLabel }}</h1>
+              <!-- 页面背景配色开关(白 / 黑 / 马卡龙):跟随页眉行全屏幕可见,不再遮挡豆包窗口 -->
+              <ThemeSwitcher />
             </div>
             <p class="paper-meta">RLC 串联谐振电路实验 · 理论仿真 · 实测比对 · 误差分析</p>
           </div>
