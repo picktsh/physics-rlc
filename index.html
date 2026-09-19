@@ -9,7 +9,7 @@
       /* 首屏防闪烁:在 CSS/JS 加载前按 localStorage 持久化偏好预设主题属性 */
       try {
         var t = localStorage.getItem('app-theme')
-        if (t === 'light' || t === 'dark' || t === 'macaron') {
+        if (t === 'light' || t === 'dark' || t === 'macaron' || t === 'green') {
           document.documentElement.setAttribute('data-theme', t)
         }
       } catch (e) {}
@@ -27,12 +27,15 @@
         gap: 14px;
         background-color: #f3f5f9;
       }
-      /* loading 背景/圆环同步三套配色(与 main.css 主题变量一致) */
+      /* loading 背景/圆环同步四套配色(与 styles/theme.css 主题变量一致) */
       html[data-theme='dark'] #app-loading {
         background-color: #0d1322;
       }
       html[data-theme='macaron'] #app-loading {
         background-color: #fdf9ec;
+      }
+      html[data-theme='green'] #app-loading {
+        background-color: #eef6f1;
       }
       #app-loading .loading-spinner {
         width: 44px;
@@ -49,6 +52,10 @@
       html[data-theme='macaron'] #app-loading .loading-spinner {
         border-color: #f0e6c6;
         border-top-color: #b8860b;
+      }
+      html[data-theme='green'] #app-loading .loading-spinner {
+        border-color: #d5e8dd;
+        border-top-color: #42b883;
       }
       #app-loading .loading-text {
         font-size: 13px;

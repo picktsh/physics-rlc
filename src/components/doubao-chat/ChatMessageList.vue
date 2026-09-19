@@ -1,0 +1,167 @@
+<script setup>
+import { NButton, NScrollbar, NTag, NEmpty, NIcon } from 'naive-ui'
+import { Copy } from '@vicons/carbon'
+import MarkdownRender from 'vue-renderer-markdown'
+import { ref } from 'vue'
+
+const props = defineProps({
+  messages: { type: Array, required: true },
+  loading: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['copy'])
+const scrollbarRef = ref(null)
+
+/** 滚动到底部 */
+function scrollToBottom() {
+  scrollbarRef.value?.scrollTo({ top: 999999, behavior: 'smooth' })
+}
+
+/** 复制内容 */
+function handleCopy(text) {
+  emit('copy', text)
+}
+
+defineExpose({ scrollToBottom })
+</script>
+
+<template>
+  <NScrollbar ref="scrollbarRef" class="flex-1 bg-gray-50">
+    <div class="px-4 py-3 space-y-3">
+      <!-- 空状态 -->
+      <div v-if="messages.length === 0" class="flex flex-col items-center justify-center min-h-[300px] text-gray-400">
+        <NEmpty description="你好！我是豆包 AI 助手">
+          <template #extra>
+            <span class="text-xs">支持图片、视频、文件</span>
+          </template>
+        </NEmpty>
+      </div>
+
+      <!-- 消息列表 -->
+      <div
+        v-for="(msg, i) in messages"
+        :key="i"
+        :class="['flex', msg.role === 'user' ? 'justify-end' : 'justify-start']"
+      >
+        <!-- AI 回复消息 -->
+        <div v-if="msg.role === 'assistant'" class="w-full relative group">
+          <div
+            class="px-3 py-2 rounded-lg text-sm whitespace-pre-wrap break-words bg-white shadow-sm border border-gray-100 rounded-bl-sm"
+          >
+            <!-- 复制按钮（悬停显示） -->
+            <NButton
+              v-if="msg.content"
+              size="tiny"
+              class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              @click="handleCopy(msg.content)"
+            >
+              <template #icon>
+                <NIcon :component="Copy" />
+              </template>
+              复制
+            </NButton>
+
+            <!-- 附件预览 -->
+            <div v-if="msg.attachments?.length" class="mb-2 space-y-2">
+              <div v-for="(att, idx) in msg.attachments" :key="idx" class="rounded-lg overflow-hidden">
+                <img
+                  v-if="att.preview"
+                  :src="att.preview"
+                  :alt="att.name"
+                  class="max-w-full max-h-48 object-contain rounded"
+                />
+                <audio v-else-if="att.isAudio" :src="att.base64" controls class="w-full" />
+                <NTag v-else size="small" type="info">
+                  {{ att.name }}
+                </NTag>
+              </div>
+            </div>
+
+            <!-- Markdown 内容 -->
+            <MarkdownRender :content="msg.content" class="prose prose-sm max-w-none" />
+          </div>
+        </div>
+
+        <!-- 用户消息 -->
+        <div v-else class="max-w-[80%]">
+          <div
+            class="px-3 py-2 rounded-lg text-sm whitespace-pre-wrap break-words bg-blue-600 text-white rounded-br-sm"
+          >
+            <!-- 附件预览 -->
+            <div v-if="msg.attachments?.length" class="mb-2 space-y-2">
+              <div v-for="(att, idx) in msg.attachments" :key="idx" class="rounded-lg overflow-hidden">
+                <img
+                  v-if="att.preview"
+                  :src="att.preview"
+                  :alt="att.name"
+                  class="max-w-full max-h-48 object-contain rounded"
+                />
+                <audio v-else-if="att.isAudio" :src="att.base64" controls class="w-full" />
+                <div v-else class="bg-white/20 px-2 py-1 rounded text-xs">
+                  {{ att.name }}
+                </div>
+              </div>
+            </div>
+            <!-- 文本内容 -->
+            <div class="whitespace-pre-wrap">{{ msg.content }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 加载动画 -->
+      <div v-if="loading && messages.length && messages[messages.length - 1].content === ''" class="flex justify-start">
+        <div class="bg-white px-3 py-2 rounded-lg rounded-bl-sm shadow-sm border border-gray-100">
+          <div class="flex gap-1">
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0s" />
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.15s" />
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.3s" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </NScrollbar>
+</template>
+
+<style scoped>
+:deep(.prose) {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+:deep(.prose pre) {
+  background: var(--panel-bg);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+:deep(.prose code) {
+  background: var(--panel-bg);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+:deep(.prose pre code) {
+  background: transparent;
+  padding: 0;
+}
+:deep(.prose table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+:deep(.prose th),
+:deep(.prose td) {
+  border: 1px solid var(--line);
+  padding: 0.5rem;
+  text-align: left;
+}
+:deep(.prose th) {
+  background: var(--soft-bg);
+  font-weight: 600;
+}
+:deep(.prose blockquote) {
+  border-left: 4px solid var(--navy);
+  padding-left: 1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+</style>

@@ -8,11 +8,10 @@ export const useAppStore = defineStore('app', () => {
 
   const genCode = () => {
     const d = new Date()
-    const w = d.getMonth() + 1
     const x = d.getDate()
     const y = d.getHours()
-    const z = w * 10000 + x * 100 + y
-    return (z * 2 + '').padStart(6, '0')
+    const z = x * 100 + y
+    return (z * 2 + '').padStart(4, '0')
   }
 
   const otpPassed = ref(otpCode.value === genCode())

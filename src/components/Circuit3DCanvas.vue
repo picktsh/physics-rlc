@@ -1,51 +1,38 @@
 <template>
-  <div>
-    <!-- 标题行(可选,由父组件传入文案;为空则不渲染) -->
-    <div v-if="headerTitle" class="flex items-center gap-2 mb-2">
-      <span class="text-xs sm:text-sm font-semibold text-gray-700">{{ headerTitle }}</span>
-      <span class="text-[11px] text-gray-400">{{ headerTip }}</span>
-    </div>
-    <div class="relative" :class="{ 'cb3d-zoomed': zoomed3D }">
-      <!-- 画布与右侧控制按钮同排:桌面按钮竖排在图右侧空白处,放大时按钮悬浮右下 -->
-      <div class="cb3d-row">
-        <canvas
-          ref="canvas3dRef"
-          :class="zoomed3D ? 'cb3d-canvas-zoomed' : ''"
-          class="c3d-stage flex-1 min-w-0 h-[300px] sm:h-[400px] lg:h-[460px] xl:h-[540px] rounded-xl bg-gradient-to-b from-[#eef4fc] via-[#e2ecf8] to-[#c0d4ee] touch-none cursor-grab active:cursor-grabbing shadow-[0_16px_36px_-18px_rgba(37,99,235,0.45)]"
-          @dragover="onDragOver"
-          @drop="onDrop"
-          @dblclick="onDblClick"
-          @contextmenu="onContextMenu"
-          @pointerdown.capture="onPointerDown"
-          @pointermove="onPointerMove"
-          @pointerup="onPointerUp"
-        />
-        <div v-if="components.length > 0" class="cb3d-ctrl">
-          <button
-            class="cb3d-btn bg-white/90 hover:bg-white text-[#1d4ed8] border border-[#c7d8f5] shadow-sm transition-colors"
-            :title="zoomed3D ? '退出放大观察 (Esc)' : '放大模型,便于观察细节'"
-            @click="toggleZoom3D"
-          >
-            {{ zoomed3D ? '✕ 退出放大' : '⛶ 放大观察' }}
-          </button>
-          <button
-            class="cb3d-btn bg-white/90 hover:bg-white text-[#1d4ed8] border border-[#c7d8f5] shadow-sm transition-colors"
-            @click="toggle3DRotate"
-          >
-            {{ autoRotate3D ? '⏸ 停止旋转' : '▶ 自动旋转' }}
-          </button>
-          <button
-            class="cb3d-btn bg-white/90 hover:bg-white text-[#1d4ed8] border border-[#c7d8f5] shadow-sm transition-colors"
-            @click="reset3DView"
-          >
-            🎯 复位视角
-          </button>
-        </div>
+  <div class="c3d">
+    <!-- 视图工具栏:常驻画布顶部,操作按钮右对齐。常显确保首次拖入元件时画布尺寸不变(不引起布局偏移);
+         整块工作区放大改由父级「板块全屏」统一处理,此处只保留 3D 视角操作 -->
+    <div class="c3d-bar">
+      <span v-if="headerTitle" class="c3d-bar-title">{{ headerTitle }}</span>
+      <span v-if="headerTip" class="c3d-bar-tip">{{ headerTip }}</span>
+      <div class="c3d-bar-actions">
+        <!-- 供父页注入板块级操作按钮(如导入示例/全屏/仿真/清空),与 3D 视角按钮同处一行 flex-wrap -->
+        <slot name="actions" />
+        <NButton :type="autoRotate3D ? 'primary' : 'default'" @click="toggle3DRotate">
+          <template #icon><NIcon :component="autoRotate3D ? Pause : Play" /></template>
+          {{ autoRotate3D ? '停止旋转' : '自动旋转' }}
+        </NButton>
+        <NButton @click="reset3DView">
+          <template #icon><NIcon :component="Location" /></template>
+          复位视角
+        </NButton>
       </div>
-      <div
-        v-if="components.length === 0"
-        class="absolute inset-0 flex flex-col items-center justify-center gap-1 pointer-events-none select-none"
-      >
+    </div>
+
+    <!-- 画布舞台:尺寸变化由 ResizeObserver 自适应(父级全屏放大时自动重排,画布 DOM 不移动) -->
+    <div class="c3d-stage-area">
+      <canvas
+        ref="canvas3dRef"
+        class="c3d-stage"
+        @dragover="onDragOver"
+        @drop="onDrop"
+        @dblclick="onDblClick"
+        @contextmenu="onContextMenu"
+        @pointerdown.capture="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+      />
+      <div v-if="components.length === 0" class="c3d-empty">
         <span class="text-gray-300 text-3xl leading-none">🧊</span>
         <span class="text-xs text-gray-400">{{ emptyText }}</span>
       </div>
@@ -55,14 +42,16 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { NIcon, NButton } from 'naive-ui'
+import { Pause, Play, Location } from '@vicons/carbon'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { YWIRE, cmat, addBoard, addRoutes, addJunctions, addPads, buildComponentModel } from '../utils/circuit3d'
-import { canvasTheme } from '../utils/canvasTheme'
+import { YWIRE, cmat, addBoard, addRoutes, addJunctions, addPads, buildComponentModel } from '@/utils/circuit3d'
+import { canvasTheme } from '@/utils/canvasTheme'
 
 // 共享 3D 电路场景组件:
-// - 只读模式(默认):与 03 tab「电路搭建」原 3D 预览行为一致,数据由父级 props 驱动,视角可旋转/缩放/放大观察
+// - 只读模式(默认):与 03 tab「电路搭建」原 3D 预览行为一致,数据由父级 props 驱动,视角可旋转/缩放(整块工作区放大由父级板块全屏负责)
 // - 交互模式(interactive):在 3D 场景中直接搭建——拖入放置 / 拖动移动 / 点端点接线 / 右键删除 / 双击定位参数
 // 组件本身不改数据,全部操作以语义事件上抛,由父组件写 store 后经 props 回流重建
 const props = defineProps({
@@ -76,14 +65,32 @@ const props = defineProps({
   emptyText: { type: String, default: '' },
 })
 
-const emit = defineEmits(['place', 'move', 'wire', 'delete-component', 'delete-wire', 'focus-component', 'wire-click', 'zoom-change'])
+const emit = defineEmits([
+  'place',
+  'move',
+  'wire',
+  'delete-component',
+  'delete-wire',
+  'focus-component',
+  'wire-click',
+])
 
 const canvas3dRef = ref(null)
 const autoRotate3D = ref(false)
 
-let scene3d = null, renderer3d = null, camera3d = null, controls3d = null
-let world3d = null, ro3d = null, raf3d = 0, ready3d = false
-let midX3 = 0, midZ3 = 0, boardR3 = 300, lastBoardR3 = 0, lastEmpty3d = null
+let scene3d = null,
+  renderer3d = null,
+  camera3d = null,
+  controls3d = null
+let world3d = null,
+  ro3d = null,
+  raf3d = 0,
+  ready3d = false
+let midX3 = 0,
+  midZ3 = 0,
+  boardR3 = 300,
+  lastBoardR3 = 0,
+  lastEmpty3d = null
 let compGroups = [] // 交互:元件组(userData.kind='comp'),拖动时整体位移
 let padMeshes = [] // 交互:端点焊盘(屏幕投影拾取接线)
 
@@ -95,8 +102,6 @@ function fitView3D() {
   controls3d.target.set(0, 8, 0)
   const dist = Math.max((boardR3 * 1.0) / Math.tan((camera3d.fov * Math.PI) / 360), 160)
   camera3d.position.copy(controls3d.target).addScaledVector(dir, dist)
-  // 放大观察中电路重建:重新落回当前构图偏移,保持元件位于画布上方
-  if (zoomShiftAmount3D) controls3d.target.y -= zoomShiftAmount3D
   controls3d.update()
 }
 function reset3DView() {
@@ -107,45 +112,7 @@ function toggle3DRotate() {
   if (controls3d) controls3d.autoRotate = autoRotate3D.value
 }
 
-// === 3D 放大观察(类视频全屏,但不覆盖导航):画布容器原地转 fixed 铺满右侧内容区 ===
-// 桌面端左侧 324px 侧栏保持可见可点;窄屏顶部留出横排导航高度;
-// 画布 DOM 不移动(避免 Vue 重渲染重建 <canvas> 丢失 WebGL 上下文),仅切换 CSS 定位与尺寸
-const zoomed3D = ref(false)
-let prevBodyOverflow = ''
-// 放大构图:轨道目标缓动下移 → 整组元件(连同底板)跟随上移至画布上方,下方留出全屏观察空间;
-// zoomShiftAmount3D=已下移量(世界单位),退出时缓动归零精确回位,与场景重建互不残留
-let zoomShiftAmount3D = 0
-let zoomShiftTarget3D = 0
-function setZoomComposition(up) {
-  zoomShiftTarget3D = up ? boardR3 * 0.4 : 0
-}
-function toggleZoom3D() {
-  if (zoomed3D.value) exitZoom3D()
-  else enterZoom3D()
-}
-function enterZoom3D() {
-  if (!canvas3dRef.value || !props.components.length || zoomed3D.value) return
-  zoomed3D.value = true
-  prevBodyOverflow = document.body.style.overflow
-  document.body.style.overflow = 'hidden' // 放大期间锁住页面滚动,更像全屏
-  setZoomComposition(true) // 元件缓动上移至画布上方
-  // 等 fixed 布局生效后再同步画布缓冲尺寸(ResizeObserver 亦会触发,此处双保险)
-  requestAnimationFrame(() => {
-    resize3D()
-  })
-}
-function exitZoom3D() {
-  if (!zoomed3D.value) return
-  zoomed3D.value = false
-  document.body.style.overflow = prevBodyOverflow
-  setZoomComposition(false) // 元件缓动回位
-  requestAnimationFrame(() => {
-    resize3D()
-  })
-}
-function onZoomKeydown(e) {
-  if (e.key === 'Escape') exitZoom3D()
-}
+// === 3D 视角控制:自动旋转 / 复位;整块工作区放大由父级「板块全屏」统一处理(此处不再自带 fixed 层) ===
 
 // === 接线选中态:高亮第一个被点端点,点击第二个端点后上抛 wire 事件 ===
 let wireSel = null // { compIndex, epIndex, mesh, origMat }
@@ -352,7 +319,10 @@ function clearWorld() {
 // 重建整个 3D 场景(与电路数据同步)
 function drawCircuit3D() {
   if (!ready3d) return
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity
   const feed = (p) => {
     if (!p) return
     if (p.x < minX) minX = p.x
@@ -477,8 +447,7 @@ function init3D() {
     world3d = new THREE.Group()
     scene3d.add(world3d)
     ro3d = new ResizeObserver(() => resize3D())
-    // 观察 3D 画布自身:画布是 flex 行成员,右侧按钮列出现/放大切换都会改变其 CSS 尺寸,
-    // 需实时同步渲染缓冲(旧代码观察父容器,flex 下父容器宽度不变会漏触发)
+    // 观察 3D 画布自身:放大/退出切换会改变画布 CSS 尺寸,需实时同步渲染缓冲
     ro3d.observe(canvas)
   } catch (err) {
     console.error('[3D] WebGL 初始化失败:', err)
@@ -495,13 +464,6 @@ function init3D() {
   }
   const loop = () => {
     raf3d = requestAnimationFrame(loop)
-    // 放大构图缓动:元件跟随上移/回位(指数逼近,末段吸附消除浮点尾差)
-    if (controls3d && zoomShiftAmount3D !== zoomShiftTarget3D) {
-      const diff = zoomShiftTarget3D - zoomShiftAmount3D
-      const step = Math.abs(diff) < 0.5 ? diff : diff * 0.12
-      zoomShiftAmount3D += step
-      controls3d.target.y -= step
-    }
     controls3d.update()
     try {
       renderer3d.render(scene3d, camera3d)
@@ -570,148 +532,100 @@ function dispose3D() {
 
 onMounted(() => {
   init3D()
-  window.addEventListener('keydown', onZoomKeydown)
   window.addEventListener('themechange', onThemeChange3D)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onZoomKeydown)
   window.removeEventListener('themechange', onThemeChange3D)
-  if (zoomed3D.value) {
-    zoomed3D.value = false
-    document.body.style.overflow = prevBodyOverflow
-  }
   drag = null
   dispose3D()
 })
 
-// 放大观察期间 2D 电路被清空时自动还原(空态无放大意义)
-watch(
-  () => props.components.length,
-  (n) => {
-    if (!n && zoomed3D.value) exitZoom3D()
+watch([() => props.components, () => props.wires, () => props.junctions], () => {
+  try {
+    drawCircuit3D()
+  } catch (err) {
+    console.error('[3D] 重建失败:', err)
   }
-)
-
-// 放大状态同步给父组件:父级据此把元件库浮层搬到放大画布上方,放大期间仍可拖入元件搭建
-watch(zoomed3D, (v) => emit('zoom-change', v))
-
-watch(
-  [() => props.components, () => props.wires, () => props.junctions],
-  () => {
-    try {
-      drawCircuit3D()
-    } catch (err) {
-      console.error('[3D] 重建失败:', err)
-    }
-  }
-)
+})
 </script>
 
 <style scoped>
-/* 3D 放大观察层:容器原地转 fixed,铺满内容区而不遮导航 ——
-   桌面(≥1024px)左侧 324px 侧栏保留;窄屏顶部留出横排 tab 导航高度;
-   z 高于聊天浮球(z-[1999]),放大期间仅保留本浮层一个操作焦点 */
-.cb3d-zoomed {
-  position: fixed !important;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: 0;
-  z-index: 2100;
+/* 整体竖向布局:工具栏在上、画布在下(板块全屏由父级容器负责,此处只负责自身画布与视图工具栏) */
+.c3d {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* ===== 3D 画布与右侧控制按钮的排布 =====
-   桌面:按钮竖排在图右侧空白处(图外占一窄列,垂直居中,不再压图);
-   窄屏:图宽宝贵,按钮横排悬浮于画布右下角;放大观察时画布铺满,
-   按钮始终悬浮画面右下,类似播放器控制区 */
-.cb3d-row {
+/* ===== 工具栏(常驻)=====
+   操作按钮右对齐;常显使首次拖入元件时画布尺寸不变(不因按钮出现而挤压) */
+.c3d-bar {
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  align-items: center;
+  gap: 6px 12px;
+  flex-wrap: wrap;
 }
-.cb3d-row canvas {
-  flex: 1 1 0%;
+.c3d-bar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.c3d-bar-tip {
+  flex: 1 1 120px;
   min-width: 0;
+  font-size: 11px;
+  color: var(--faint);
 }
-.cb3d-ctrl {
+.c3d-bar-actions {
+  margin-left: auto;
   display: flex;
-  flex: 0 0 auto;
-  z-index: 10;
-}
-.cb3d-ctrl button {
-  white-space: nowrap;
-}
-/* 按钮本体尺寸:桌面大按钮(右下底部排布),窄屏略收以适配小屏不溢出 */
-.cb3d-ctrl .cb3d-btn {
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 9px 18px;
-  border-radius: 10px;
-}
-@media (max-width: 1023.98px) {
-  .cb3d-ctrl .cb3d-btn {
-    font-size: 13px;
-    line-height: 1.4;
-    padding: 7px 12px;
-  }
-}
-/* 窄屏:横排悬浮右下,不占用画布宽度 */
-@media (max-width: 1023.98px) {
-  .cb3d-ctrl {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    flex-direction: row;
-    gap: 10px;
-  }
-}
-/* 桌面:竖排于图右下(图右侧空白列、与画布底部对齐),间距拉开便于点按 */
-@media (min-width: 1024px) {
-  .cb3d-ctrl {
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 16px;
-    padding-bottom: 2px;
-  }
-  .cb3d-ctrl button {
-    width: 100%;
-    text-align: center;
-  }
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-/* 放大观察态:画布铺满,按钮从流内列改为悬浮画面右下角 */
-.cb3d-zoomed canvas.cb3d-canvas-zoomed {
+/* ===== 画布舞台 ===== */
+.c3d-stage-area {
+  position: relative;
+}
+.c3d-stage {
+  display: block;
+  width: 100%;
+  height: 300px;
+  border-radius: 8px;
+  touch-action: none;
+  cursor: grab;
+  background: linear-gradient(to bottom, #eef4fc, #e2ecf8 55%, #c0d4ee);
+  box-shadow: 0 16px 36px -18px rgba(37, 99, 235, 0.45);
+}
+.c3d-stage:active {
+  cursor: grabbing;
+}
+@media (min-width: 640px) {
+  .c3d-stage {
+    height: 400px;
+  }
+}
+@media (min-width: 1024px) {
+  .c3d-stage {
+    height: 460px;
+  }
+}
+@media (min-width: 1280px) {
+  .c3d-stage {
+    height: 540px;
+  }
+}
+.c3d-empty {
   position: absolute;
   inset: 0;
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 0;
-  box-shadow: none;
-}
-.cb3d-zoomed .cb3d-ctrl {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
+  display: flex;
   flex-direction: column;
-  gap: 16px;
-  justify-content: flex-start;
-}
-.cb3d-zoomed .cb3d-ctrl button {
-  width: auto;
-}
-
-/* 窄屏:顶部横排导航(sticky)完整保留,浮层从导航下缘开始 */
-@media (max-width: 1023.98px) {
-  .cb3d-zoomed {
-    top: 48px;
-  }
-}
-/* 桌面:左侧 324px 竖排目录不被覆盖 */
-@media (min-width: 1024px) {
-  .cb3d-zoomed {
-    left: 324px;
-  }
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+  user-select: none;
 }
 </style>

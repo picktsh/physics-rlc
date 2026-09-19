@@ -1,5 +1,5 @@
-// 全局页面背景配色切换:白配色 / 黑配色 / 马卡龙配色
-// - 通过 <html data-theme="..."> 触发 main.css 中的主题变量切换
+// 全局页面背景配色切换:白配色 / 黑配色 / 马卡龙配色 / 绿色版(Vue 绿)
+// - 通过 <html data-theme="..."> 触发 styles/theme.css 中的主题变量切换
 // - localStorage 持久化;index.html 首屏内联脚本会在 JS 加载前预设同款属性防止闪白
 import { ref } from 'vue'
 
@@ -9,6 +9,7 @@ export const THEME_OPTIONS = [
   { key: 'light', label: '白配色' },
   { key: 'dark', label: '黑配色' },
   { key: 'macaron', label: '马卡龙配色' },
+  { key: 'green', label: '绿色版' },
 ]
 
 const VALID_KEYS = THEME_OPTIONS.map((t) => t.key)

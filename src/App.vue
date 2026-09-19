@@ -1,21 +1,25 @@
 <script setup>
 import { computed } from 'vue'
 import { dateZhCN, darkTheme, NConfigProvider, NMessageProvider, zhCN } from 'naive-ui'
-import IndexVue from './views/index.vue'
 import { useTheme } from './composables/useTheme'
 
 const { theme } = useTheme()
 
-// 黑配色下启用 naive-ui 内置暗色主题,马卡龙/白配色保持亮色
+// 黑配色下启用 naive-ui 内置暗色主题,其余浅色配色(白/马卡龙/绿色)保持亮色
 const naiveTheme = computed(() => (theme.value === 'dark' ? darkTheme : undefined))
 
-// naive-ui 主题定制:三套配色各有主色(白=学术藏青 / 黑=亮蓝 / 马卡龙=柠檬金)+ 直角 + 衬线字体
+// 各配色下 naive-ui 主色(白=学术藏青 / 黑=亮蓝 / 马卡龙=柠檬金 / 绿色=Vue 品牌绿)
+const PRIMARY_BY_THEME = {
+  light: ['#1f4e79', '#2a5b8f', '#17375c'],
+  dark: ['#5b8ef7', '#6d9bf7', '#4a7ce0'],
+  macaron: ['#b8860b', '#d19c26', '#9c7109'],
+  green: ['#42b883', '#3aa876', '#369e6e'],
+}
+
+// naive-ui 主题定制:主色随配色切换 + 直角 + 衬线字体
 const themeOverrides = computed(() => {
-  const isDark = theme.value === 'dark'
-  const isMacaron = theme.value === 'macaron'
-  const primaryColor = isDark ? '#5b8ef7' : isMacaron ? '#b8860b' : '#1f4e79'
-  const primaryColorHover = isDark ? '#6d9bf7' : isMacaron ? '#d19c26' : '#2a5b8f'
-  const primaryColorPressed = isDark ? '#4a7ce0' : isMacaron ? '#9c7109' : '#17375c'
+  const [primaryColor, primaryColorHover, primaryColorPressed] =
+    PRIMARY_BY_THEME[theme.value] || PRIMARY_BY_THEME.light
   return {
     common: {
       primaryColor,
@@ -47,7 +51,7 @@ const themeOverrides = computed(() => {
     :theme-overrides="themeOverrides"
   >
     <NMessageProvider>
-      <IndexVue />
+      <RouterView />
     </NMessageProvider>
   </NConfigProvider>
 </template>

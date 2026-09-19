@@ -1,0 +1,25 @@
+/* ==========================================================================
+ * 组件层(极简全局层):仅保留「跨多个页面复用」且 UnoCSS 原子类无法表达的通用样式。
+ * 全站其余样式一律走 naive-ui + UnoCSS 原子类;个别无法原子化的写在组件 <style scoped>。
+ * 组织与样式归位原则见 AGENTS.local.md「样式与组件组织」。
+ * ========================================================================== */
+
+/* ========== 电路图纸式浅蓝坐标纸底(2D 画布 / 图表容器复用) ==========
+ * repeating 渐变网格纹理无法用原子类干净表达,作通用工具类保留 */
+.blueprint-grid {
+  background-color: var(--blueprint-bg);
+  background-image:
+    linear-gradient(var(--blueprint-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--blueprint-line) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ========== naive 卡片标题条主题化覆盖 ==========
+ * 标记类 card-hd 配合各组件的原子类使用;此处用主题变量 + !important
+ * 压过模板里写死的灰阶原子类,使标题条随配色联动 */
+[class~='card-hd'] {
+  background: var(--soft-bg) !important;
+  border-bottom: 1px solid var(--line) !important;
+  padding-left: 16px;
+  padding-right: 16px;
+}
