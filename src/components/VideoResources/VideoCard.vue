@@ -1,154 +1,80 @@
 <script setup>
 import { ref } from 'vue'
-import { bilibiliEmbedUrl, douyinEmbedUrl, useVideoEmbed } from './composables/useVideoEmbed'
+import { NTooltip } from 'naive-ui'
+import { useElementVisibility, useMediaQuery } from '@vueuse/core'
+import VideoPlayer from './VideoPlayer.vue'
 
-defineProps({
-  // { title, bv? , dy? } —— bv 为 B 站号,dy 为抖音视频 ID,二选一
+const props = defineProps({
+  // { title, bv?, dy? } —— bv 为 B 站号,dy 为抖音视频 ID,二选一
   video: { type: Object, required: true },
 })
 
 const emit = defineEmits(['expand'])
 
+// 卡片只负责懒加载门控与占位;播放器渲染交给 VideoPlayer(与放大弹窗共用)
 const mediaEl = ref(null)
-const { isPlayerReady, douyinScale } = useVideoEmbed(mediaEl)
+// 首次进入视口才挂载(全页数十 iframe 同时初始化会拖垮性能);once 定格 true,配合 v-if 常驻不卸载
+const isPlayerReady = useElementVisibility(mediaEl, { rootMargin: '0px 0px', once: true })
+const playerRef = ref(null)
+
+// 点击必须在同步栈里发起全屏(手势约束);不支持/被拒时回退上抛父组件开弹窗
+async function handleExpand() {
+  const ok = await playerRef.value?.enterFullscreen()
+  if (!ok) emit('expand', props.video)
+}
+
+// 触屏无真 hover,点击气泡不自动收起,故按 hover 能力禁用
+const canHover = useMediaQuery('(hover: hover)')
 </script>
 
 <template>
+  <!-- 阴影走主题变量 --card-shadow:黑底自动转深,故不自带边框(见 main.css) -->
   <div
-    class="group border border-[#e2e7f0] rounded-[10px] overflow-hidden bg-white transition-all duration-200 hover:border-[#c9d6ec] hover:shadow-[0_6px_18px_rgba(28,42,80,0.10)]"
-    data-vr="card"
+    class="group overflow-hidden rounded-[10px] bg-white shadow-[var(--card-shadow)] transition-all duration-200"
   >
     <!-- 视频区:可视区域内才挂载播放器,视口外为轻量占位封面 -->
-    <div ref="mediaEl" class="relative overflow-hidden aspect-video">
-      <!-- B 站 iframe 嵌入 -->
-      <template v-if="video.bv">
-        <iframe
-          v-if="isPlayerReady"
-          class="absolute inset-0 w-full h-full border-0"
-          :src="bilibiliEmbedUrl(video.bv)"
-          scrolling="no"
-          frameborder="0"
-          allowfullscreen="true"
-          loading="lazy"
-          data-vr="frame"
-        ></iframe>
-        <div v-else class="media-placeholder">
-          <span class="ph-play">▶</span>
-          <span class="ph-badge">bilibili</span>
-        </div>
-      </template>
-      <!-- 抖音 iframe 嵌入:大尺寸渲染 + CSS 缩放,避免比例问题 -->
-      <template v-else-if="video.dy">
-        <iframe
-          v-if="isPlayerReady"
-          class="dy-player"
-          :src="douyinEmbedUrl(video.dy)"
-          :style="{ transform: `scale(${douyinScale})`, transformOrigin: 'top left' }"
-          width="1280"
-          height="720"
-          scrolling="no"
-          frameborder="0"
-          allowfullscreen="true"
-          loading="lazy"
-          data-vr="frame"
-        ></iframe>
-        <div v-else class="media-placeholder">
-          <span class="ph-play">▶</span>
-          <span class="ph-badge">抖音</span>
-        </div>
-      </template>
+    <div ref="mediaEl" class="relative aspect-video overflow-hidden">
+      <VideoPlayer v-if="isPlayerReady" ref="playerRef" :video="video" />
+      <div
+        v-else
+        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#1e293b] to-[#0f172a]"
+      >
+        <span
+          class="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/12 pl-[3px] text-base text-white"
+          >▶</span
+        >
+        <span class="text-[11px] tracking-[0.5px] text-[#94a3b8]">{{ video.bv ? 'bilibili' : '抖音' }}</span>
+      </div>
     </div>
     <div class="relative flex items-start gap-1 px-3 py-2.5">
-      <p class="flex-1 text-[13px] leading-snug text-[#33415e] line-clamp-2" :title="video.title" data-vr="title">
+      <p class="flex-1 text-[13px] leading-snug text-[#33415e] line-clamp-2" :title="video.title">
         {{ video.title }}
       </p>
-      <button class="expand-btn shrink-0 mt-0.5" @click="emit('expand', video)" title="放大播放">
-        <svg
-          viewBox="0 0 24 24"
-          class="w-3.5 h-3.5"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polyline points="15 3 21 3 21 9" />
-          <polyline points="9 21 3 21 3 15" />
-          <line x1="21" y1="3" x2="14" y2="10" />
-          <line x1="3" y1="21" x2="10" y2="14" />
-        </svg>
-      </button>
+      <NTooltip trigger="hover" placement="top" :disabled="!canHover">
+        <template #trigger>
+          <!-- PC:默认透明、hover 卡片才显形;触屏无 hover 能力则常驻淡背景描边 -->
+          <button
+            class="mt-0.5 flex h-[26px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-[#94a3b8] opacity-0 transition duration-200 group-hover:opacity-100 hover:border-[#e2e8f0] hover:bg-[#f1f5f9] hover:text-[#475569] [@media(hover:none)]:border-[#e2e8f0] [@media(hover:none)]:bg-[#f1f5f9] [@media(hover:none)]:text-[#475569] [@media(hover:none)]:opacity-100"
+            @click="handleExpand"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          </button>
+        </template>
+        放大播放
+      </NTooltip>
     </div>
   </div>
 </template>
-
-<style scoped>
-.dy-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: 0;
-}
-
-/* 可视区域外的播放器占位封面 */
-.media-placeholder {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-}
-
-.ph-play {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #fff;
-  font-size: 16px;
-  padding-left: 3px;
-}
-
-.ph-badge {
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
-}
-
-/* 放大按钮 */
-.expand-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: transparent;
-  color: #94a3b8;
-  border: 1px solid transparent;
-  cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity 0.2s,
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.group:hover .expand-btn {
-  opacity: 1;
-}
-
-.expand-btn:hover {
-  background: #f1f5f9;
-  color: #475569;
-  border-color: #e2e8f0;
-}
-</style>

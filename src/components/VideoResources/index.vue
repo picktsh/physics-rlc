@@ -1,14 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { useEventListener } from '@vueuse/core'
-import VideoCard from './VideoResources/VideoCard.vue'
-import { bilibiliEmbedUrl, douyinEmbedUrl } from './VideoResources/composables/useVideoEmbed'
+import { ref } from 'vue'
+import { NModal } from 'naive-ui'
+import VideoCard from './VideoCard.vue'
+import VideoPlayer from './VideoPlayer.vue'
 
-// ⚠️ 视频清单:未替换的条目均为占位(标题带「(示例)」,BV 用 B 站嵌入文档示例号)。
-// 换真实视频时只改这里:title 是卡片标题;bv 取 B 站视频地址中的 BV 号
-// (如 https://www.bilibili.com/video/BV1xx411c7mD 的 BV1xx411c7mD)。
-// dy 填抖音视频 ID(从 https://www.douyin.com/video/xxxxx 地址中提取纯数字)。
-// 每类数量不限,自动三列换行。
+// ⚠️ 视频清单:换真实视频只改这里。bv 取 B 站地址中的 BV 号(如 BV1xx411c7mD);
+// dy 取抖音视频地址中的纯数字 ID。每类数量不限,自动三列换行。
 const rawCategories = [
   {
     id: 'principle',
@@ -69,9 +66,10 @@ const rawCategories = [
   },
 ]
 
-// 卡片渲染与可视区域懒加载逻辑见 VideoResources/VideoCard.vue 与 composables/useVideoEmbed.js
+// 卡片渲染与懒加载见 VideoResources/VideoCard.vue;播放器渲染与全屏见 VideoResources/VideoPlayer.vue
 
 // ── 视频放大/缩小 ──
+// 遮罩、滚动锁定、Esc/点遮罩关闭、过渡动画均由 NModal 内置处理
 const expandedVideo = ref(null)
 
 function expandVideo(video) {
@@ -81,36 +79,18 @@ function expandVideo(video) {
 function closeExpand() {
   expandedVideo.value = null
 }
-
-function onModalKeydown(e) {
-  if (e.key === 'Escape') closeExpand()
-}
-
-// 弹窗打开期间才响应 Esc,卸载时 VueUse 自动移除监听
-useEventListener(window, 'keydown', (e) => {
-  if (expandedVideo.value) onModalKeydown(e)
-})
-
-watch(expandedVideo, (v) => {
-  document.body.style.overflow = v ? 'hidden' : ''
-})
 </script>
 
 <template>
-  <section v-for="cat in rawCategories" :key="cat.id" class="card mb-4" data-vr="cat">
+  <section v-for="cat in rawCategories" :key="cat.id" class="card mb-4">
     <div class="flex items-center justify-between mb-3.5">
       <h2 class="sec-title !mb-0">{{ cat.title }}</h2>
       <span class="shrink-0 text-xs text-[#8a97ab] bg-[#f2f5fa] border border-[#e2e7f0] rounded-full px-2.5 py-[3px]">
         {{ cat.videos.length }} 个视频
       </span>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5" data-vr="grid">
-      <VideoCard
-        v-for="video in cat.videos"
-        :key="video.bv || video.dy"
-        :video="video"
-        @expand="expandVideo"
-      />
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+      <VideoCard v-for="video in cat.videos" :key="video.bv || video.dy" :video="video" @expand="expandVideo" />
     </div>
   </section>
   <a
@@ -118,7 +98,6 @@ watch(expandedVideo, (v) => {
     target="_blank"
     rel="noopener noreferrer"
     class="card flex items-center justify-center gap-2 py-3.5 text-[15px] font-medium text-[#1d4ed8] bg-[#dbeafe] border border-[#93b4fd] rounded-xl transition-all duration-200 hover:bg-[#bfdbfe] hover:border-[#60a5fa] hover:shadow-[0_4px_14px_rgba(29,78,216,0.18)]"
-    data-vr="more-btn"
   >
     <svg
       viewBox="0 0 24 24"
@@ -150,76 +129,45 @@ watch(expandedVideo, (v) => {
     </svg>
   </a>
 
-  <!-- 视频放大弹窗 -->
-  <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="expandedVideo" class="fixed inset-0 z-[9999] flex items-center justify-center">
-        <!-- 背景遮罩 -->
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeExpand"></div>
-        <!-- 内容卡片 -->
-        <div class="relative z-10 w-[94vw] max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-            <h3 class="text-[15px] font-semibold text-gray-800 truncate pr-4">{{ expandedVideo.title }}</h3>
-            <button
-              class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              @click="closeExpand"
-              title="缩小"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                class="w-4 h-4 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-          <div class="relative aspect-video bg-black">
-            <iframe
-              v-if="expandedVideo.bv"
-              class="absolute inset-0 w-full h-full border-0"
-              :src="bilibiliEmbedUrl(expandedVideo.bv)"
-              scrolling="no"
-              frameborder="0"
-              allowfullscreen="true"
-            ></iframe>
-            <iframe
-              v-else-if="expandedVideo.dy"
-              class="absolute inset-0 w-full h-full border-0"
-              :src="douyinEmbedUrl(expandedVideo.dy)"
-              scrolling="no"
-              frameborder="0"
-              allowfullscreen="true"
-            ></iframe>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <!-- 放大弹窗宿主:NModal 通过 to 挂载于此,便于用 :deep 局部覆盖遮罩与圆角,不影响其他弹窗 -->
+  <div id="video-modal-host"></div>
+
+  <!-- 视频放大弹窗:NModal preset=card 自带标题栏 + 右上关闭按钮,无需手写遮罩/滚动锁定/过渡 -->
+  <NModal
+    :show="!!expandedVideo"
+    preset="card"
+    to="#video-modal-host"
+    :title="expandedVideo?.title"
+    :block-scroll="true"
+    :mask-closable="true"
+    :auto-focus="false"
+    :content-style="{ padding: 0 }"
+    class="w-full max-w-[1280px]"
+    @update:show="closeExpand"
+  >
+    <div class="relative aspect-video bg-black">
+      <VideoPlayer v-if="expandedVideo" :video="expandedVideo" />
+    </div>
+  </NModal>
 </template>
 
 <style scoped>
-/* 弹窗动画 */
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.25s ease;
+/* 全局主题为直角,放大弹窗单独恢复圆角并裁切视频边缘 */
+#video-modal-host :deep(.n-card) {
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
+/* naive 遮罩默认 rgba(0,0,0,.4) 为硬编码而非主题变量,这里针对本弹窗加深 */
+#video-modal-host :deep(.n-modal-mask) {
+  background-color: rgba(0, 0, 0, 0.85);
 }
 
-.modal-enter-active .relative {
-  transition: transform 0.25s ease;
-}
-
-.modal-enter-from .relative {
-  transform: scale(0.92);
+/* 标题过长时单行省略,避免换行把弹窗头撑高(不改 padding 以保持 PC/移动端统一) */
+#video-modal-host :deep(.n-card-header__main) {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 </style>
