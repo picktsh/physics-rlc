@@ -170,6 +170,7 @@ async function handleImportMeasHistory(file) {
     </h2>
     <MeasuredDataInput
       v-model:data="calcStore.measuredData"
+      :theoretical-params="params"
       :history="measuredHistory"
       @plot="handlePlotMeasured"
       @export-history="historyStore.exportMeasuredHistory()"

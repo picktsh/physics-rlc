@@ -50,7 +50,7 @@ export const navRoutes = [
   {
     name: 'analysis',
     path: '/analysis',
-    label: '仿真分析',
+    label: '电压最大值法',
     icon: Analytics,
     desc: '计算结果、三大特性曲线、实测比对与误差分析',
     component: () => import('@/views/analysis/index.vue'),

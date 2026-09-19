@@ -71,6 +71,123 @@
       >
         绘制实测曲线
       </button>
+      <button
+        @click="calculateQValue"
+        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
+      >
+        计算 Q 值
+      </button>
+    </div>
+
+    <!-- Q 值计算结果 -->
+    <div v-if="qResult.show" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+      <h3 class="text-base font-bold text-green-800 mb-3 flex items-center gap-2">
+        <span class="text-xl">📊</span> Q 值计算结果
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="p-3 bg-white rounded border border-green-100">
+          <div class="text-gray-600 text-xs mb-1">谐振频率 f₀</div>
+          <div class="text-xl font-bold text-green-700">{{ qResult.fr }} kHz</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-green-100">
+          <div class="text-gray-600 text-xs mb-1">最大电流 Iₘₓ</div>
+          <div class="text-xl font-bold text-green-700">{{ qResult.imax }} mA</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-green-100">
+          <div class="text-gray-600 text-xs mb-1">品质因数 Q</div>
+          <div class="text-xl font-bold text-green-700">{{ qResult.Q }}</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-green-100">
+          <div class="text-gray-600 text-xs mb-1">带宽 BW</div>
+          <div class="text-xl font-bold text-green-700">{{ qResult.BW }} kHz</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-green-100">
+          <div class="text-gray-600 text-xs mb-1">下截止频率 f₁</div>
+          <div class="text-xl font-bold text-green-700">{{ qResult.f1 }} kHz</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-green-100">
+          <div class="text-gray-600 text-xs mb-1">上截止频率 f₂</div>
+          <div class="text-xl font-bold text-green-700">{{ qResult.f2 }} kHz</div>
+        </div>
+      </div>
+      <div class="mt-4 p-3 bg-white rounded border border-green-100 text-xs text-gray-700">
+        <div class="font-semibold mb-1">计算公式：</div>
+        <div class="mb-1">• 谐振频率：通过实测数据峰值拟合得到 f₀</div>
+        <div class="mb-2" style="line-height: 1.9;">
+          • 半功率点电流：I = I
+          <sub>max</sub> × 
+          <span style="display: inline-block; vertical-align: middle; text-align: center; margin: 0 5px; font-size: 16px; line-height: 1.3;">
+            <span style="border-bottom: 2px solid #1f2937; display: block; padding: 2px 8px; font-weight: bold;">1</span>
+            <span style="display: block; padding: 2px 8px; font-weight: bold;">√2 ≈ 0.707</span>
+          </span>
+          × I
+          <sub>max</sub>
+        </div>
+        <div class="mb-2" style="line-height: 1.9;">
+          • 品质因数：Q = 
+          <span style="display: inline-block; vertical-align: middle; text-align: center; margin: 0 5px; font-size: 16px; line-height: 1.3;">
+            <span style="border-bottom: 2px solid #1f2937; display: block; padding: 2px 8px; font-weight: bold;">f₀</span>
+            <span style="display: block; padding: 2px 8px; font-weight: bold;">f₂ - f₁</span>
+          </span>
+          = f₀/BW
+        </div>
+        <div>• 带宽：BW = f₂ - f₁（半功率点之间的频率宽度）</div>
+      </div>
+    </div>
+
+    <!-- 误差分析 -->
+    <div v-if="qResult.show" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <h3 class="text-base font-bold text-blue-800 mb-3 flex items-center gap-2">
+        <span class="text-xl"></span> 误差分析
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div class="p-3 bg-white rounded border border-blue-100">
+          <div class="text-gray-600 text-xs mb-1">理论 Q 值（基于标称元件）</div>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              :value="errorAnalysis.manualQ || errorAnalysis.theoreticalQ"
+              @change="errorAnalysis.manualQ = $event.target.value ? parseFloat($event.target.value) : null"
+              class="w-full px-2 py-1 border border-gray-300 rounded text-lg font-bold text-blue-700"
+              placeholder="手动输入或留空"
+            />
+            <button
+              v-if="errorAnalysis.manualQ"
+              @click="errorAnalysis.manualQ = null"
+              class="px-2 py-1 text-red-500 hover:text-red-700 text-xs"
+              title="清除手动输入"
+            >
+              ✕
+            </button>
+          </div>
+          <div v-if="!errorAnalysis.manualQ" class="text-xs text-gray-500 mt-1">自动计算 (R/L/C)</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-blue-100">
+          <div class="text-gray-600 text-xs mb-1">实测 Q 值</div>
+          <div class="text-xl font-bold text-blue-700">{{ qResult.Q }}</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-blue-100">
+          <div class="text-gray-600 text-xs mb-1">绝对误差 ΔQ</div>
+          <div class="text-lg font-bold text-blue-700">{{ Math.abs(errorAnalysis.diff).toFixed(2) }}</div>
+        </div>
+        <div class="p-3 bg-white rounded border border-blue-100">
+          <div class="text-gray-600 text-xs mb-1">相对误差 δ</div>
+          <div class="text-lg font-bold text-blue-700">{{ errorAnalysis.relativeError }}%</div>
+        </div>
+      </div>
+      <div class="mt-4 p-3 bg-white rounded border border-blue-100 text-xs text-gray-700">
+        <div class="font-semibold mb-2">误差来源分析：</div>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+          <li><strong>元件公差：</strong>R、L、C 实际值与标称值的偏差（通常±5%~±10%）</li>
+          <li><strong>测量误差：</strong>电流表、频率计的精度限制及读数误差</li>
+          <li><strong>环境因素：</strong>温度变化导致元件参数漂移，电磁干扰</li>
+          <li><strong>方法误差：</strong>半功率点定位不精确，抛物线拟合的近似性</li>
+          <li><strong>电路寄生参数：</strong>导线电阻、电感分布电容等未计入模型</li>
+        </ul>
+        <div class="mt-2 p-2 bg-blue-50 rounded text-[12px] text-blue-800">
+          💡 提示：若相对误差超过 15%，请检查实验操作是否规范，或重新采集数据
+        </div>
+      </div>
     </div>
 
     <!-- 历史记录 -->
@@ -146,6 +263,25 @@ import { ref, watch } from 'vue'
 import { NIcon } from 'naive-ui'
 import { Save, TrashCan } from '@vicons/carbon'
 
+// Q 值计算结果
+const qResult = ref({
+  show: false,
+  fr: 0,
+  imax: 0,
+  Q: 0,
+  BW: 0,
+  f1: 0,
+  f2: 0
+})
+
+// 误差分析结果
+const errorAnalysis = ref({
+  theoreticalQ: '-',
+  manualQ: null, // 手动输入的 Q 值，null 表示使用自动计算值
+  diff: 0,
+  relativeError: 0
+})
+
 const props = defineProps({
   data: {
     type: Array,
@@ -154,6 +290,10 @@ const props = defineProps({
   history: {
     type: Array,
     default: () => [],
+  },
+  theoreticalParams: {
+    type: Object,
+    default: () => null, // { R, L, C } 用于计算理论 Q 值
   },
 })
 
@@ -236,5 +376,123 @@ function addRow() {
 
 function deleteRow(index) {
   localData.value.splice(index, 1)
+}
+
+// 计算 Q 值及谐振参数
+function calculateQValue() {
+  const data = localData.value
+  if (data.length < 5) {
+    alert('至少需要 5 个数据点才能进行 Q 值计算')
+    return
+  }
+
+  // 1. 找到最大电流及其对应的频率
+  let maxIdx = 0
+  let maxI = data[0].current
+  for (let i = 1; i < data.length; i++) {
+    if (data[i].current > maxI) {
+      maxI = data[i].current
+      maxIdx = i
+    }
+  }
+
+  const fr = data[maxIdx].freq
+  const imax = maxI
+  const halfPower = imax / Math.sqrt(2) // 半功率点电流
+
+  // 2. 使用抛物线拟合同峰值附近的数据，精确计算谐振频率
+  if (maxIdx > 0 && maxIdx < data.length - 1) {
+    const y0 = data[maxIdx - 1].current
+    const y1 = data[maxIdx].current
+    const y2 = data[maxIdx + 1].current
+    const x0 = data[maxIdx - 1].freq
+    const x1 = data[maxIdx].freq
+    const x2 = data[maxIdx + 1].freq
+
+    // 抛物线拟合：通过三点 (x0,y0), (x1,y1), (x2,y2)
+    // 顶点公式：x_peak = x1 - (x2-x0)*(y2-y0)/(2*(y2-2*y1+y0))
+    const denom = 2 * (y2 - 2 * y1 + y0)
+    if (Math.abs(denom) > 1e-6) {
+      const xPeak = x1 - (x2 - x0) * (y2 - y0) / denom
+      const yPeak = y1 - (y2 - y0) ** 2 / (8 * denom)
+      
+      // 更新结果
+      qResult.value.fr = parseFloat(xPeak.toFixed(4))
+      qResult.value.imax = parseFloat(yPeak.toFixed(4))
+    } else {
+      qResult.value.fr = parseFloat(fr.toFixed(4))
+      qResult.value.imax = parseFloat(imax.toFixed(4))
+    }
+  } else {
+    qResult.value.fr = parseFloat(fr.toFixed(4))
+    qResult.value.imax = parseFloat(imax.toFixed(4))
+  }
+
+  // 3. 查找半功率点（上下截止频率）
+  // 从峰值向左找 f1
+  let f1 = 0
+  for (let i = maxIdx; i >= 0; i--) {
+    if (data[i].current <= halfPower) {
+      // 线性插值求精确点
+      if (i > 0) {
+        const frac = (data[i].current - halfPower) / (data[i].current - data[i-1].current)
+        f1 = data[i].freq + frac * (data[i-1].freq - data[i].freq)
+      } else {
+        f1 = data[i].freq
+      }
+      break
+    }
+  }
+
+  // 从峰值向右找 f2
+  let f2 = 0
+  for (let i = maxIdx; i < data.length; i++) {
+    if (data[i].current <= halfPower) {
+      // 线性插值求精确点
+      if (i < data.length - 1) {
+        const frac = (data[i].current - halfPower) / (data[i].current - data[i+1].current)
+        f2 = data[i].freq + frac * (data[i+1].freq - data[i].freq)
+      } else {
+        f2 = data[i].freq
+      }
+      break
+    }
+  }
+
+  // 4. 计算带宽和 Q 值
+  const BW = f2 - f1
+  const Q = BW > 0 ? fr / BW : 0
+
+  qResult.value.f1 = parseFloat(f1.toFixed(4))
+  qResult.value.f2 = parseFloat(f2.toFixed(4))
+  qResult.value.BW = parseFloat(BW.toFixed(4))
+  qResult.value.Q = parseFloat(Q.toFixed(2))
+  qResult.value.show = true
+
+  // 5. 误差分析：如果父组件传入了 R、L、C 标称值，则计算理论 Q 值
+  // params 中的 L 单位是 mH，C 单位是 μF，需要转换为标准单位
+  if (props.theoreticalParams && props.theoreticalParams.R && props.theoreticalParams.L && props.theoreticalParams.C) {
+    const { R, L, C } = props.theoreticalParams
+    // L: mH -> H (除以 1000), C: μF -> F (除以 1e6)
+    const L_H = L / 1000
+    const C_F = C / 1e6
+    // 理论 Q 值公式：Q = (1/R) * sqrt(L/C)
+    const theoreticalQ = (1 / R) * Math.sqrt(L_H / C_F)
+    
+    errorAnalysis.value.theoreticalQ = parseFloat(theoreticalQ.toFixed(2))
+  }
+
+  // 使用手动输入的 Q 值或自动计算的 Q 值
+  const usedTheoreticalQ = errorAnalysis.value.manualQ !== null ? errorAnalysis.value.manualQ : errorAnalysis.value.theoreticalQ
+  
+  if (usedTheoreticalQ && usedTheoreticalQ > 0) {
+    const diff = Q - usedTheoreticalQ
+    const relativeError = Math.abs(diff / usedTheoreticalQ) * 100
+    
+    errorAnalysis.value.diff = parseFloat(diff.toFixed(2))
+    errorAnalysis.value.relativeError = parseFloat(relativeError.toFixed(1))
+  }
+
+  alert(`✅ Q 值计算完成！\n谐振频率：${qResult.value.fr} kHz\n最大电流：${qResult.value.imax} mA\n品质因数：Q = ${qResult.value.Q}\n带宽：${qResult.value.BW} kHz`)
 }
 </script>
