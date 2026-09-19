@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { NTooltip } from 'naive-ui'
-import { useElementVisibility, useMediaQuery } from '@vueuse/core'
+import { useElementVisibility, useMediaQuery, useTimeoutFn } from '@vueuse/core'
 import VideoPlayer from './VideoPlayer.vue'
+import VideoPlaceholder from './VideoPlaceholder.vue'
 
 const props = defineProps({
   // { title, bv?, dy? } —— bv 为 B 站号,dy 为抖音视频 ID,二选一
@@ -13,9 +14,33 @@ const emit = defineEmits(['expand'])
 
 // 卡片只负责懒加载门控与占位;播放器渲染交给 VideoPlayer(与放大弹窗共用)
 const mediaEl = ref(null)
-// 首次进入视口才挂载(全页数十 iframe 同时初始化会拖垮性能);once 定格 true,配合 v-if 常驻不卸载
-const isPlayerReady = useElementVisibility(mediaEl, { rootMargin: '0px 0px', once: true })
 const playerRef = ref(null)
+
+// 性能:整页几十个第三方 iframe 若「进入视口即常驻不卸载」,滚完一遍会累积几十个存活浏览上下文,弱机内存/CPU 直接被打爆。
+// 改成跟随可见性挂载——存活数始终 ≈ 屏幕能容纳的卡片数(约 9~12),并双向防抖避免快速滚动反复创建/销毁:
+//  - 挂载需持续可见 MOUNT_DELAY:快速滑过、一闪而过的卡片根本不触发 iframe 初始化
+//  - 卸载给 UNMOUNT_GRACE 宽限:边缘抖动/小幅回滚直接复用已挂载播放器,不必销毁重建
+const MOUNT_DELAY = 150
+const UNMOUNT_GRACE = 700
+const isVisible = useElementVisibility(mediaEl, { rootMargin: '0px 0px' })
+const isPlayerReady = ref(false)
+const { start: scheduleMount, stop: cancelMount } = useTimeoutFn(() => (isPlayerReady.value = true), MOUNT_DELAY, {
+  immediate: false,
+})
+const { start: scheduleUnmount, stop: cancelUnmount } = useTimeoutFn(
+  () => (isPlayerReady.value = false),
+  UNMOUNT_GRACE,
+  { immediate: false },
+)
+watch(isVisible, (visible) => {
+  if (visible) {
+    cancelUnmount() // 宽限期内滚回:取消卸载,继续复用
+    if (!isPlayerReady.value) scheduleMount()
+  } else {
+    cancelMount() // 已滑走:撤销待挂载,连 iframe 都不必创建
+    if (isPlayerReady.value) scheduleUnmount()
+  }
+})
 
 // 点击必须在同步栈里发起全屏(手势约束);不支持/被拒时回退上抛父组件开弹窗
 async function handleExpand() {
@@ -29,22 +54,11 @@ const canHover = useMediaQuery('(hover: hover)')
 
 <template>
   <!-- 阴影走主题变量 --card-shadow:黑底自动转深,故不自带边框(见 main.css) -->
-  <div
-    class="group overflow-hidden rounded-[10px] bg-white shadow-[var(--card-shadow)] transition-all duration-200"
-  >
+  <div class="group overflow-hidden rounded-[10px] bg-white shadow-[var(--card-shadow)] transition-all duration-200">
     <!-- 视频区:可视区域内才挂载播放器,视口外为轻量占位封面 -->
     <div ref="mediaEl" class="relative aspect-video overflow-hidden">
       <VideoPlayer v-if="isPlayerReady" ref="playerRef" :video="video" />
-      <div
-        v-else
-        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-[#1e293b] to-[#0f172a]"
-      >
-        <span
-          class="flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/12 pl-[3px] text-base text-white"
-          >▶</span
-        >
-        <span class="text-[11px] tracking-[0.5px] text-[#94a3b8]">{{ video.bv ? 'bilibili' : '抖音' }}</span>
-      </div>
+      <VideoPlaceholder v-else :video="video" />
     </div>
     <div class="relative flex items-start gap-1 px-3 py-2.5">
       <p class="flex-1 text-[13px] leading-snug text-[#33415e] line-clamp-2" :title="video.title">
