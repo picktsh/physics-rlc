@@ -78,9 +78,16 @@
         class="w-full cursor-crosshair bg-transparent"
         :style="{ height: chartHeight + 'px' }"
         @click="handleChartClick"
-        @mousemove="handleChartHover"
-        @mouseleave="hideTooltip"
       ></canvas>
+      <!-- Imax/√2 截止线公式标注:KaTeX 分式渲染,-translate-y-full 令分式底边对齐虚线上方;
+           坐标由 drawAmpChart 每次重绘同步写入 halfPowerMark -->
+      <div
+        v-if="halfPowerMark"
+        class="absolute -translate-y-full pointer-events-none text-[10px] text-[#e0523f] leading-none"
+        :style="{ left: halfPowerMark.x + 'px', top: halfPowerMark.y + 'px' }"
+      >
+        <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}mA</span>
+      </div>
       <div
         v-if="tooltip.show"
         class="chart-tooltip absolute bg-white/95 border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-lg pointer-events-none whitespace-nowrap"
@@ -101,7 +108,10 @@
       </div>
       <div class="flex items-center gap-1">
         <div class="w-4 h-0 border-t-2 border-dashed border-gray-400"></div>
-        <span>Imax/√2 截止电流</span>
+        <span class="inline-flex items-center gap-1">
+          <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span>
+          <span>截止电流</span>
+        </span>
       </div>
     </div>
   </div>
@@ -109,8 +119,19 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import { impedance, calculateRLC } from '@/utils/physics'
 import { canvasTheme } from '@/utils/canvasTheme'
+
+/** 渲染 LaTeX 为 KaTeX HTML(与公式原理/收音机页同一封装) */
+function K(tex, display = false) {
+  return katex.renderToString(tex, {
+    displayMode: display,
+    throwOnError: false,
+    strict: 'ignore',
+  })
+}
 
 const props = defineProps({
   params: { type: Object, required: true },
@@ -135,6 +156,9 @@ const localFEnd = ref(props.params.fEnd || 2000)
 
 // 幅频图绘制时窗口内的理论峰值与实测峰值(供量级错配提示条使用)
 const ampPeaks = ref({ theory: 0, meas: 0 })
+
+// Imax/√2 截止线公式标注(KaTeX 分式,HTML 覆盖层):坐标由 drawAmpChart 每次重绘时写入
+const halfPowerMark = ref(null)
 
 const tooltip = ref({ show: false, x: 0, y: 0, content: '' })
 
@@ -200,6 +224,9 @@ function drawChart() {
   const pad = { top: 40, right: 40, bottom: 50, left: 60 }
   const width = W - pad.left - pad.right
   const height = H - pad.top - pad.bottom
+
+  // 公式标注仅在幅频图中出现:每次重绘先清空,由 drawAmpChart 重新写入
+  halfPowerMark.value = null
 
   // 未搭建电路且无实测数据时显示占位图
   if (!props.simulated && props.measuredData.length === 0) {
@@ -376,10 +403,14 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.font = 'bold 11px system-ui'
   ctx.fillText('Imax=' + theory.Imax.toFixed(4) + 'mA', resX - 35, resY - 10)
 
-  // Imax/√2标注
-  ctx.fillStyle = '#e0523f'
-  ctx.font = '10px system-ui'
-  ctx.fillText('Imax/√2=' + theory.halfPower.toFixed(4) + 'mA', pad.left + 5, halfPowerY - 5)
+  // Imax/√2 标注:公式改由 KaTeX 覆盖层渲染(见模板),此处仅同步位置与数值;
+  // offsetLeft/Top 把画布坐标换算到图容器坐标,分式底边贴虚线上方 4px
+  const canvasEl = chartCanvasRef.value
+  halfPowerMark.value = {
+    x: (canvasEl?.offsetLeft || 0) + pad.left + 5,
+    y: (canvasEl?.offsetTop || 0) + halfPowerY - 4,
+    value: theory.halfPower.toFixed(4),
+  }
 
   // f1/f2截止频率
   const f1x = pad.left + ((theory.f1 - fStart) / (fEnd - fStart)) * width
@@ -683,6 +714,8 @@ function calcTheory(R, L, C, V) {
 
 function switchChart(type) {
   currentChart.value = type
+  // 切图时收起上一张图的 tooltip:固定显示不随鼠标,跨图残留会指向错误位置
+  hideTooltip()
   nextTick(() => drawChart())
 }
 
@@ -705,7 +738,7 @@ function applyFreqRange() {
   drawChart()
 }
 
-// 图表点击 - tooltip
+// 图表点击 - 在最近的曲线点/实测点旁固定显示 tooltip(不随鼠标移动)
 function handleChartClick(event) {
   const canvas = chartCanvasRef.value
   const rect = canvas.getBoundingClientRect()
@@ -770,7 +803,9 @@ function handleChartClick(event) {
     closestF = 0,
     closestI = 0,
     closestZ = 0,
-    closestPhase = 0
+    closestPhase = 0,
+    closestX = 0,
+    closestY = 0
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
     const w = 2 * Math.PI * f
@@ -810,6 +845,8 @@ function handleChartClick(event) {
       closestI = I
       closestZ = Z
       closestPhase = phase
+      closestX = curveX
+      closestY = curveY
     }
   }
 
@@ -821,16 +858,8 @@ function handleChartClick(event) {
   } else {
     content = `频率: ${closestF.toFixed(4)} Hz<br>阻抗: ${closestZ.toFixed(4)} Ω<br>电流: ${closestI.toFixed(4)} mA`
   }
-  tooltip.value = { show: true, x: clickX + 10, y: clickY - 10, content }
-}
-
-function handleChartHover(event) {
-  if (tooltip.value.show) {
-    const canvas = chartCanvasRef.value
-    const rect = canvas.getBoundingClientRect()
-    tooltip.value.x = event.clientX - rect.left + 10
-    tooltip.value.y = event.clientY - rect.top - 10
-  }
+  // 固定显示在选中点旁(不随鼠标移动):坐标取最近曲线点而非点击像素
+  tooltip.value = { show: true, x: closestX + 10, y: closestY - 10, content }
 }
 
 function hideTooltip() {

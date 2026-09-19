@@ -467,6 +467,7 @@ function calculateQValue() {
   qResult.value.f2 = parseFloat(f2.toFixed(4))
   qResult.value.BW = parseFloat(BW.toFixed(4))
   qResult.value.Q = parseFloat(Q.toFixed(2))
+  // 结果直接由下方结果面板展开呈现,不弹窗打断
   qResult.value.show = true
 
   // 5. 误差分析：如果父组件传入了 R、L、C 标称值，则计算理论 Q 值
@@ -492,7 +493,5 @@ function calculateQValue() {
     errorAnalysis.value.diff = parseFloat(diff.toFixed(2))
     errorAnalysis.value.relativeError = parseFloat(relativeError.toFixed(1))
   }
-
-  alert(`✅ Q 值计算完成！\n谐振频率：${qResult.value.fr} kHz\n最大电流：${qResult.value.imax} mA\n品质因数：Q = ${qResult.value.Q}\n带宽：${qResult.value.BW} kHz`)
 }
 </script>

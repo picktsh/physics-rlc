@@ -22,8 +22,28 @@
           在此频段需要亨利级电感和法拉级电容,工程上不可行。实际生物电/光传感器均采用有源 RC 滤波器:第一级高通隔直 (0.48
           Hz) 去除直流基线,第二级低通 (4.08 Hz) 滤除高频噪声,运放缓冲级隔离前后级避免负载效应。
         </p>
-        <div class="flex justify-center">
-          <svg viewBox="0 0 500 170" class="w-full" style="max-width: 500px">
+        <!-- 带通滤波器电路图:点「放大」弹出居中放大层等比例查看,「关闭」/Esc/点空白处退出 -->
+        <div
+          class="relative"
+          :class="isDiagramExpanded ? 'diagram-lightbox' : 'max-w-[500px] mx-auto'"
+          @click.self="collapseDiagram"
+        >
+          <button
+            v-if="!isDiagramExpanded"
+            @click="expandDiagram"
+            class="absolute top-2 right-2 z-10 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all flex items-center gap-1 text-xs font-medium"
+            title="放大查看电路图"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+            </svg>
+            放大
+          </button>
+          <svg
+            viewBox="0 0 500 170"
+            class="h-auto"
+            :class="isDiagramExpanded ? 'w-[92vw] max-w-[1500px] m-auto' : 'w-full'"
+          >
             <!-- 标题 -->
             <text x="250" y="14" text-anchor="middle" font-size="13" fill="#334155" font-weight="600">
               有源 RC 带通滤波器 (等效选频网络)
@@ -97,6 +117,17 @@
               高通 f_c = 1/(2πR₁C₁) ≈ 0.48 Hz · 低通 f_c = 1/(2πR₂C₂) ≈ 4.08 Hz · 通带 0.5 – 4 Hz
             </text>
           </svg>
+          <button
+            v-if="isDiagramExpanded"
+            @click="collapseDiagram"
+            class="absolute top-4 right-4 z-10 p-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-md transition-all flex items-center gap-1 text-xs font-medium"
+            title="关闭放大 (Esc)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            关闭
+          </button>
         </div>
       </div>
     </section>
@@ -179,6 +210,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { useFullscreenSection } from '@/composables/useFullscreenSection'
 
 // ============ 状态 ============
 const connected = ref(false)
@@ -187,7 +219,11 @@ const bpm = ref(null)
 const adcValue = ref(null)
 const voltageValue = ref('--')
 const logs = ref([])
-const serialSupported = ref(false) // 是否支持Web Serial API
+const serialSupported = ref(false) // 是否支持 Web Serial API
+
+// 电路图放大查看:复用「板块全屏」能力(fixed 铺满视口,自带 Esc 退出与背景滚动锁定),
+// 放大层样式由 .diagram-lightbox 承担;不重建 SVG 节点,放大即原图等比例缩放
+const { isFullscreen: isDiagramExpanded, enter: expandDiagram, exit: collapseDiagram } = useFullscreenSection()
 
 // ============ 串口变量 ============
 let port = null
@@ -669,6 +705,18 @@ onUnmounted(() => {
   font-size: 22px;
   line-height: 1.4;
   margin-bottom: 10px;
+}
+
+/* 电路图放大层:fixed 铺满视口等比例展示电路图(层级取 --z-overlay 令牌,恒低于 naive-ui 浮层),
+ * 背景取页面底色随主题切换,overflow 兜底极小视口下的滚动查看 */
+.diagram-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  overflow: auto;
+  padding: 24px;
+  background: var(--paper);
 }
 
 /* 状态指示灯 */
