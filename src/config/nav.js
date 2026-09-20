@@ -13,6 +13,7 @@ import {
   Chip,
   ChartLine,
   ChartLineSmooth,
+  Document,
 } from '@vicons/carbon'
 
 // keepAlive:true 的页面在布局层被 <KeepAlive> 缓存(后台扫频切走不丢进度),
@@ -102,6 +103,14 @@ export const navRoutes = [
     icon: Chip,
     desc: '心率检测与收音机调谐等工程应用演示',
     component: () => import('@/views/engineering/index.vue'),
+  },
+  {
+    name: 'docs',
+    path: '/docs',
+    label: '文档中心',
+    icon: Document,
+    desc: '内置手册与通用 Markdown 查看器 · 支持拖入 md/zip、导出 md/doc/png/打印 PDF',
+    component: () => import('@/views/docs/index.vue'),
   },
 ]
 

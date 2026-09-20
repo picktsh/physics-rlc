@@ -18,8 +18,7 @@ const PRIMARY_BY_THEME = {
 
 // naive-ui 主题定制:主色随配色切换 + 直角 + 衬线字体
 const themeOverrides = computed(() => {
-  const [primaryColor, primaryColorHover, primaryColorPressed] =
-    PRIMARY_BY_THEME[theme.value] || PRIMARY_BY_THEME.light
+  const [primaryColor, primaryColorHover, primaryColorPressed] = PRIMARY_BY_THEME[theme.value] || PRIMARY_BY_THEME.light
   return {
     common: {
       primaryColor,
@@ -30,10 +29,9 @@ const themeOverrides = computed(() => {
       infoColorHover: primaryColorHover,
       infoColorPressed: primaryColorPressed,
       infoColorSuppl: primaryColor,
-      borderRadius: '0px',
+      borderRadius: '8px',
       fontSize: '14px',
-      fontFamily:
-        "Georgia, 'Times New Roman', 'Songti SC', 'STSong', SimSun, 'Noto Serif CJK SC', serif",
+      fontFamily: "Georgia, 'Times New Roman', 'Songti SC', 'STSong', SimSun, 'Noto Serif CJK SC', serif",
     },
     Button: {
       fontWeight: '600',
