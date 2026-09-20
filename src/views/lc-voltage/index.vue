@@ -1,82 +1,5 @@
 <template>
   <div>
-    <!-- 参数区 -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
-      <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-4 bg-gray-50 rounded-lg">
-        <div class="flex items-center gap-1 text-xs sm:text-sm">
-          <label class="font-semibold text-gray-700">R</label>
-          <input
-            type="number"
-            v-model.number="R"
-            step="1"
-            min="0.1"
-            class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-          />
-          <span class="text-xs text-gray-500">Ω</span>
-        </div>
-        <div class="flex items-center gap-1 text-xs sm:text-sm">
-          <label class="font-semibold text-gray-700">L</label>
-          <input
-            type="number"
-            v-model.number="L_mH"
-            step="0.1"
-            min="0.01"
-            class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-          />
-          <span class="text-xs text-gray-500">mH</span>
-        </div>
-        <div class="flex items-center gap-1 text-xs sm:text-sm">
-          <label class="font-semibold text-gray-700">C</label>
-          <input
-            type="number"
-            v-model.number="C_uF"
-            step="0.01"
-            min="0.0001"
-            class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-          />
-          <span class="text-xs text-gray-500">μF</span>
-        </div>
-        <div class="flex items-center gap-1 text-xs sm:text-sm">
-          <label class="font-semibold text-gray-700">Us</label>
-          <input
-            type="number"
-            v-model.number="Us"
-            step="0.1"
-            min="0.1"
-            class="w-14 sm:w-16 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-          />
-          <span class="text-xs text-gray-500">V</span>
-        </div>
-        <div class="flex items-center gap-1 sm:gap-2 flex-1 min-w-[160px] sm:min-w-[200px]">
-          <label class="font-semibold text-gray-700 text-xs sm:text-sm whitespace-nowrap">f</label>
-          <input
-            type="number"
-            v-model.number="f"
-            step="1"
-            class="w-16 sm:w-20 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-          />
-          <span class="text-xs text-gray-500">Hz</span>
-          <input
-            type="range"
-            :min="freqMin"
-            :max="freqMax"
-            step="1"
-            v-model.number="f"
-            class="flex-1 min-w-[60px] cursor-pointer"
-          />
-          <span class="text-xs sm:text-sm font-semibold text-blue-600 min-w-[70px] sm:min-w-[80px] text-right"
-            >{{ t4(f) }} Hz</span
-          >
-        </div>
-        <button
-          @click="searchResonance"
-          class="inline-flex items-center justify-center gap-1 w-full sm:w-auto px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all"
-        >
-          <NIcon :component="Search" /> 搜索谐振
-        </button>
-      </div>
-    </section>
-
     <!-- 图表区：2列布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <!-- ===== 行1列1: UL/UC 波形 ===== -->
@@ -165,13 +88,22 @@
           <span class="text-sm font-semibold text-gray-800">辅助 · 幅频特性曲线 ( f–I )</span>
           <span class="text-xs text-gray-500">峰值点对应 UL=UC 谐振频率</span>
         </div>
-        <div class="p-3 bg-gray-50 flex-1 flex items-center">
+        <div class="relative p-3 bg-gray-50 flex-1 flex items-center">
           <canvas
             ref="ampCanvasRef"
             class="w-full border border-gray-200 rounded"
             style="height: 380px"
             @click="handleAmpClick"
           ></canvas>
+          <!-- Imax/√2 截止线公式标注:KaTeX 分式渲染,-translate-y-full 令分式底边对齐虚线上方;
+               坐标由 drawAmpChart 每次重绘同步写入 halfPowerMark -->
+          <div
+            v-if="halfPowerMark"
+            class="absolute -translate-y-full pointer-events-none text-[10px] text-[#d9962b] leading-none"
+            :style="{ left: halfPowerMark.x + 'px', top: halfPowerMark.y + 'px' }"
+          >
+            <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}mA</span>
+          </div>
         </div>
         <div class="flex justify-center gap-6 px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs flex-wrap">
           <span
@@ -250,6 +182,34 @@
           class="w-12 sm:w-14 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
         />
         <span class="text-xs text-gray-500">%</span>
+        <div class="w-full border-t border-dashed border-gray-200 my-1"></div>
+        <div class="flex items-center gap-1 sm:gap-2 flex-1 min-w-[160px] sm:min-w-[200px]">
+          <label class="font-semibold text-gray-700 text-xs sm:text-sm whitespace-nowrap">f</label>
+          <input
+            type="number"
+            v-model.number="f"
+            step="1"
+            class="w-16 sm:w-20 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
+          />
+          <span class="text-xs text-gray-500">Hz</span>
+          <input
+            type="range"
+            :min="freqMin"
+            :max="freqMax"
+            step="1"
+            v-model.number="f"
+            class="flex-1 min-w-[60px] cursor-pointer"
+          />
+          <span class="text-xs sm:text-sm font-semibold text-blue-600 min-w-[70px] sm:min-w-[80px] text-right"
+            >{{ t4(f) }} Hz</span
+          >
+        </div>
+        <button
+          @click="searchResonance"
+          class="inline-flex items-center justify-center gap-1 w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all"
+        >
+          <NIcon :component="Search" /> 搜索谐振
+        </button>
       </div>
     </section>
 
@@ -451,7 +411,10 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import { NIcon } from 'naive-ui'
+import { storeToRefs } from 'pinia'
 import {
   Search,
   Stop,
@@ -463,15 +426,19 @@ import {
   Download,
 } from '@vicons/carbon'
 import { canvasTheme } from '@/utils/canvasTheme'
+import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
 
 // 组件名须与 config/nav 的 keepAliveNames 一致,保证切页时后台扫频进度不丢
 defineOptions({ name: 'LCVoltageMethod' })
 
 // ---- 参数状态 ----
-const R = ref(100)
-const L_mH = ref(100)
-const C_uF = ref(0.05)
-const Us = ref(0.9)
+// 电路参数统一取自「电路搭建」store(单一数据源),本页只读引用,不再单独维护输入
+const calcStore = useRLCCalculatorStore()
+const { params } = storeToRefs(calcStore)
+const R = computed(() => params.value.R)
+const L_mH = computed(() => params.value.L)
+const C_uF = computed(() => params.value.C)
+const Us = computed(() => params.value.V)
 const f = ref(2250.7)
 const threshold = ref(10)
 const isScanning = ref(false)
@@ -519,10 +486,21 @@ const mF0Ref = ref(null)
 const mDfRef = ref(null)
 const mQRef = ref(null)
 const mQLabelRef = ref(null)
+// Imax/√2 截止线公式标注(KaTeX 分式,HTML 覆盖层):坐标由 drawAmpChart 每次重绘时写入
+const halfPowerMark = ref(null)
 
 // ---- 工具函数 ----
 const t4 = (x) => x.toFixed(4)
 const clamp = (v, l, h) => Math.min(h, Math.max(l, v))
+
+/** 渲染 LaTeX 为 KaTeX HTML(与分析页/公式原理/收音机页同一封装) */
+function K(tex, display = false) {
+  return katex.renderToString(tex, {
+    displayMode: display,
+    throwOnError: false,
+    strict: 'ignore',
+  })
+}
 
 // 绘制红色五角星
 function drawStar(ctx, x, y, r, color) {
@@ -920,7 +898,9 @@ function updateResGain() {
 
 // ---- 幅频数据生成 ----
 function generateSweepData(n) {
-  const lo = f0.value - 800
+  // 横轴窗口 f0±800;f0≤800Hz 时(如电路搭建页调大 C/L 后)下限会 ≤0,log10 结果为 NaN 致整图空白,
+  // 故下限不低于 f0/4(f0≥1066.7Hz 时 f0-800≥f0/4,与旧窗口完全一致)。
+  const lo = Math.max(f0.value - 800, f0.value / 4)
   const hi = f0.value + 800
   const d = []
   for (let i = 0; i < n; i++) {
@@ -940,6 +920,8 @@ function generateSweepData(n) {
 function drawAmpChart() {
   const canvas = ampCanvasRef.value
   if (!canvas) return
+  // 公式标注每次重绘先清空,画到半功率线时按新坐标重写(早退分支下不残留旧位置)
+  halfPowerMark.value = null
   const ct = canvasTheme()
   const dpr = window.devicePixelRatio || 1
   const rect = canvas.getBoundingClientRect()
@@ -1039,12 +1021,23 @@ function drawAmpChart() {
   ctx.fillText('I (mA)', 0, 0)
   ctx.restore()
 
-  // curve
+  // 理论参考曲线:灰色虚线(未采集时为画布上唯一的曲线轮廓,采集后作蓝色实测线的对照)
+  ctx.setLineDash([5, 4])
+  ctx.strokeStyle = ct.label
+  ctx.lineWidth = 1.5
   ctx.beginPath()
   data.forEach((p) => ctx.lineTo(mx(p.f), my(p.I)))
-  ctx.strokeStyle = '#2563eb'
-  ctx.lineWidth = 2
   ctx.stroke()
+  ctx.setLineDash([])
+
+  // 实测曲线:由有效采集点连线,随扫频逐点生长;首点仅现蓝点,第二点起出现蓝色波形
+  if (validData.value.length >= 2) {
+    ctx.beginPath()
+    validData.value.forEach((p) => ctx.lineTo(mx(p.f), my(p.I)))
+    ctx.strokeStyle = '#2563eb'
+    ctx.lineWidth = 2
+    ctx.stroke()
+  }
 
   // half power line
   ctx.setLineDash([4, 4])
@@ -1054,12 +1047,14 @@ function drawAmpChart() {
   ctx.moveTo(mL, yh)
   ctx.lineTo(mL + pw, yh)
   ctx.stroke()
-  ctx.fillStyle = '#d9962b'
-  ctx.font = '9px system-ui'
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'bottom'
-  ctx.fillText('Iₚ/√2', mL + 3, yh - 2)
   ctx.setLineDash([])
+  // Imax/√2 标注:公式改由 KaTeX 覆盖层渲染(见模板),此处仅同步位置与数值;
+  // offsetLeft/Top 把画布坐标换算到图容器坐标,分式底边贴虚线上方 4px
+  halfPowerMark.value = {
+    x: canvas.offsetLeft + mL + 3,
+    y: canvas.offsetTop + yh - 4,
+    value: (Ih * 1e3).toFixed(4),
+  }
 
   // bandwidth markers
   if (bw > 0) {
@@ -1304,6 +1299,18 @@ function handleAmpClick(event) {
 }
 
 // ---- 自动扫频 ----
+// 扫频窗口随 f₀ 联动:原 1950~2550Hz 是默认参数(f₀≈2250.8Hz)下的固定窗,
+// 换算为倍率窗 f₀×[0.8664, 1.1329],谐振点仍单独插入保证被采样。
+function buildScanFreqs(f0Hz) {
+  const lo = f0Hz * 0.8664
+  const hi = f0Hz * 1.1329
+  const freqs = Array.from({ length: 51 }, (_, i) => lo * Math.pow(hi / lo, i / 50))
+  let insIdx = freqs.findIndex((x) => x >= f0Hz)
+  if (insIdx < 0) insIdx = freqs.length
+  freqs.splice(insIdx, 0, f0Hz)
+  return freqs
+}
+
 function autoScan() {
   if (isScanning.value) {
     isScanning.value = false
@@ -1311,11 +1318,7 @@ function autoScan() {
   }
   isScanning.value = true
   const f0_val = f0.value
-  // 固定 1950~2550Hz 对数窗生成扫频点(谐振点自动插入)
-  const freqs = Array.from({ length: 51 }, (_, i) => 1950 * Math.pow(2550 / 1950, i / 50))
-  let insIdx = freqs.findIndex((f) => f >= f0_val)
-  if (insIdx < 0) insIdx = freqs.length
-  freqs.splice(insIdx, 0, f0_val)
+  const freqs = buildScanFreqs(f0_val)
   let step = 0
 
   function stepFunc() {
@@ -1398,11 +1401,7 @@ function autoScanWithNoise() {
   rejectedData.value = []
 
   const f0_val = f0.value
-  // 固定 1950~2550Hz 对数窗生成扫频点(谐振点自动插入)
-  const freqs = Array.from({ length: 51 }, (_, i) => 1950 * Math.pow(2550 / 1950, i / 50))
-  let insIdx = freqs.findIndex((f) => f >= f0_val)
-  if (insIdx < 0) insIdx = freqs.length
-  freqs.splice(insIdx, 0, f0_val)
+  const freqs = buildScanFreqs(f0_val)
   let step = 0
 
   function stepFunc() {
