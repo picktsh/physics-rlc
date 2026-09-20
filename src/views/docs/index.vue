@@ -254,7 +254,7 @@ async function onExportSelect(key) {
       class="docs-tabs"
       @update:value="selectTab"
       @add="triggerFileInput"
-      @remove="onTabRemove"
+      @close="onTabRemove"
     >
       <n-tab-pane v-for="t in allTabs" :key="t.key" :name="t.key" :closable="!t.isBuiltin">
         <template #tab>{{ t.title }}</template>

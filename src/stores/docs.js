@@ -1,8 +1,10 @@
 import { ref, shallowRef, watch } from 'vue'
 import { defineStore } from 'pinia'
+import { useSessionStorage } from '@vueuse/core'
 import {
   DOCS_BUILTIN,
   DOCS_TABS_KEY,
+  DOCS_ACTIVE_KEY,
   DOCS_TAB_PERSIST_MAX_BYTES,
   DOCS_TABS_TOTAL_MAX_BYTES,
 } from '@/config/docs'
@@ -23,13 +25,15 @@ export const useDocsStore = defineStore('docs', () => {
   const builtinState = shallowRef({})
   // local tab 结构：{ key, title, fileName, content, transient, source:'file'|'zip', _imageResolver?, _zipAssets? }
   const localTabs = ref([])
-  const activeKey = ref(`builtin:${DOCS_BUILTIN[0].file}`)
+  // 激活 tab 用 useSessionStorage 持久化:切 tab 即写入,刷新后停在原阅读位置(与 localTabs 快照同生命周期)
+  const activeKey = useSessionStorage(DOCS_ACTIVE_KEY, `builtin:${DOCS_BUILTIN[0].file}`)
 
   let fetchStarted = false
   let hydrated = false
 
   // -------------------------------------------------------------------------
-  // 内置文档 fetch：视图 mount 时调 loadBuiltins；单例守卫，重复调用无副作用
+  // 内置文档加载：视图 mount 时调 loadBuiltins；单例守卫，重复调用无副作用
+  // 带 getRaw 的条目走 ?raw 构建期内联，否则从 public/docs/ 静态 fetch
   // -------------------------------------------------------------------------
   async function fetchOne(b) {
     builtinState.value = {
@@ -37,13 +41,18 @@ export const useDocsStore = defineStore('docs', () => {
       [b.file]: { loading: true, error: null, content: '' },
     }
     try {
-      const url = `${import.meta.env.BASE_URL}docs/${encodeURIComponent(b.file)}`
-      const res = await fetch(url, { cache: 'no-cache' })
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
-      const text = await res.text()
+      let text
+      if (b.getRaw) {
+        text = await b.getRaw()
+      } else {
+        const url = `${import.meta.env.BASE_URL}docs/${encodeURIComponent(b.file)}`
+        const res = await fetch(url, { cache: 'no-cache' })
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+        text = await res.text()
+      }
       builtinState.value = {
         ...builtinState.value,
-        [b.file]: { loading: false, error: null, content: text.replace(/^\uFEFF/, '') },
+        [b.file]: { loading: false, error: null, content: String(text).replace(/^\uFEFF/, '') },
       }
     } catch (e) {
       builtinState.value = {
@@ -247,6 +256,13 @@ export const useDocsStore = defineStore('docs', () => {
   // store 首次实例化即恢复 sessionStorage 快照 + 挂 push/splice 自动 persist 的 watcher
   // （store 为应用级单例，watcher 与 store 同生命期，无需手动 stop）
   hydrate()
+  // 校验持久化的激活 tab:local tab 可能未落盘(transient/zip)或已被关闭,失配时回退首篇内置,避免空白页
+  if (
+    activeKey.value.startsWith('local:') &&
+    !localTabs.value.some((t) => t.key === activeKey.value)
+  ) {
+    activeKey.value = `builtin:${DOCS_BUILTIN[0].file}`
+  }
   watch(
     () => localTabs.value.length,
     () => persist(),
