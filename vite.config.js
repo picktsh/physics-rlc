@@ -23,6 +23,7 @@ export default defineConfig({
   },
   server: {
     host: true,
+    port: 5080,
     // 忽略根目录 .tmp-* 临时目录（无头浏览器 profile 等），避免 EBUSY 崩溃
     watch: { ignored: ['**/.tmp-*/**', '**/.tmp-*'] },
     proxy: {
