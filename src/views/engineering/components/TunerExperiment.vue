@@ -24,18 +24,91 @@
         <span class="text-[#8a97ab]">→</span>
         <span class="chip-flow">只留目标台 → 检波收听</span>
       </div>
-      <div
-        class="mt-3 rounded-lg bg-[#f6f8fb] border border-[#e6eaf2] px-4 py-3 text-[13.5px] text-[#56647a] leading-7"
-      >
-        <span
-          class="formula-k"
-          v-html="K('I(f)=\\dfrac{V}{\\sqrt{R^2+\\left(\\omega L-\\dfrac{1}{\\omega C}\\right)^{\\!2}}}')"
-        ></span>
-        <span class="formula-k ml-2" v-html="K('\\quad f_0=\\dfrac{1}{2\\pi\\sqrt{LC}}')"></span>
-        <span class="text-[#8a97ab] ml-2"
-          >电台频率取 AM 中波的 1/1000 缩比(0.5~1.5 kHz),原理不变;本页 L = 100 mH 固定,旋钮调 C。</span
-        >
+      <!-- 核心公式:与页面读数一一对应 —— 调谐选台 → 各台电流不同 → Q/带宽定选择性 → 选频曲线与 dB 串扰 -->
+      <h3 class="flex items-center gap-2.5 text-[15px] font-bold text-[#1c2534] mt-5 mb-3">
+        <span class="inline-block w-[3px] h-[15px] rounded-full bg-[#2563eb]"></span>核心公式
+      </h3>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div class="formula-card flex flex-col rounded-lg bg-[#f6f8fb] border border-[#e6eaf2] px-4 py-4 text-center">
+          <div class="text-[12px] font-semibold text-[#8a97ab] tracking-[0.14em] mb-3">调谐(选台)</div>
+          <div class="overflow-x-auto">
+            <div
+              class="formula-k min-w-max mx-auto text-[#1c2534]"
+              style="font-size: 18px"
+              v-html="K('f_0 = \\dfrac{1}{2\\pi\\sqrt{LC}}', true)"
+            ></div>
+          </div>
+          <p class="text-[13px] text-[#7d8aab] leading-6 mt-auto pt-3">
+            本页 L = 100 mH 固定,旋钮实际调的是可变电容
+            <span class="formula-k" v-html="K('C = \\dfrac{1}{(2\\pi f_0)^2 L}')"></span
+            >,每个台对应一个电容位置。
+          </p>
+        </div>
+
+        <div class="formula-card flex flex-col rounded-lg bg-[#f6f8fb] border border-[#e6eaf2] px-4 py-4 text-center">
+          <div class="text-[12px] font-semibold text-[#8a97ab] tracking-[0.14em] mb-3">回路电流</div>
+          <div class="overflow-x-auto">
+            <div
+              class="formula-k min-w-max mx-auto text-[#1c2534]"
+              style="font-size: 18px"
+              v-html="K('I(f) = \\dfrac{V}{\\sqrt{R^2 + \\left(\\omega L - \\dfrac{1}{\\omega C}\\right)^{2}}}', true)"
+            ></div>
+          </div>
+          <p class="text-[13px] text-[#7d8aab] leading-6 mt-auto pt-3">
+            对准 f₀ 时 <span class="formula-k" v-html="K('X_L = X_C')"></span>、阻抗最小
+            <span class="formula-k" v-html="K('|Z| = R')"></span>,该台电流最大,其余台被压低。
+          </p>
+        </div>
+
+        <div class="formula-card flex flex-col rounded-lg bg-[#f6f8fb] border border-[#e6eaf2] px-4 py-4 text-center">
+          <div class="text-[12px] font-semibold text-[#8a97ab] tracking-[0.14em] mb-3">品质因数与带宽</div>
+          <div
+            class="formula-k flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-[#1c2534]"
+            style="font-size: 18px"
+          >
+            <span v-html="K('Q = \\dfrac{\\omega_0 L}{R}', true)"></span>
+            <span v-html="K('\\Delta f = \\dfrac{f_0}{Q}', true)"></span>
+          </div>
+          <p class="text-[13px] text-[#7d8aab] leading-6 mt-auto pt-3">
+            R 越小 Q 越高、通频带越窄;带宽两端为半功率点
+            <span class="formula-k" v-html="K('h = \\dfrac{1}{\\sqrt{2}} \\approx 0.707')"></span>(-3 dB)。
+          </p>
+        </div>
+
+        <div class="formula-card flex flex-col rounded-lg bg-[#f6f8fb] border border-[#e6eaf2] px-4 py-4 text-center">
+          <div class="text-[12px] font-semibold text-[#8a97ab] tracking-[0.14em] mb-3">选频曲线(相对电流)</div>
+          <div class="overflow-x-auto">
+            <div
+              class="formula-k min-w-max mx-auto text-[#1c2534]"
+              style="font-size: 18px"
+              v-html="K('h(f) = \\dfrac{1}{\\sqrt{1 + Q^2\\left(f/f_0 - f_0/f\\right)^2}}', true)"
+            ></div>
+          </div>
+          <p class="text-[13px] text-[#7d8aab] leading-6 mt-auto pt-3">
+            纵轴 h 为相对电流 <span class="formula-k" v-html="K('h = \\dfrac{I(f)}{I(f_0)}')"></span>,峰值
+            1;下方选频曲线画的就是它。
+          </p>
+        </div>
+
+        <div class="formula-card flex flex-col rounded-lg bg-[#f6f8fb] border border-[#e6eaf2] px-4 py-4 text-center">
+          <div class="text-[12px] font-semibold text-[#8a97ab] tracking-[0.14em] mb-3">邻台串扰(dB)</div>
+          <div class="overflow-x-auto">
+            <div
+              class="formula-k min-w-max mx-auto text-[#1c2534]"
+              style="font-size: 18px"
+              v-html="K('20\\lg\\dfrac{I}{I_0}\\ (\\text{dB})', true)"
+            ></div>
+          </div>
+          <p class="text-[13px] text-[#7d8aab] leading-6 mt-auto pt-3">
+            各台相对目标台(基准 <span class="formula-k" v-html="K('I_0')"></span>)的 dB 值;邻台 -20 dB
+            表示其电流只剩 1/10。
+          </p>
+        </div>
       </div>
+
+      <p class="text-[13px] text-[#8a97ab] leading-6 mt-3">
+        电台频率取 AM 中波的 1/1000 缩比(0.5~1.5 kHz),原理不变。
+      </p>
     </section>
 
     <!-- ============ 2. 电台与调谐 ============ -->
@@ -239,6 +312,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import { canvasTheme } from '@/utils/canvasTheme'
 import {
   STATIONS,
@@ -627,6 +701,10 @@ onBeforeUnmount(() => {
   font-size: 23px;
   line-height: 1.5;
   margin-bottom: 16px;
+}
+/* KaTeX display 公式在公式卡内不额外留外边距:由卡片 padding 控制(与公式原理页同口径) */
+:deep(.formula-card .katex-display) {
+  margin: 0;
 }
 .chip-flow {
   display: inline-block;

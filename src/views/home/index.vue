@@ -1,11 +1,12 @@
 <script setup>
 // 首页落地:功能卡片网格(参考示例站)。卡片数据源为 config/nav,排除「首页」自身。
+// 分组节点的子页面一并展平:首页保持对所有页面卡片直达,与侧栏分组互不影响。
 // 页面标题/副标题由 DefaultLayout 统一渲染,此处只出卡片。
 import { NIcon } from 'naive-ui'
 import { ArrowRight } from '@vicons/carbon'
 import { navRoutes } from '@/config/nav'
 
-const features = navRoutes.filter((item) => item.name !== 'home')
+const features = navRoutes.filter((item) => item.name !== 'home').flatMap((item) => [item, ...(item.children || [])])
 </script>
 
 <template>
