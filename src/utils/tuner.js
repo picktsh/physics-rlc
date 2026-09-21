@@ -97,21 +97,14 @@ export function tunerCurve(f0, R) {
   return pts
 }
 
-/** 半功率带宽交点(-3dB):在曲线数组上线性插值求 h=1/√2 的两个穿越频率 */
+/**
+ * 半功率带宽交点(-3dB):解析解求 h=1/√2 的两个穿越频率
+ * 令 r=f/f0 解 r-1/r=±1/Q 的正根,带宽与 Δf=f0/Q 精确一致(避免采样插值误差)
+ */
 export function tunerBandEdges(f0, R) {
-  const pts = tunerCurve(f0, R)
-  const thr = 1 / Math.SQRT2
-  const cross = []
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1]
-    const b = pts[i]
-    if ((a.h - thr) * (b.h - thr) <= 0) {
-      const t = (thr - a.h) / (b.h - a.h)
-      cross.push(a.f + (b.f - a.f) * t)
-    }
-  }
-  if (cross.length >= 2) return { lo: cross[0], hi: cross[cross.length - 1] }
-  return null
+  const Q = (2 * Math.PI * f0 * TUNER_L_MH * 1e-3) / R
+  const r = (1 / Q + Math.sqrt(1 / (Q * Q) + 4)) / 2
+  return { lo: f0 / r, hi: f0 * r }
 }
 
 /** 时域波形采样:输入为多台叠加(载波),输出为回路电流(含各台衰减与相移) */
@@ -124,10 +117,11 @@ export function tunerWaveforms(f0, R, interfOn) {
   const T = 0.008 // 时间窗 8ms
   const vin = new Float32Array(N)
   const vout = new Float32Array(N)
+  const all = [...STATIONS, ...(interfOn ? [INTERFERER] : [])]
+  // 输入归一化须含干扰台,否则开启干扰台后混合波形会越过参考区
   let inScale = 0
   let outScale = 0
-  for (const s of STATIONS) inScale += s.amp
-  const all = [...STATIONS, ...(interfOn ? [INTERFERER] : [])]
+  for (const s of all) inScale += s.amp
   for (const c of st.comps) outScale += c.I
   inScale = inScale || 1
   outScale = outScale || 1

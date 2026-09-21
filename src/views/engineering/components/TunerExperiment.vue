@@ -205,15 +205,15 @@
               <div class="meter">
                 <div
                   class="meter-fill"
-                  :class="crosstalk > 10 ? 'bg-[var(--app-error)]' : 'bg-[var(--app-success)]'"
-                  :style="{ width: Math.min(100, crosstalk * 4) + '%' }"
+                  :class="suppressDb < 10 ? 'bg-[var(--app-error)]' : 'bg-[var(--app-success)]'"
+                  :style="{ width: Math.min(100, suppressDb * 4) + '%' }"
                 ></div>
               </div>
               <div
                 class="text-xs mt-0.5"
-                :class="crosstalk > 10 ? 'text-[color:var(--app-error)] font-medium' : 'text-[color:var(--app-text-faint)]'"
+                :class="suppressDb < 10 ? 'text-[color:var(--app-error)] font-medium' : 'text-[color:var(--app-text-faint)]'"
               >
-                {{ crosstalk > 10 ? '⚠ 串台:选择性不足,同时听到两个台 —— 请减小 R 提高 Q' : '邻台被压住,收听干净' }}
+                {{ suppressDb < 10 ? '⚠ 串台:选择性不足,同时听到两个台 —— 请减小 R 提高 Q' : '邻台被压住,收听干净' }}
               </div>
             </div>
           </div>
@@ -240,7 +240,7 @@
             <span class="flex items-center gap-2"
               ><i class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--app-error)]"></i>f₀ 调谐点</span
             >
-            <span v-if="bandEdges" class="text-[color:var(--app-text-faint)] ml-auto">-3 dB 带宽 {{ bandEdges.hi - bandEdges.lo }} Hz</span>
+            <span v-if="bandEdges" class="text-[color:var(--app-text-faint)] ml-auto">-3 dB 带宽 {{ (bandEdges.hi - bandEdges.lo).toFixed(1) }} Hz</span>
           </div>
           <div ref="curveWrapRef" class="w-full">
             <canvas ref="curveCanvasRef" class="w-full block" style="height: 300px"></canvas>
@@ -374,11 +374,8 @@ const levelHint = computed(() => {
   if (d < 30) return '微微失谐:继续转动旋钮对准 ' + st.value.target.freq + ' Hz 可满格'
   return '明显失谐:转动调谐旋钮(或点上方电台)对准 ' + st.value.target.freq + ' Hz'
 })
-const crosstalk = computed(() => {
-  const s = st.value
-  if (!s.adj || s.adj.id === s.target.id) return 0
-  return s.target.dB !== 0 ? -Math.min(0, s.target.dB) : 0
-})
+// 邻台抑制深度(dB)= 20·lg(目标台/最大邻台),口径同 tuner.js 的 select;值越大越干净,<10 dB 判串台
+const suppressDb = computed(() => Math.max(0, st.value.select))
 
 /* ---------------- 绘图 ---------------- */
 const curveCanvasRef = ref(null)
