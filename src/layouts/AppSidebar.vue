@@ -3,11 +3,11 @@
 // 带 children 的一级分组渲染为可折叠开关:父项仅开合子项、不导航;路由进入某组子项时自动展开该组。
 // 桌面端内联渲染,移动端由父布局放进 NDrawer;点击子项导航后由父层关闭抽屉。
 // 样式全量 UnoCSS 原子类,8px 网格:图标 24 / 内边距 8 / 图文间距 8 / 项高 40 / 项间距 8。
-// 折叠态(页眉汉堡按钮切换,见 DefaultLayout)靠祖先 .sidebar-collapsed 的任意变体隐藏文字标签;
+// 折叠态(页眉汉堡按钮切换,见 DefaultLayout)靠祖先 .sidebar-collapsed 的任意变体淡出文字标签(配合 aside overflow-x 裁切与宽度过渡);
 // 侧栏与项内边距恒定 → 图标左偏移不变 → 展开⇄收起零横向位移,与页眉按钮共轴。
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { NIcon } from 'naive-ui'
+import { NCollapseTransition, NIcon } from 'naive-ui'
 import { ChevronDown } from '@vicons/carbon'
 import { navRoutes } from '@/config/nav.js'
 
@@ -40,22 +40,22 @@ function isGroupActive(group) {
 </script>
 
 <template>
-  <nav class="flex flex-col gap-8px" aria-label="实验章节">
+  <nav class="flex flex-col gap-2" aria-label="实验章节">
     <template v-for="item in navRoutes" :key="item.name">
       <!-- 页面节点:普通导航链接 -->
       <RouterLink
         v-if="!item.children"
         :to="item.path"
         :title="item.label"
-        class="group flex h-40px items-center gap-8px rounded-lg p-8px no-underline text-[var(--muted)] transition-colors hover:bg-[var(--tab-hover-bg)] hover:text-[var(--navy)] [&.router-link-active]:bg-[var(--tab-active-bg)] [&.router-link-active]:text-[var(--navy-deep)] [&.router-link-active]:font-bold"
+        class="group flex h-40px items-center gap-2 rounded-lg p-2 no-underline text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-brand)] hover:text-[var(--app-brand)] [&.router-link-active]:bg-[var(--app-surface-brand-strong)] [&.router-link-active]:text-[var(--app-brand-strong)] [&.router-link-active]:font-bold"
         @click="$emit('navigate')"
       >
         <span
-          class="flex shrink-0 items-center text-[var(--faint)] transition-colors group-hover:text-[var(--navy)] [.router-link-active_&]:text-[var(--navy-deep)]"
+          class="flex shrink-0 items-center text-[var(--app-text-faint)] transition-colors group-hover:text-[var(--app-brand)] [.router-link-active_&]:text-[var(--app-brand-strong)]"
         >
           <NIcon :component="item.icon" :size="24" />
         </span>
-        <span class="truncate text-15px font-semibold [.sidebar-collapsed_&]:hidden">{{ item.label }}</span>
+        <span class="truncate text-base font-semibold transition-opacity duration-300 [.sidebar-collapsed_&]:opacity-0">{{ item.label }}</span>
       </RouterLink>
 
       <!-- 分组节点:标题行只作开合开关(不导航);子项沿用页面节点的导航样式并加左缩进体现层级 -->
@@ -64,49 +64,44 @@ function isGroupActive(group) {
           type="button"
           :title="item.label"
           :aria-expanded="!!groupOpen[item.name]"
-          class="group flex h-40px w-full items-center gap-8px rounded-lg p-8px text-left text-[var(--muted)] transition-colors hover:bg-[var(--tab-hover-bg)] hover:text-[var(--navy)]"
-          :class="{ 'text-[var(--navy-deep)]': isGroupActive(item) }"
+          class="group flex h-40px w-full items-center gap-2 rounded-lg p-2 text-left text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-brand)] hover:text-[var(--app-brand)]"
+          :class="{ 'text-[var(--app-brand-strong)]': isGroupActive(item) }"
           @click="toggleGroup(item.name)"
         >
-          <span class="flex shrink-0 items-center text-[var(--faint)] transition-colors group-hover:text-[var(--navy)]">
+          <span class="flex shrink-0 items-center text-[var(--app-text-faint)] transition-colors group-hover:text-[var(--app-brand)]">
             <NIcon :component="item.icon" :size="24" />
           </span>
-          <span class="truncate text-15px font-semibold [.sidebar-collapsed_&]:hidden">{{ item.label }}</span>
+          <span class="truncate text-base font-semibold transition-opacity duration-300 [.sidebar-collapsed_&]:opacity-0">{{ item.label }}</span>
           <span
-            class="ml-auto flex shrink-0 items-center text-[var(--faint)] transition-transform duration-300 [.sidebar-collapsed_&]:hidden"
+            class="ml-auto flex shrink-0 items-center text-[var(--app-text-faint)] transition-all duration-300 [.sidebar-collapsed_&]:opacity-0"
             :class="{ 'rotate-180': groupOpen[item.name] }"
           >
             <NIcon :component="ChevronDown" :size="16" />
           </span>
         </button>
 
-        <!-- 开合即时生效(不做高度过渡):子项必须在点击父项后立刻可命中,
-             高度过渡期间点击会落在包裹容器上导致首次点击丢失;视觉动感由子项淡入提供。
-             收起态用 invisible 退出命中与键盘焦点链(opacity 不影响命中,不能只靠透明)。 -->
-        <div class="grid" :class="groupOpen[item.name] ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
-          <div class="overflow-hidden" :class="groupOpen[item.name] ? undefined : 'invisible'">
-            <div
-              class="flex flex-col gap-8px transition-opacity duration-200"
-              :class="groupOpen[item.name] ? 'opacity-100' : 'opacity-0'"
+        <!-- 分组子项:NCollapseTransition 做高度展开/收起动画(代码更整洁,取代旧 grid-rows+invisible hack) -->
+        <NCollapseTransition :show="!!groupOpen[item.name]">
+          <div class="flex flex-col gap-2">
+            <RouterLink
+              v-for="child in item.children"
+              :key="child.name"
+              :to="child.path"
+              :title="child.label"
+              class="group flex h-40px items-center gap-2 rounded-lg p-2 pl-4 no-underline text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-brand)] hover:text-[var(--app-brand)] [&.router-link-active]:bg-[var(--app-surface-brand-strong)] [&.router-link-active]:text-[var(--app-brand-strong)] [&.router-link-active]:font-bold [.sidebar-collapsed_&]:pl-2"
+              @click="$emit('navigate')"
             >
-              <RouterLink
-                v-for="child in item.children"
-                :key="child.name"
-                :to="child.path"
-                :title="child.label"
-                class="group flex h-40px items-center gap-8px rounded-lg p-8px pl-32px no-underline text-[var(--muted)] transition-colors hover:bg-[var(--tab-hover-bg)] hover:text-[var(--navy)] [&.router-link-active]:bg-[var(--tab-active-bg)] [&.router-link-active]:text-[var(--navy-deep)] [&.router-link-active]:font-bold [.sidebar-collapsed_&]:pl-8px"
-                @click="$emit('navigate')"
+              <span
+                class="flex shrink-0 items-center text-[var(--app-text-faint)] transition-colors group-hover:text-[var(--app-brand)] [.router-link-active_&]:text-[var(--app-brand-strong)]"
               >
-                <span
-                  class="flex shrink-0 items-center text-[var(--faint)] transition-colors group-hover:text-[var(--navy)] [.router-link-active_&]:text-[var(--navy-deep)]"
-                >
-                  <NIcon :component="child.icon" :size="24" />
-                </span>
-                <span class="truncate text-15px font-semibold [.sidebar-collapsed_&]:hidden">{{ child.label }}</span>
-              </RouterLink>
-            </div>
+                <NIcon :component="child.icon" :size="24" />
+              </span>
+              <span class="truncate text-base font-semibold transition-opacity duration-300 [.sidebar-collapsed_&]:opacity-0">{{
+                child.label
+              }}</span>
+            </RouterLink>
           </div>
-        </div>
+        </NCollapseTransition>
       </template>
     </template>
   </nav>

@@ -7,27 +7,26 @@
  * ========================================================================== */
 
 :root {
-  /* 基础文字/线条 */
-  --paper: #f3f5f9;
-  --line: #e2e7f0;
-  --line-soft: #eef1f7;
-  --line-strong: #c9d3e2;
-  --ink: #1c2534;
-  --muted: #56647a;
-  --faint: #8a97ab;
-  /* 主色 */
-  --navy: #2563eb;
-  --navy-deep: #1d4ed8;
-  --navy-mid: #3b82f6;
-  --accent-solid: #2563eb;
-  --accent-solid-hover: #1d4ed8;
+  /* 基础面 / 描边 / 三级文字 */
+  --app-bg: #f3f5f9;
+  --app-border: #e2e7f0;
+  --app-border-light: #eef1f7;
+  --app-border-dark: #c9d3e2;
+  --app-text: #1c2534;
+  --app-text-muted: #56647a;
+  --app-text-faint: #8a97ab;
+  /* 主色(按钮/实色/naive 主色同源) / 品牌(链接/图标可读主色) */
+  --app-primary: #2563eb;
+  --app-primary-hover: #1d4ed8;
+  --app-brand: #2563eb;
+  --app-brand-strong: #1d4ed8;
   /* 语义表面 */
-  --card-bg: #ffffff;
-  --card-inner-bg: #ffffff;
-  --soft-bg: #f6f8fb;
-  --panel-bg: #eef1f7;
-  --soft-blue: #eaf1fe;
-  --soft-blue-strong: #dbeafe;
+  --app-surface: #ffffff;
+  --app-surface-sunken: #f6f8fb;
+  --app-surface-muted: #eef1f7;
+  --app-surface-brand: #eaf1fe;
+  --app-surface-brand-strong: #dbeafe;
+  --app-rail-bg: #ffffff;
   --canvas-bg: #fafcff;
   --canvas-grid: #e6ecf4;
   --canvas-axis: #c9d3e2;
@@ -35,39 +34,31 @@
   --canvas-label-dim: #b3c1d4;
   --canvas-ink: #1c2534;
   --canvas-wire: #2563eb;
-  --rail-bg: #ffffff;
-  --card-bg-95: rgba(255, 255, 255, 0.95);
-  --card-bg-90: rgba(255, 255, 255, 0.9);
-  --card-bg-80: rgba(255, 255, 255, 0.8);
-  --chip-bg: #ffffff;
-  --chip-border: #dce4f2;
-  /* 导航态 */
-  --tab-active-bg: #dbe7ff;
-  --tab-hover-bg: #e9f0fe;
-  /* 语义色 */
-  --danger-ink: #d14a3f;
-  --danger-bg: #fdeeec;
-  --danger-bg-hover: #fae0dc;
-  --danger-border: #f6d3cd;
-  --success-ink: #16a34a;
-  --success-bg: #eafaf1;
-  --success-border: #c9ecd9;
-  --warn-ink: #d97706;
-  --warn-bg: #fdf4e7;
+  /* 状态色(对齐 naive-ui:error/success/warning) */
+  --app-error: #d14a3f;
+  --app-error-bg: #fdeeec;
+  --app-error-bg-hover: #fae0dc;
+  --app-error-border: #f6d3cd;
+  --app-success: #16a34a;
+  --app-success-bg: #eafaf1;
+  --app-success-border: #c9ecd9;
+  --app-warning: #d97706;
+  --app-warning-bg: #fdf4e7;
+  --app-warning-border: #f3dfbd;
   /* 氛围/细节 */
-  --sel-bg: #dbe6ff;
-  --sel-ink: #1e3a8a;
+  --app-selection: #dbe6ff;
+  --app-selection-text: #1e3a8a;
   --scroll-thumb: #c6cfdc;
   --scroll-thumb-hover: #98a4b8;
   --blueprint-bg: #f9fbfe;
   --blueprint-line: rgba(37, 99, 235, 0.055);
   --ambient-a: rgba(214, 227, 252, 0.65);
   --ambient-b: rgba(214, 227, 252, 0.5);
-  --card-shadow:
+  --app-shadow:
     0 1px 2px rgba(16, 24, 40, 0.05),
     0 18px 42px -22px rgba(37, 99, 235, 0.3);
-  --card-inner-shadow: 0 2px 12px -8px rgba(37, 99, 235, 0.18);
-  --font-body:
+  --app-shadow-sm: 0 2px 12px -8px rgba(37, 99, 235, 0.18);
+  --app-font:
     'DigitsUI',
     'Segoe UI',
     'Helvetica Neue',
@@ -76,7 +67,7 @@
     'Microsoft YaHei',
     'Noto Sans CJK SC',
     sans-serif;
-  --font-head:
+  --app-font-heading:
     'DigitsUI',
     'Segoe UI',
     'Helvetica Neue',
@@ -103,24 +94,23 @@
 
 /* 黑配色:深蓝黑夜色 */
 html[data-theme='dark'] {
-  --paper: #0d1322;
-  --line: #27324c;
-  --line-soft: #1f2a42;
-  --line-strong: #3a4a6b;
-  --ink: #e8edf7;
-  --muted: #a0aec6;
-  --faint: #6b7894;
-  --navy: #6d9bf7;
-  --navy-deep: #8ab0ff;
-  --navy-mid: #5b8ef7;
-  --accent-solid: #2f66d0;
-  --accent-solid-hover: #2857b8;
-  --card-bg: #151d30;
-  --card-inner-bg: #1a2438;
-  --soft-bg: #1b2538;
-  --panel-bg: #232c42;
-  --soft-blue: #1b2943;
-  --soft-blue-strong: #24365e;
+  --app-bg: #0d1322;
+  --app-border: #27324c;
+  --app-border-light: #1f2a42;
+  --app-border-dark: #3a4a6b;
+  --app-text: #e8edf7;
+  --app-text-muted: #a0aec6;
+  --app-text-faint: #6b7894;
+  --app-primary: #2f66d0;
+  --app-primary-hover: #2857b8;
+  --app-brand: #6d9bf7;
+  --app-brand-strong: #8ab0ff;
+  --app-surface: #151d30;
+  --app-surface-sunken: #1b2538;
+  --app-surface-muted: #232c42;
+  --app-surface-brand: #1b2943;
+  --app-surface-brand-strong: #24365e;
+  --app-rail-bg: #10172a;
   --canvas-bg: #070d1a;
   --canvas-grid: rgba(148, 163, 184, 0.16);
   --canvas-axis: rgba(148, 163, 184, 0.42);
@@ -128,110 +118,100 @@ html[data-theme='dark'] {
   --canvas-label-dim: #6d80a3;
   --canvas-ink: #dce5f7;
   --canvas-wire: #5b8ef7;
-  --rail-bg: #10172a;
-  --card-bg-95: rgba(21, 29, 48, 0.95);
-  --card-bg-90: rgba(21, 29, 48, 0.9);
-  --card-bg-80: rgba(21, 29, 48, 0.8);
-  --chip-bg: #1a2438;
-  --chip-border: #2f3c5c;
-  --tab-active-bg: #223760;
-  --tab-hover-bg: #1b2a4a;
-  --danger-ink: #f28b82;
-  --danger-bg: rgba(229, 72, 77, 0.16);
-  --danger-bg-hover: rgba(229, 72, 77, 0.26);
-  --danger-border: #5a2a30;
-  --success-ink: #34d399;
-  --success-bg: #16302a;
-  --success-border: #1f4a3c;
-  --warn-ink: #fbbf24;
-  --warn-bg: #3a2e18;
-  --sel-bg: #2b4374;
-  --sel-ink: #dbe7ff;
+  --app-error: #f28b82;
+  --app-error-bg: rgba(229, 72, 77, 0.16);
+  --app-error-bg-hover: rgba(229, 72, 77, 0.26);
+  --app-error-border: #5a2a30;
+  --app-success: #34d399;
+  --app-success-bg: #16302a;
+  --app-success-border: #1f4a3c;
+  --app-warning: #fbbf24;
+  --app-warning-bg: #3a2e18;
+  --app-warning-border: #5a4620;
+  --app-selection: #2b4374;
+  --app-selection-text: #dbe7ff;
   --scroll-thumb: #37435c;
   --scroll-thumb-hover: #4b5b7d;
   --blueprint-bg: #070d1a;
   --blueprint-line: rgba(110, 155, 255, 0.14);
   --ambient-a: rgba(59, 130, 246, 0.1);
   --ambient-b: rgba(124, 92, 240, 0.08);
-  --card-shadow:
+  --app-shadow:
     0 1px 2px rgba(0, 0, 0, 0.45),
     0 18px 42px -22px rgba(0, 0, 0, 0.7);
-  --card-inner-shadow: 0 2px 12px -8px rgba(0, 0, 0, 0.5);
+  --app-shadow-sm: 0 2px 12px -8px rgba(0, 0, 0, 0.5);
 }
 
 /* 马卡龙配色:柠檬奶油甜点风 */
 html[data-theme='macaron'] {
-  --paper: #fdf9ec;
-  --line: #f0e6c6;
-  --line-soft: #f7efd7;
-  --line-strong: #e3d5a8;
-  --ink: #4f4423;
-  --muted: #8d7f55;
-  --faint: #bbb083;
-  --navy: #b8860b;
-  --navy-deep: #93690a;
-  --navy-mid: #d9b44a;
-  --accent-solid: #b8860b;
-  --accent-solid-hover: #9c7109;
-  --card-bg: #ffffff;
-  --card-inner-bg: #fffdf7;
-  --soft-bg: #fbf4dd;
-  --panel-bg: #f6ecd0;
-  --soft-blue: #fbf4da;
-  --soft-blue-strong: #f6ecc2;
+  --app-bg: #fdf9ec;
+  --app-border: #f0e6c6;
+  --app-border-light: #f7efd7;
+  --app-border-dark: #e3d5a8;
+  --app-text: #4f4423;
+  --app-text-muted: #8d7f55;
+  --app-text-faint: #bbb083;
+  --app-primary: #b8860b;
+  --app-primary-hover: #9c7109;
+  --app-brand: #b8860b;
+  --app-brand-strong: #93690a;
+  --app-surface: #ffffff;
+  --app-surface-sunken: #fbf4dd;
+  --app-surface-muted: #f6ecd0;
+  --app-surface-brand: #fbf4da;
+  --app-surface-brand-strong: #f6ecc2;
+  --app-rail-bg: #ffffff;
   --canvas-bg: #fdfaf0;
-  --rail-bg: #ffffff;
-  --card-bg-95: rgba(255, 255, 255, 0.95);
-  --card-bg-90: rgba(255, 255, 255, 0.9);
-  --card-bg-80: rgba(255, 255, 255, 0.8);
-  --chip-bg: #ffffff;
-  --chip-border: #f0e3bf;
-  --tab-active-bg: #f9e7ad;
-  --tab-hover-bg: #fcf2d3;
-  --danger-ink: #c25a3a;
-  --danger-bg: #fdeee5;
-  --danger-bg-hover: #f9e0d0;
-  --danger-border: #f6d8c4;
-  --success-ink: #2e9e77;
-  --success-bg: #e7f8ef;
-  --success-border: #cdeedd;
-  --warn-ink: #c07830;
-  --warn-bg: #fdf0e2;
-  --sel-bg: #f9e3a8;
-  --sel-ink: #7a5a10;
+  --canvas-grid: #f2ead0;
+  --canvas-axis: #e3d5a8;
+  --canvas-label: #bbb083;
+  --canvas-label-dim: #cfc39a;
+  --canvas-ink: #4f4423;
+  --canvas-wire: #b8860b;
+  --app-error: #c25a3a;
+  --app-error-bg: #fdeee5;
+  --app-error-bg-hover: #f9e0d0;
+  --app-error-border: #f6d8c4;
+  --app-success: #2e9e77;
+  --app-success-bg: #e7f8ef;
+  --app-success-border: #cdeedd;
+  --app-warning: #c07830;
+  --app-warning-bg: #fdf0e2;
+  --app-warning-border: #f0d9a8;
+  --app-selection: #f9e3a8;
+  --app-selection-text: #7a5a10;
   --scroll-thumb: #e6d8ab;
   --scroll-thumb-hover: #d6c385;
   --blueprint-bg: #fdf9ee;
   --blueprint-line: rgba(184, 134, 11, 0.09);
   --ambient-a: rgba(255, 226, 140, 0.85);
   --ambient-b: rgba(255, 210, 165, 0.7);
-  --card-shadow:
+  --app-shadow:
     0 1px 2px rgba(122, 96, 30, 0.06),
     0 18px 42px -22px rgba(184, 134, 11, 0.3);
-  --card-inner-shadow: 0 2px 12px -8px rgba(184, 134, 11, 0.22);
+  --app-shadow-sm: 0 2px 12px -8px rgba(184, 134, 11, 0.22);
 }
 
 /* 绿色版:Vue 品牌绿基调(浅底 #42b883 主色 / #35495e 深墨绿灵感) */
 html[data-theme='green'] {
-  --paper: #eef6f1;
-  --line: #d5e8dd;
-  --line-soft: #e4f1e9;
-  --line-strong: #b7d6c4;
-  --ink: #1c2b25;
-  --muted: #4f6a5d;
-  --faint: #84a392;
-  /* 主色:--navy 系列在本主题下取可读深绿(链接/图标),按钮用 Vue 品牌绿 */
-  --navy: #10865d;
-  --navy-deep: #0b6b49;
-  --navy-mid: #42b883;
-  --accent-solid: #42b883;
-  --accent-solid-hover: #3aa876;
-  --card-bg: #ffffff;
-  --card-inner-bg: #f7fcf9;
-  --soft-bg: #f0f8f3;
-  --panel-bg: #e5f1ea;
-  --soft-blue: #e3f5ec;
-  --soft-blue-strong: #cdeedd;
+  --app-bg: #eef6f1;
+  --app-border: #d5e8dd;
+  --app-border-light: #e4f1e9;
+  --app-border-dark: #b7d6c4;
+  --app-text: #1c2b25;
+  --app-text-muted: #4f6a5d;
+  --app-text-faint: #84a392;
+  /* 主色:--app-brand 系列在本主题下取可读深绿(链接/图标),按钮用 Vue 品牌绿 */
+  --app-primary: #42b883;
+  --app-primary-hover: #3aa876;
+  --app-brand: #10865d;
+  --app-brand-strong: #0b6b49;
+  --app-surface: #ffffff;
+  --app-surface-sunken: #f0f8f3;
+  --app-surface-muted: #e5f1ea;
+  --app-surface-brand: #e3f5ec;
+  --app-surface-brand-strong: #cdeedd;
+  --app-rail-bg: #ffffff;
   --canvas-bg: #f5fbf8;
   --canvas-grid: #e0efe6;
   --canvas-axis: #bcd4c8;
@@ -239,303 +219,41 @@ html[data-theme='green'] {
   --canvas-label-dim: #aac6b8;
   --canvas-ink: #1c2b25;
   --canvas-wire: #42b883;
-  --rail-bg: #ffffff;
-  --card-bg-95: rgba(255, 255, 255, 0.95);
-  --card-bg-90: rgba(255, 255, 255, 0.9);
-  --card-bg-80: rgba(255, 255, 255, 0.8);
-  --chip-bg: #ffffff;
-  --chip-border: #d3e8dc;
-  --tab-active-bg: #d3efe1;
-  --tab-hover-bg: #e6f6ee;
-  --danger-ink: #d14a3f;
-  --danger-bg: #fdeeec;
-  --danger-bg-hover: #fae0dc;
-  --danger-border: #f6d3cd;
-  --success-ink: #16a34a;
-  --success-bg: #eafaf1;
-  --success-border: #c9ecd9;
-  --warn-ink: #d97706;
-  --warn-bg: #fdf4e7;
-  --sel-bg: #cdeedd;
-  --sel-ink: #0b6b49;
+  --app-error: #d14a3f;
+  --app-error-bg: #fdeeec;
+  --app-error-bg-hover: #fae0dc;
+  --app-error-border: #f6d3cd;
+  --app-success: #16a34a;
+  --app-success-bg: #eafaf1;
+  --app-success-border: #c9ecd9;
+  --app-warning: #d97706;
+  --app-warning-bg: #fdf4e7;
+  --app-warning-border: #f3dfbd;
+  --app-selection: #cdeedd;
+  --app-selection-text: #0b6b49;
   --scroll-thumb: #c1d9cb;
   --scroll-thumb-hover: #93b7a5;
   --blueprint-bg: #f6fbf8;
   --blueprint-line: rgba(66, 184, 131, 0.07);
   --ambient-a: rgba(197, 235, 216, 0.6);
   --ambient-b: rgba(197, 235, 216, 0.45);
-  --card-shadow:
+  --app-shadow:
     0 1px 2px rgba(16, 40, 30, 0.05),
     0 18px 42px -22px rgba(66, 184, 131, 0.32);
-  --card-inner-shadow: 0 2px 12px -8px rgba(66, 184, 131, 0.2);
+  --app-shadow-sm: 0 2px 12px -8px rgba(66, 184, 131, 0.2);
 }
 
 ::selection {
-  background: var(--sel-bg);
-  color: var(--sel-ink);
+  background: var(--app-selection);
+  color: var(--app-selection-text);
 }
 
 /* ==========================================================================
- * 主题适配层:全站 UnoCSS 原子类的语义化映射
- * 组件模板大量直接使用任意值类(如 bg-[#f6f8fb] / text-[#1c2534])与灰阶类,
- * 这里按语义把它们绑定到上方主题变量:白配色下取值与原始硬编码一致,
- * 其余配色自动映射到对应色,无需逐组件改模板。
- * 选择器统一带 html 前缀提升特异性,稳定压过 UnoCSS 生成的单类选择器。
+ * 颜色原子类适配层已移除(2026-09 颜色 Token 重构):
+ * 全站组件统一直接使用 --app-* 语义 token 类(text-[color:var(--app-*)] / bg-[var(--app-*)] …),
+ * 单一数据源,不再有「硬编码色/标准色类 → 变量」的事后反向映射。
+ * 下方为仍必要的功能性兜底规则(非色类映射)。
  * ========================================================================== */
-
-/* ---- 文字:任意值 token 类 ---- */
-html .text-\[\#1c2534\],
-html .text-\[\#334155\],
-html .text-\[\#33415e\] {
-  color: var(--ink);
-}
-html .text-\[\#56647a\],
-html .text-\[\#475569\],
-html .text-\[\#7d8aab\],
-html .text-\[\#7d8dab\],
-html .text-\[\#64748b\] {
-  color: var(--muted);
-}
-html .text-\[\#8a97ab\],
-html .text-\[\#94a3b8\],
-html .text-\[\#9db0c8\],
-html .text-\[\#c3cede\] {
-  color: var(--faint);
-}
-html .text-\[\#2563eb\] {
-  color: var(--navy);
-}
-html .text-\[\#1d4ed8\],
-html .text-\[\#1e40af\] {
-  color: var(--navy-deep);
-}
-html .text-\[\#d14a3f\],
-html .text-\[\#d03050\] {
-  color: var(--danger-ink);
-}
-html .text-\[\#0e9f6e\] {
-  color: var(--success-ink);
-}
-html .text-\[\#d97706\] {
-  color: var(--warn-ink);
-}
-
-/* ---- 文字:UnoCSS 标准灰阶/彩色类 ---- */
-html .text-gray-800,
-html .text-gray-700 {
-  color: var(--ink);
-}
-html .text-gray-600,
-html .text-gray-500 {
-  color: var(--muted);
-}
-html .text-gray-400,
-html .text-gray-300 {
-  color: var(--faint);
-}
-html .text-blue-600 {
-  color: var(--navy);
-}
-html .text-blue-800 {
-  color: var(--navy-deep);
-}
-html .text-red-600,
-html .text-red-500,
-html .text-red-700,
-html .text-red-800 {
-  color: var(--danger-ink);
-}
-html .text-green-600,
-html .text-green-700,
-html .text-emerald-700,
-html .text-emerald-800 {
-  color: var(--success-ink);
-}
-html .text-amber-600,
-html .text-amber-700,
-html .text-amber-800,
-html .text-orange-600,
-html .text-yellow-600 {
-  color: var(--warn-ink);
-}
-
-/* ---- 背景:任意值 token 类 ---- */
-html .bg-\[\#f6f8fb\],
-html .bg-\[\#f7f9fc\],
-html .bg-\[\#f2f5fa\],
-html .bg-\[\#f8fafc\] {
-  background-color: var(--soft-bg);
-}
-html .bg-\[\#f3f5f9\] {
-  background-color: var(--paper);
-}
-html .bg-\[\#e9eef5\],
-html .bg-\[\#eef1f7\] {
-  background-color: var(--panel-bg);
-}
-html .bg-\[\#dbeafe\],
-html .bg-\[\#e3edfd\],
-html .bg-\[\#e8f0fe\],
-html .bg-\[\#bfdbfe\] {
-  background-color: var(--soft-blue-strong);
-}
-html .bg-\[\#c3cede\] {
-  background-color: var(--faint);
-}
-html .bg-\[\#2563eb\] {
-  background-color: var(--accent-solid);
-}
-
-/* ---- 背景:UnoCSS 标准类 ---- */
-html .bg-white {
-  background-color: var(--card-bg);
-}
-html .bg-white\/95 {
-  background-color: var(--card-bg-95);
-}
-html .bg-white\/90 {
-  background-color: var(--card-bg-90);
-}
-html .bg-white\/80 {
-  background-color: var(--card-bg-80);
-}
-html .bg-gray-50 {
-  background-color: var(--soft-bg);
-}
-html .bg-gray-100,
-html .bg-gray-200 {
-  background-color: var(--panel-bg);
-}
-html .bg-gray-300 {
-  background-color: var(--line-strong);
-}
-html .bg-blue-50 {
-  background-color: var(--soft-blue);
-}
-html .bg-blue-100 {
-  background-color: var(--soft-blue-strong);
-}
-html .bg-blue-500,
-html .bg-blue-600 {
-  background-color: var(--accent-solid);
-}
-html .bg-blue-700 {
-  background-color: var(--accent-solid-hover);
-}
-html .bg-red-50,
-html .bg-red-100 {
-  background-color: var(--danger-bg);
-}
-html .bg-amber-50 {
-  background-color: var(--warn-bg);
-}
-html .bg-green-50,
-html .bg-emerald-50 {
-  background-color: var(--success-bg);
-}
-
-/* ---- 描边:任意值 token 类 ---- */
-html .border-\[\#e6eaf2\],
-html .border-\[\#e2e7f0\],
-html .border-\[\#e6ebf3\],
-html .border-\[\#e2e8f0\] {
-  border-color: var(--line);
-}
-html .border-\[\#eef1f7\] {
-  border-color: var(--line-soft);
-}
-html .border-\[\#c9d3e2\],
-html .border-\[\#c9d6ec\] {
-  border-color: var(--line-strong);
-}
-html .border-\[\#c7d8f5\] {
-  border-color: var(--soft-blue-strong);
-}
-html .border-\[\#93b4fd\],
-html .border-\[\#60a5fa\],
-html .border-\[\#2563eb\] {
-  border-color: var(--accent-solid);
-}
-
-/* ---- 描边:UnoCSS 标准类 ---- */
-html .border-gray-100 {
-  border-color: var(--line-soft);
-}
-html .border-gray-200 {
-  border-color: var(--line);
-}
-html .border-gray-300,
-html .border-gray-400 {
-  border-color: var(--line-strong);
-}
-html .border-blue-100 {
-  border-color: var(--soft-blue-strong);
-}
-html .border-blue-500,
-html .border-blue-600 {
-  border-color: var(--accent-solid);
-}
-html .border-red-100,
-html .border-red-200 {
-  border-color: var(--danger-border);
-}
-html .border-emerald-200 {
-  border-color: var(--success-border);
-}
-html .border-amber-200 {
-  border-color: #f3dfbd;
-}
-html[data-theme='dark'] .border-amber-200 {
-  border-color: #5a4620;
-}
-
-/* ---- hover 态变体 ---- */
-html .hover\:bg-blue-700:hover {
-  background-color: var(--accent-solid-hover);
-}
-html .hover\:bg-gray-100:hover {
-  background-color: var(--soft-bg);
-}
-html .hover\:bg-gray-200:hover {
-  background-color: var(--panel-bg);
-}
-html .hover\:bg-gray-300:hover {
-  background-color: var(--line-strong);
-}
-html .hover\:bg-red-100:hover {
-  background-color: var(--danger-bg-hover);
-}
-html .hover\:border-gray-300:hover {
-  border-color: var(--line-strong);
-}
-html .hover\:bg-white:hover {
-  background-color: var(--card-bg);
-}
-
-/* ---- 渐变底数据方框:渐变类不在 background-color 覆盖体系内,
- *      这里把全站使用的渐变组合绑定到主题变量(黑配色下随主题整体转深) ---- */
-html .bg-gradient-to-br.from-gray-50.to-gray-100 {
-  background-image: linear-gradient(to bottom right, var(--soft-bg), var(--panel-bg));
-}
-html .bg-gradient-to-r.from-blue-50.to-indigo-50 {
-  background-image: linear-gradient(to right, var(--soft-blue), var(--soft-blue-strong));
-}
-html .bg-gradient-to-b.from-emerald-50.to-teal-50 {
-  background-image: linear-gradient(to bottom, var(--success-bg), var(--success-bg));
-}
-
-/* ---- 表单控件兜底:黑配色下中性输入框统一转深色(作者样式胜过浏览器默认白底黑字);
- *      优先级为 0 不参与竞争——显式 bg- / text- 类(如终端风 bg-[#0d0d1a] + text-green-400)自动优先 ---- */
-:where(html[data-theme='dark']) :where(input, textarea, select) {
-  color: var(--ink);
-}
-:where(html[data-theme='dark']) :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), textarea, select) {
-  background-color: var(--card-inner-bg);
-  border-color: var(--line-strong);
-}
-:where(html[data-theme='dark']) :where(input, textarea)::placeholder {
-  color: var(--faint);
-}
 
 /* ---- 画布兜底:透明 canvas(2D 图表 / 3D 视口)统一垫“图纸底”(黑配色下为近黑),
  *      保证内部绘制内容在各主题下均可读;

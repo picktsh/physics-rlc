@@ -10,23 +10,23 @@ const features = navRoutes.filter((item) => item.name !== 'home').flatMap((item)
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-16px sm:grid-cols-2 xl:grid-cols-3">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <RouterLink
       v-for="item in features"
       :key="item.name"
       :to="item.path"
-      class="group flex flex-col gap-8px rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] no-underline transition hover:-translate-y-2px"
+      class="group flex flex-col gap-2 rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] no-underline transition hover:-translate-y-2px"
     >
-      <div class="flex items-center gap-12px">
+      <div class="flex items-center gap-3">
         <span
-          class="flex size-48px shrink-0 items-center justify-center rounded-lg bg-[var(--soft-blue)] text-[var(--navy)]"
+          class="flex size-48px shrink-0 items-center justify-center rounded-lg bg-[var(--app-surface-brand)] text-[var(--app-brand)]"
         >
           <NIcon :component="item.icon" :size="26" />
         </span>
-        <h2 class="text-20px font-bold text-[var(--ink)] [font-family:var(--font-head)]">{{ item.label }}</h2>
+        <h2 class="text-20px font-bold text-[var(--app-text)] [font-family:var(--app-font-heading)]">{{ item.label }}</h2>
       </div>
-      <p class="flex-1 text-14px leading-[1.7] text-[var(--muted)]">{{ item.desc }}</p>
-      <span class="inline-flex items-center gap-4px text-14px font-semibold text-[var(--navy)]">
+      <p class="flex-1 leading-[1.7] text-[var(--app-text-muted)]">{{ item.desc }}</p>
+      <span class="inline-flex items-center gap-1 font-semibold text-[var(--app-brand)]">
         进入 <NIcon :component="ArrowRight" :size="16" />
       </span>
     </RouterLink>

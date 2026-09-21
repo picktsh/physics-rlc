@@ -1,5 +1,9 @@
 import { ref } from 'vue'
 import dayjs from 'dayjs'
+import { createDiscreteApi } from 'naive-ui'
+
+// 非组件上下文(store/composable)无法用 useMessage,改用离散 API 弹温和轻提示
+const { message } = createDiscreteApi(['message'])
 
 /**
  * 历史记录数据库管理 Composable
@@ -114,7 +118,7 @@ export function useHistoryDB() {
    */
   function exportSimulationHistory() {
     if (simulationHistory.value.length === 0) {
-      alert('暂无历史记录可保存')
+      message.warning('暂无历史记录可保存')
       return
     }
     const jsonStr = JSON.stringify(simulationHistory.value, null, 2)
@@ -172,7 +176,7 @@ export function useHistoryDB() {
    */
   function exportMeasuredHistory() {
     if (measuredHistory.value.length === 0) {
-      alert('暂无实测历史记录可保存')
+      message.warning('暂无实测历史记录可保存')
       return
     }
     const jsonStr = JSON.stringify(measuredHistory.value, null, 2)

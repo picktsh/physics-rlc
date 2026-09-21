@@ -595,16 +595,16 @@ onBeforeUnmount(dispose3D)
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 10px;
-  background: var(--card-bg);
-  border: 1px solid var(--line);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   padding: 7px 11px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 26px -18px rgba(37, 99, 235, 0.35);
 }
 .hc-btn {
-  border: 1px solid var(--chip-border);
-  background: var(--soft-blue);
-  color: var(--ink);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-brand);
+  color: var(--app-text);
   border-radius: 8px;
   padding: 5px 13px;
   font-size: 12.5px;
@@ -615,12 +615,12 @@ onBeforeUnmount(dispose3D)
   white-space: nowrap;
 }
 .hc-btn:hover {
-  border-color: var(--line-strong);
-  background: var(--soft-blue-strong);
+  border-color: var(--app-border-dark);
+  background: var(--app-surface-brand-strong);
 }
 .hc-btn.on {
-  background: var(--accent-solid);
-  border-color: var(--accent-solid);
+  background: var(--app-primary);
+  border-color: var(--app-primary);
   color: #fff;
   box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
 }
@@ -630,22 +630,22 @@ onBeforeUnmount(dispose3D)
   gap: 4px;
   padding: 3px 10px;
   border-radius: 999px;
-  background: var(--card-bg);
-  border: 1px dashed var(--soft-blue-strong);
+  background: var(--app-surface);
+  border: 1px dashed var(--app-surface-brand-strong);
   font-size: 12px;
-  color: var(--muted);
+  color: var(--app-text-muted);
   white-space: nowrap;
 }
 .hc-f0 b {
-  font-family: var(--font-head);
-  color: var(--navy-deep);
+  font-family: var(--app-font-heading);
+  color: var(--app-brand-strong);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .hc-sld {
   flex: 1 1 170px;
   min-width: 130px;
-  accent-color: var(--accent-solid);
+  accent-color: var(--app-primary);
   cursor: pointer;
 }
 .hc-reads {
@@ -656,16 +656,16 @@ onBeforeUnmount(dispose3D)
 }
 .hc-rd {
   font-size: 12px;
-  color: var(--muted);
-  background: var(--soft-bg);
-  border: 1px solid var(--line-soft);
+  color: var(--app-text-muted);
+  background: var(--app-surface-sunken);
+  border: 1px solid var(--app-border-light);
   padding: 3px 9px;
   border-radius: 999px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .hc-rd b {
-  color: var(--ink);
+  color: var(--app-text);
   font-weight: 700;
   margin-left: 2px;
 }
@@ -679,26 +679,26 @@ onBeforeUnmount(dispose3D)
   letter-spacing: 0.04em;
 }
 .hc-zone.z-cap {
-  color: var(--navy-deep);
-  background: var(--soft-blue);
-  border-color: var(--soft-blue-strong);
+  color: var(--app-brand-strong);
+  background: var(--app-surface-brand);
+  border-color: var(--app-surface-brand-strong);
 }
 .hc-zone.z-res {
-  color: var(--success-ink);
-  background: var(--success-bg);
-  border-color: var(--success-border);
+  color: var(--app-success);
+  background: var(--app-success-bg);
+  border-color: var(--app-success-border);
 }
 .hc-zone.z-ind {
-  color: var(--warn-ink);
-  background: var(--warn-bg);
-  border-color: var(--warn-bg);
+  color: var(--app-warning);
+  background: var(--app-warning-bg);
+  border-color: var(--app-warning-bg);
 }
 .hc-legend {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   font-size: 11.5px;
-  color: var(--faint);
+  color: var(--app-text-faint);
   white-space: nowrap;
   letter-spacing: 0.03em;
 }
@@ -720,7 +720,7 @@ onBeforeUnmount(dispose3D)
   position: relative;
   height: 472px;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   background: linear-gradient(180deg, #eef3fb, #e3ebf7);
 }
@@ -737,7 +737,7 @@ onBeforeUnmount(dispose3D)
   width: 100%;
   height: 100%;
   font-size: 13px;
-  color: var(--faint);
+  color: var(--app-text-faint);
 }
 .hero3d-hint {
   position: absolute;
@@ -745,11 +745,11 @@ onBeforeUnmount(dispose3D)
   bottom: 10px;
   padding: 3px 10px;
   border-radius: 999px;
-  background: var(--card-bg-80);
-  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--app-surface), transparent 20%);
+  border: 1px solid var(--app-border);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--faint);
+  color: var(--app-text-faint);
   pointer-events: none;
   user-select: none;
 }

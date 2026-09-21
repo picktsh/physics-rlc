@@ -1,23 +1,23 @@
 <template>
   <div>
     <!-- ============ 1. 模块说明 ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-3">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-3">
       <h2
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] pl-12px hr-title mb-16px"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] pl-3 hr-title mb-4"
       >
         心率检测
       </h2>
-      <p class="text-[14.5px] text-[#56647a] leading-6">
+      <p class="text-[color:var(--app-text-muted)] leading-6">
         心率检测是 RLC 电路的工程应用场景之一:传感器拾取脉搏信号,经选频/滤波网络处理后提取有效分量,据此计算心率。
       </p>
-      <p class="text-[13.5px] text-[#8a97ab] leading-6 mt-1">
+      <p class="text-[color:var(--app-text-faint)] leading-6 mt-1">
         通过 Web Serial API 连接 STM32 心率传感器模块,实时显示脉搏波形与心率值。
       </p>
 
       <!-- 有源 RC 带通滤波器电路图与原理 -->
-      <div class="mt-4 p-4 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-        <h3 class="text-[15px] font-semibold text-[#334155] mb-2">有源 RC 带通滤波器</h3>
-        <p class="text-[13px] text-[#64748b] leading-5 mb-3">
+      <div class="mt-4 p-4 bg-[var(--app-surface-sunken)] rounded-lg border border-[color:var(--app-border)]">
+        <h3 class="text-base font-semibold text-[color:var(--app-text)] mb-2">有源 RC 带通滤波器</h3>
+        <p class="text-[color:var(--app-text-muted)] leading-5 mb-3">
           心率信号频率仅 0.5–4 Hz,纯无源 RLC
           在此频段需要亨利级电感和法拉级电容,工程上不可行。实际生物电/光传感器均采用有源 RC 滤波器:第一级高通隔直 (0.48
           Hz) 去除直流基线,第二级低通 (4.08 Hz) 滤除高频噪声,运放缓冲级隔离前后级避免负载效应。
@@ -28,17 +28,21 @@
           :class="isDiagramExpanded ? 'diagram-lightbox' : 'max-w-[500px] mx-auto'"
           @click.self="collapseDiagram"
         >
-          <button
+          <NButton
             v-if="!isDiagramExpanded"
-            @click="expandDiagram"
-            class="absolute top-2 right-2 z-10 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-all flex items-center gap-1 text-xs font-medium"
+            secondary
+            type="primary"
+            class="absolute top-2 right-2 z-10 shadow-md"
             title="放大查看电路图"
+            @click="expandDiagram"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-            </svg>
-            放大
-          </button>
+            <span class="inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+              放大
+            </span>
+          </NButton>
           <svg
             viewBox="0 0 500 170"
             class="h-auto"
@@ -117,46 +121,38 @@
               高通 f_c = 1/(2πR₁C₁) ≈ 0.48 Hz · 低通 f_c = 1/(2πR₂C₂) ≈ 4.08 Hz · 通带 0.5 – 4 Hz
             </text>
           </svg>
-          <button
+          <NButton
             v-if="isDiagramExpanded"
-            @click="collapseDiagram"
-            class="absolute top-4 right-4 z-10 p-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg shadow-md transition-all flex items-center gap-1 text-xs font-medium"
+            secondary
+            class="absolute top-4 right-4 z-10 shadow-md"
             title="关闭放大 (Esc)"
+            @click="collapseDiagram"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            关闭
-          </button>
+            <span class="inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              关闭
+            </span>
+          </NButton>
         </div>
       </div>
     </section>
 
     <!-- ============ 2. 连接控制 ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-3">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-3">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div class="flex items-center gap-3">
           <div class="status-dot" :class="connected ? 'connected' : 'disconnected'"></div>
-          <span class="text-[14px] font-medium" :class="connected ? 'text-green-600' : 'text-gray-500'">
+          <span class="font-medium" :class="connected ? 'text-[color:var(--app-success)]' : 'text-[color:var(--app-text-muted)]'">
             {{ statusText }}
           </span>
         </div>
         <div>
-          <button
-            class="px-5 py-2 rounded-lg text-sm font-medium transition-all"
-            :class="
-              !serialSupported
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : connected
-                  ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-            "
-            :disabled="!serialSupported"
-            @click="toggleConnect"
-          >
+          <NButton secondary :type="connected ? 'error' : 'primary'" :disabled="!serialSupported" @click="toggleConnect">
             {{ connected ? '断开连接' : '连接串口' }}
-          </button>
-          <p v-if="!serialSupported" class="text-xs text-red-500 mt-2">
+          </NButton>
+          <p v-if="!serialSupported" class="text-xs text-[color:var(--app-error)] mt-2">
             当前浏览器不支持 Web Serial API，请使用 Chrome 或 Edge 浏览器访问
           </p>
         </div>
@@ -164,7 +160,7 @@
     </section>
 
     <!-- ============ 3. 数据概览（BPM + ADC + 电压） ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-3">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-3">
       <div class="grid grid-cols-3 gap-4">
         <div class="info-item">
           <div class="bpm-value" :class="{ pulse: connected }">
@@ -184,9 +180,9 @@
     </section>
 
     <!-- ============ 4. 波形图 ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-3">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-3">
       <h3
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] pl-12px mb-2"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] pl-3 mb-2"
       >
         脉搏波形 (滤波后)
       </h3>
@@ -194,9 +190,9 @@
     </section>
 
     <!-- ============ 5. 串口日志 ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-3">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-3">
       <h3
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] pl-12px mb-2"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] pl-3 mb-2"
       >
         串口数据日志
       </h3>
@@ -210,6 +206,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { NButton } from 'naive-ui'
 import { useFullscreenSection } from '@/composables/useFullscreenSection'
 
 // ============ 状态 ============
@@ -716,7 +713,7 @@ onUnmounted(() => {
   display: flex;
   overflow: auto;
   padding: 24px;
-  background: var(--paper);
+  background: var(--app-bg);
 }
 
 /* 状态指示灯 */

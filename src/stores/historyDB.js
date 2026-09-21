@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import dayjs from 'dayjs'
+import { createDiscreteApi } from 'naive-ui'
+
+// store 非组件上下文,用离散 API 弹温和轻提示替代 alert
+const { message } = createDiscreteApi(['message'])
 
 const SIMULATION_HISTORY_KEY = 'rlc_simulation_history'
 const MEASURED_HISTORY_KEY = 'rlc_measured_history'
@@ -82,7 +86,7 @@ export const useHistoryStore = defineStore('history', () => {
 
   function exportHistory(key, data, prefix) {
     if (data.length === 0) {
-      alert('暂无历史记录可保存')
+      message.warning('暂无历史记录可保存')
       return
     }
     const jsonStr = JSON.stringify(data, null, 2)

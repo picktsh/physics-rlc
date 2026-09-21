@@ -1,7 +1,7 @@
 # 全站颜色 Token 系统性重构规划
 
-> 状态：方案已确认（Plan 已批准），**尚未开始改代码**。下次开工从 §5 阶段 0 开始。
-> 创建：2026-09-20 · 末次更新：2026-09-20
+> 状态：**已完成待验收**。阶段 0–4（颜色 Token 全量重构 + 删适配层）、阶段 3b（原生表单→naive 组件，12 文件）、阶段 5（删表单兑底层 + 文档锁点）均已落地；余下阶段 6 验收（build + grep 断言 + 清脚本）与四主题视觉走查。强转 naive 会造回归的原生控件列入「有意例外清单」（详 §12）。
+> 创建：2026-09-20 · 末次更新：2026-09-21（阶段 0 复核 + 范围扩围：并入「原生表单控件 → naive 组件」替换）
 > 起因：审查 `src/App.vue` 与 `src/assets/styles/theme.css` 的颜色定义，发现"主色双份定义已漂移 + 270 行事后映射适配层"两处乱源，决定系统性重构。
 > 批准版 Plan 原文：`~/.qoder-cn/.../plans/color-token-refactor_*.md`（本文件是其工程化落地增强版，含采集数据与新发现的扩围）。
 
@@ -243,3 +243,55 @@ grep -rn -- '--navy\b\|--ink\b\|--accent-solid\|--danger-ink\|--card-bg\|--soft-
 - 命名：`--app-` 前缀、扁平化（去中间类别词）、积极合并；**不**给 header/sidebar/chart 造过多 token（功能/布局 token 保留）。
 - 状态色词表：对齐 naive-ui，用 `error` 取代 `danger`。
 - naive 主色源：运行时读 CSS 变量（唯一源），而非 JS 映射表为源。
+
+---
+
+## 11. 开工决策增补（2026-09-21 grill 确认）
+
+### 11.1 阶段 0 采集复核（刷新 §3 数字）
+
+- 硬编码 hex 类：**359 处 / 45 色值**（重灾区 `formula` 234、`TunerExperiment` 91）。
+- 标准 UnoCSS 色类：**753 处**。合计 ≈ **1112 处**。
+- 允许清单已核实：damping 终端风、`bg-[#1a1a2e]` 示波器底、`text-white`（24 处均在彩/深底按钮上）。
+
+### 11.2 新发现的字典盲区（§6 草案未点透）
+
+适配层只拦截了**一部分**标准色类；下列当前一直是**字面色、未被拦截**（删适配层不影响，但残留字面色）：
+`bg-red-500/600`、`bg-green-600/700`、`bg-amber-500/600`、`bg-blue-400`、`bg-gray-600/700`、`border-green-100/200/500`、`border-gray-500`、`border-red-600`、`border-blue-200`、`text-blue-700`、`text-green-800`、`text-amber-500`、`text-[#d9962b]`。
+另有 `border-amber-200` 在适配层是硬编码 `#f3dfbd`/`#5a4620`（非变量）→ 迁移需**新增 `--app-warning-border`**。
+
+### 11.3 本轮确认的决策（覆盖前文冲突项）
+
+1. **盲区字面状态类**：一并纳入 token，让它们跟主题（Q1）。
+2. **⚠️ 范围扩围**：本轮**同时**把全站**全部原生表单控件**（44 `<button>` / 41 `<input>`（含 `type=range` 滑块）/ select / textarea / checkbox / radio）替换为 naive-ui 组件；实心状态色按钮改用 `NButton type` 区分，不再堆 `-solid` token。**合并进本轮一起做**（用户明示，允许适当视觉变动）。→ 新增**阶段 3b**。
+   - 3b 子决策（2026-09-21 确认）：9 个 `type=range` 仿真滑块 → **全部改 `NSlider`**；4 个 `type=file`（选件导入/导出）→ **全部改 `NUpload`**。用户接受逐个回归验证交互/精度的成本，取最大规范化。
+3. **`--app-info` 取消**：不造独立 info、不做多余派生；naive `infoColor` 直接读 `--app-primary`（与 primary 同色）。状态 token 仅 `primary/success/warning/error`。
+4. **实心状态底**：优先落到 naive 组件（type）；未组件化的残留色用 `--app-error/success/warning/primary` 强色，hover 用 `color-mix` 加深派生，不新增 `-solid`。
+
+### 11.4 修订后的阶段（§5 补充 3b）
+
+- **3b · 原生表单控件 → naive 组件**：`<button>`→`NButton`、`<input type=text/number>`→`NInput/NInputNumber`、`type=range`→`NSlider`、`checkbox/radio`→`NCheckbox/NRadio`、`<select>`→`NSelect`、`<textarea>`→`NInput type=textarea`、`type=file`→`NUpload`。连带删除 theme.css 「表单控件深色兑底层」（naive 自带主题后不再需要）。重点文件：`damping`、`MeasuredDataInput`、`ChartPanel`、`lc-voltage`、`TunerExperiment`、`LissajousScope`、`CircuitBoard`、`ErrorAnalysis`、`SimulationHistory`、`HeartRateMonitor`。
+
+---
+
+## 12. 进度日志
+
+### 已完成（2026-09-21，均 `pnpm build` 绿）
+- **阶段 0**：采集复核 359 hex / 753 标准类；字典定稿（含适配层未拦盲区）。
+- **阶段 1**：theme.css 四块变量重写为 `--app-*`（合并 navy-mid/soft-bg/card-inner-bg；新增 `--app-warning-border`/`--app-rail-bg`；补全 macaron `--canvas-*`）+ 全局 `var(--旧名)`→`var(--app-*)` 改名（31 文件）。
+- **阶段 2**：App.vue 删 `PRIMARY_BY_THEME`，naive 主色/状态色/字体运行时读 `--app-*`。
+- **阶段 3**：颜色迁移 codemod（~970 处 hex+标准类）+ 渐变/半透白/`bg-[#f1f5f9]` 盲区手工处理。
+- **阶段 4**：删除颜色类适配层（theme.css 528→285 行），保留功能性兑底（canvas 垫底/黑舞台）。
+- **阶段 3b（完成）**：全站原生表单控件→naive 组件（NButton/NInput/NInputNumber/NSlider/NSwitch/NSelect/NCheckbox/NUpload），实心状态色按钮改由 `type` 表达。已转 12 文件：`analysis/`（MeasuredDataInput、ChartPanel、SimulationHistory、ErrorAnalysis、ResultCards）、`lc-voltage/`、`LissajousScope`、`HeartRateMonitor`、`CircuitBoard`、`TunerExperiment`、`damping/`（终端风输入除外）、`formula/`（qTabs）、`AttachmentPreview`（`bg-red-500` 实心徽标→`NButton circle type=error`）。
+- **阶段 5（完成）**：删 theme.css 「表单控件深色兑底层」；文档锁点——`AGENTS.local.md`「主题与配色」章节重写（固化 `--app-*` 命名/naive 组件规范/允许清单）、`CHANGELOG.md` 加 `[Unreleased]` 条、`index.html` 内联 loading 色同步锚点注释强化。
+
+### 有意例外清单（保留原生控件，均为固定/语义/动画耦合，强转 naive 会造回归）
+1. **`AppSidebar` / `AppHeader` 导航按钮**：受「页眉↔侧栏折叠共轴、图标零位移」布局约束保护，转 NButton 会破坏零位移对齐。
+2. **`engineering/` 二级 tab（`role=tablist`）**：语义 ARIA tablist、已 token 着色；**`HeroCircuit` 控制条（hc-btn/hc-sld）**：`sldRef` 命令式逐帧动画同步 + bespoke 多态 pill，转 NSlider/NButton 会破坏。
+3. **`VideoCard` 展开图标按钮**：绝对定位、hover-reveal 角标，转 NButton 与自定义 opacity/边框动画相冲。
+4. **`ChatInputArea` / `docs` 隐藏 `<input type=file>`**：class=hidden，绑 base64 附件/文档导入流水线且由程序 `.click()` 触发（naive NUpload 内部同为隐藏 input，换组件无收益需重接跨文件契约）；**可见部分已 NButton**。
+5. **`ThemeSwitcher` 预览圆点（`role=radio`）**：每点代表对应主题色，必须为固定字面渐变（不参与主题）。
+6. **允许清单固定深色**：damping 终端风输入（6）、示波器/画布固定底（`bg-[#1a1a2e]`）、`index.html` 内联 loading、深色底刻意白字 `text-white`、视频黑边 letterbox。
+
+### 待验收
+- 阶段 6：`pnpm build` 自证绿 + grep 断言（旧 token 引用 0 / 非允许硬编码色类 0 / 原生表单仅剩例外清单）+ 清理仓库根一次性脚本 `.tmp-rename-tokens.mjs`/`.tmp-migrate-colors.mjs`/`.tmp-strip-adapter.mjs`。四主题视觉走查由用户统一验收。

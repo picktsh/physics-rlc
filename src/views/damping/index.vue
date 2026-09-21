@@ -2,15 +2,15 @@
   <div>
     <!-- ============ RLC 阻尼振荡特性实验 · 顶部电路搭建(3D 直接拖拽) ============ -->
     <section
-      :class="isFullscreen ? 'board-fs' : 'rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4'"
+      :class="isFullscreen ? 'board-fs' : 'rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4'"
     >
       <h2
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
       >
         电路搭建(3D 直接拖拽)
       </h2>
       <!-- 操作提示:从工具栏行移到板块标题下方,腾出整行给工具按钮 -->
-      <p class="-mt-10px mb-12px text-[11px] leading-4 text-gray-400">
+      <p class="-mt-2 mb-3 text-xs leading-4 text-[color:var(--app-text-faint)]">
         空白拖拽旋转视角 · 滚轮缩放 | 拖入元件放置 · 拖动元件移动 · 点端点接线 · 右键删除 · 双击元件定位参数
       </p>
 
@@ -26,10 +26,10 @@
               :key="comp.type"
               draggable="true"
               :class="[
-                'component-item flex flex-col items-center justify-center gap-1 p-2 border border-gray-200 rounded-lg cursor-pointer text-xs text-gray-600 transition-all lg:flex-1',
+                'component-item flex flex-col items-center justify-center gap-2 p-2 border border-[color:var(--app-border)] rounded-lg cursor-pointer text-xs text-[color:var(--app-text-muted)] transition-all lg:flex-1',
                 pendingPlaceType === comp.type
-                  ? 'bg-blue-50 ring-2 ring-[#3b82f6]'
-                  : 'bg-white hover:bg-gray-100 hover:border-gray-300',
+                  ? 'bg-[var(--app-surface-brand)] ring-2 ring-[color:var(--app-primary)]'
+                  : 'bg-[var(--app-surface)] hover:bg-[var(--app-surface-muted)] hover:border-[color:var(--app-border-dark)]',
               ]"
               @dragstart="handleDragStart($event, comp.type)"
               @click="selectPaletteComponent(comp.type)"
@@ -41,9 +41,11 @@
                 alt=""
                 class="w-16 h-16 object-contain pointer-events-none select-none"
               />
-              <span v-else class="w-16 h-16 flex items-center justify-center text-xl font-bold text-gray-300">{{
-                comp.type
-              }}</span>
+              <span
+                v-else
+                class="w-16 h-16 flex items-center justify-center text-xl font-bold text-[color:var(--app-text-faint)]"
+                >{{ comp.type }}</span
+              >
               <span class="font-medium">{{ comp.name }}</span>
             </div>
           </div>
@@ -52,7 +54,10 @@
         <!-- 中栏:3D 实验台(拖入放置 / 拖动移动 / 点端点接线 / 右键删除 / 双击定位) -->
         <div class="min-w-0">
           <!-- 触摸端点选元件后,提示到台面上放置(桌面端以拖拽为主) -->
-          <div v-if="pendingPlaceType" class="text-[11px] text-blue-600 bg-blue-50 rounded px-2 py-1 mb-2">
+          <div
+            v-if="pendingPlaceType"
+            class="text-xs text-[color:var(--app-brand)] bg-[var(--app-surface-brand)] rounded px-2 py-1 mb-2"
+          >
             📌 已选中「{{ typeName(pendingPlaceType) }}」:点击 3D 实验台空白处放置(再次点击库项取消)
           </div>
           <Circuit3DCanvas
@@ -73,20 +78,20 @@
             <!-- 板块级操作按钮注入 3D 工具栏,与自动旋转/复位视角合并为一行(flex-wrap 支持换行) -->
             <template #actions>
               <NDropdown trigger="click" :options="presetOptions" @select="applyPreset">
-                <NButton>
+                <NButton secondary>
                   <template #icon><NIcon :component="Catalog" /></template>
                   导入示例
                 </NButton>
               </NDropdown>
-              <NButton :title="isFullscreen ? '退出全屏 (Esc)' : '全屏编辑,便于排列元件'" @click="toggle">
+              <NButton secondary :title="isFullscreen ? '退出全屏 (Esc)' : '全屏编辑,便于排列元件'" @click="toggle">
                 <template #icon><NIcon :component="isFullscreen ? Minimize : Maximize" /></template>
                 {{ isFullscreen ? '退出全屏' : '全屏' }}
               </NButton>
-              <NButton type="primary" @click="onSimulate">
+              <NButton secondary type="success" @click="onSimulate">
                 <template #icon><NIcon :component="Flash" /></template>
                 仿真
               </NButton>
-              <NButton tertiary type="error" @click="onReset">
+              <NButton secondary type="error" @click="onReset">
                 <template #icon><NIcon :component="PaintBrush" /></template>
                 清空
               </NButton>
@@ -98,8 +103,8 @@
             :class="[
               'mt-3 border rounded-lg px-3 py-2 text-xs leading-relaxed',
               simulation.success
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                : 'bg-red-50 border-red-200 text-red-600',
+                ? 'bg-[var(--app-success-bg)] border-[color:var(--app-success-border)] text-[color:var(--app-success)]'
+                : 'bg-[var(--app-error-bg)] border-[color:var(--app-error-border)] text-[color:var(--app-error)]',
             ]"
           >
             <div class="font-semibold">{{ simulation.success ? '✅' : '⚠️' }} {{ simulation.message }}</div>
@@ -117,134 +122,117 @@
         <!-- 右栏:元件参数编辑 + 公差设置(08 tab 独立一份);全屏时隐藏(3D 视图占满,参数编辑退出全屏再做) -->
         <div v-if="!isFullscreen" class="min-w-0">
           <!-- 元件参数编辑器(双击 3D 元件可定位到对应输入框) -->
-          <div v-if="store.components.length > 0" class="mt-3 lg:mt-0">
-            <div class="text-xs sm:text-sm font-semibold text-gray-700 mb-2">⚙️ 元件参数编辑</div>
-            <div class="flex flex-col gap-2">
-              <div
-                v-for="(comp, idx) in store.components"
-                :id="'damp-comp-' + idx"
-                :key="idx"
-                :class="[
-                  'p-2 rounded-lg border-2 transition-all',
-                  focusedCompIndex === idx ? 'border-blue-500 bg-blue-50' : 'border-transparent',
-                ]"
-              >
-                <label class="text-xs text-gray-600">{{ getComponentLabel(comp.type) }} #{{ idx + 1 }}</label>
-                <div class="flex gap-1 items-center mt-1">
-                  <input
-                    type="number"
-                    step="any"
-                    :value="getCompDisplay(idx)"
-                    class="w-full min-w-0 px-2 py-1.5 border border-gray-300 rounded text-sm"
-                    @input="onCompInput(idx, $event)"
-                    @blur="onCompBlur(idx)"
-                  />
-                  <span class="text-xs text-gray-500 whitespace-nowrap">{{ getComponentUnit(comp.type) }}</span>
-                </div>
-                <!-- 信号源波形参数(仅 V 类型展开) -->
-                <div v-if="comp.type === 'V'" class="mt-2 space-y-1.5">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap min-w-[36px]">波形</span>
-                    <select
-                      :value="comp.signalWaveform || 'sine'"
-                      class="flex-1 min-w-0 px-1.5 py-1 border border-gray-300 rounded text-xs"
-                      @change="onSignalChange(idx, 'waveform', $event.target.value)"
+          <div v-if="store.components.length > 0">
+            <div>⚙️ 元件参数编辑</div>
+            <NForm label-placement="top" :show-feedback="false">
+              <div class="flex flex-col gap-2">
+                <div
+                  v-for="(comp, idx) in store.components"
+                  :id="'damp-comp-' + idx"
+                  :key="idx"
+                  :class="[
+                    'flex flex-col gap-3 p-2 rounded-lg border-2 transition-all',
+                    focusedCompIndex === idx
+                      ? 'border-[color:var(--app-primary)] bg-[var(--app-surface-brand)]'
+                      : 'border-transparent',
+                  ]"
+                >
+                  <NFormItem :label="`${getComponentLabel(comp.type)} #${idx + 1}`">
+                    <NInputNumber
+                      :value="comp.value"
+                      :show-button="false"
+                      @update:value="(v) => onCompValueChange(idx, v)"
                     >
-                      <option value="sine">正弦波</option>
-                      <option value="square">方波</option>
-                    </select>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap min-w-[36px]">频率</span>
-                    <input
-                      type="number"
-                      step="any"
-                      min="1"
-                      max="10000"
-                      :value="comp.signalFrequency || 100"
-                      class="flex-1 min-w-0 px-1.5 py-1 border border-gray-300 rounded text-xs"
-                      @input="onSignalInput(idx, 'frequency', $event)"
-                      @blur="onSignalBlur(idx, 'frequency', $event)"
-                    />
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap">Hz</span>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap min-w-[36px]">周期</span>
-                    <input
-                      type="number"
-                      step="any"
-                      min="0.1"
-                      max="1000"
-                      :value="comp.signalPeriod || 10"
-                      class="flex-1 min-w-0 px-1.5 py-1 border border-gray-300 rounded text-xs"
-                      @input="onSignalInput(idx, 'period', $event)"
-                      @blur="onSignalBlur(idx, 'period', $event)"
-                    />
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap">ms</span>
-                  </div>
-                  <div v-if="comp.signalWaveform === 'square'" class="flex items-center gap-1.5">
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap min-w-[36px]">占空比</span>
-                    <input
-                      type="number"
-                      step="1"
-                      min="10"
-                      max="90"
-                      :value="comp.signalDutyCycle || 50"
-                      class="flex-1 min-w-0 px-1.5 py-1 border border-gray-300 rounded text-xs"
-                      @input="onSignalInput(idx, 'dutyCycle', $event)"
-                      @blur="onSignalBlur(idx, 'dutyCycle', $event)"
-                    />
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap">%</span>
-                  </div>
-                  <div v-if="comp.signalWaveform === 'square'" class="flex items-center gap-1.5">
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap min-w-[36px]">脉宽</span>
-                    <input
-                      type="number"
-                      step="any"
-                      min="0.01"
-                      :value="comp.signalPulseWidth || 5"
-                      class="flex-1 min-w-0 px-1.5 py-1 border border-gray-300 rounded text-xs"
-                      @input="onSignalInput(idx, 'pulseWidth', $event)"
-                      @blur="onSignalBlur(idx, 'pulseWidth', $event)"
-                    />
-                    <span class="text-[11px] text-gray-500 whitespace-nowrap">ms</span>
-                  </div>
+                      <template #suffix>{{ getComponentUnit(comp.type) }}</template>
+                    </NInputNumber>
+                  </NFormItem>
+                  <!-- 信号源波形参数(仅 V 类型展开) -->
+                  <template v-if="comp.type === 'V'">
+                    <NFormItem label="波形">
+                      <NSelect
+                        :value="comp.signalWaveform || 'sine'"
+                        :options="[
+                          { label: '正弦波', value: 'sine' },
+                          { label: '方波', value: 'square' },
+                        ]"
+                        @update:value="(v) => onSignalChange(idx, 'waveform', v)"
+                      />
+                    </NFormItem>
+                    <NFormItem label="频率">
+                      <NInputNumber
+                        :value="comp.signalFrequency || 100"
+                        :show-button="false"
+                        @update:value="(v) => onSignalChange(idx, 'frequency', v)"
+                      >
+                        <template #suffix>Hz</template>
+                      </NInputNumber>
+                    </NFormItem>
+                    <NFormItem label="周期">
+                      <NInputNumber
+                        :value="comp.signalPeriod || 10"
+                        :show-button="false"
+                        @update:value="(v) => onSignalChange(idx, 'period', v)"
+                      >
+                        <template #suffix>ms</template>
+                      </NInputNumber>
+                    </NFormItem>
+                    <NFormItem v-if="comp.signalWaveform === 'square'" label="占空比">
+                      <NInputNumber
+                        :value="comp.signalDutyCycle || 50"
+                        :show-button="false"
+                        @update:value="(v) => onSignalChange(idx, 'dutyCycle', v)"
+                      >
+                        <template #suffix>%</template>
+                      </NInputNumber>
+                    </NFormItem>
+                    <NFormItem v-if="comp.signalWaveform === 'square'" label="脉宽">
+                      <NInputNumber
+                        :value="comp.signalPulseWidth || 5"
+                        :show-button="false"
+                        @update:value="(v) => onSignalChange(idx, 'pulseWidth', v)"
+                      >
+                        <template #suffix>ms</template>
+                      </NInputNumber>
+                    </NFormItem>
+                  </template>
                 </div>
               </div>
-            </div>
+            </NForm>
           </div>
-          <div v-else class="mt-3 lg:mt-0 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 leading-5">
+          <div
+            v-else
+            class="mt-3 lg:mt-0 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-2 leading-5"
+          >
             拖入元件后,在此编辑元件参数;双击 3D 元件可快速定位
           </div>
 
           <!-- 元件公差设置(独立于 03 tab 电路搭建) -->
-          <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+          <div class="mt-3 p-3 bg-[var(--app-surface-sunken)] rounded-lg">
             <div class="flex items-center gap-3 mb-2">
-              <div class="text-xs sm:text-sm font-semibold text-gray-700">🎯 元件公差</div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="toleranceEnabled" class="sr-only peer" @change="onToleranceToggle" />
-                <div
-                  class="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
-                ></div>
-              </label>
-              <span class="text-xs text-gray-500">{{ toleranceEnabled ? '已开启' : '已关闭' }}</span>
+              <div class="text-xs font-semibold text-[color:var(--app-text)]">🎯 元件公差</div>
+              <NSwitch :value="toleranceEnabled" @update:value="onToleranceToggle" />
+              <span class="text-xs text-[color:var(--app-text-muted)]">{{
+                toleranceEnabled ? '已开启' : '已关闭'
+              }}</span>
             </div>
             <div v-if="toleranceEnabled" class="flex items-center gap-3">
-              <span class="text-xs text-gray-600 whitespace-nowrap">公差范围：</span>
-              <input
-                type="range"
-                min="1"
-                max="20"
-                step="0.5"
-                v-model.number="tolerancePercent"
-                class="flex-1 cursor-pointer"
-                @input="onToleranceChange"
+              <span class="text-xs text-[color:var(--app-text-muted)] whitespace-nowrap">公差范围：</span>
+              <NSlider
+                :value="tolerancePercent"
+                :min="1"
+                :max="20"
+                :step="0.5"
+                class="flex-1"
+                @update:value="onToleranceChange"
               />
-              <span class="text-xs font-semibold text-blue-600 min-w-[40px] text-right"
+              <span class="text-xs font-semibold text-[color:var(--app-brand)] min-w-[40px] text-right"
                 >±{{ tolerancePercent.toFixed(1) }}%</span
               >
             </div>
-            <div v-if="toleranceEnabled" class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
+            <div
+              v-if="toleranceEnabled"
+              class="text-xs text-[color:var(--app-warning)] bg-[var(--app-warning-bg)] rounded px-2 py-1 mt-1"
+            >
               💡 开启后每次仿真实物参数将在标称值的 ±{{ tolerancePercent.toFixed(1) }}% 范围内随机波动
             </div>
           </div>
@@ -253,24 +241,24 @@
     </section>
 
     <!-- ============ 阻尼状态(点击 3D 电路导线触发) ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
       <h2
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
       >
         阻尼状态
       </h2>
-      <div v-if="!wireClicked" class="mt-3 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-4 text-center leading-5">
+      <div
+        v-if="!wireClicked"
+        class="mt-3 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-4 text-center leading-5"
+      >
         🖱 点击已搭建电路中的导线,展示阻尼状态曲线
       </div>
       <div v-else class="mt-3">
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-semibold" :class="dampingStateColor">{{ dampingStateLabel }}</span>
-          <button
-            class="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600"
-            @click="wireClicked = false"
-          >
+          <NButton text class="text-[color:var(--app-text-faint)]" @click="wireClicked = false">
             <NIcon :component="Close" /> 关闭
-          </button>
+          </NButton>
         </div>
         <canvas
           ref="dampingCanvasRef"
@@ -284,53 +272,38 @@
           "
         ></canvas>
         <!-- 坐标轴范围调节器 -->
-        <div class="mt-2 flex items-center gap-3 flex-wrap">
-          <span class="text-[10px] text-gray-500 font-semibold">📐 坐标范围</span>
-          <div class="flex items-center gap-1">
-            <label class="text-[10px] text-gray-400">Y轴下限</label>
-            <div class="flex items-center gap-0.5">
-              <input
-                type="number"
-                step="0.1"
-                v-model.number="axisYMinMul"
-                class="w-14 px-1.5 py-0.5 bg-[#0d0d1a] border border-gray-600 rounded text-[10px] text-green-400 font-mono focus:border-green-500 focus:outline-none"
-              />
-              <span class="text-[10px] text-gray-500">×V₀</span>
+        <div class="mt-2">
+          <div class="mb-1">📐 坐标范围</div>
+          <NForm label-placement="top" :show-feedback="false">
+            <div class="flex items-end gap-3 flex-wrap">
+              <NFormItem label="Y轴下限" class="flex-1 min-w-[120px]">
+                <NInputNumber v-model:value="axisYMinMul" :show-button="false" :step="0.1">
+                  <template #suffix>×V₀</template>
+                </NInputNumber>
+              </NFormItem>
+              <NFormItem label="Y轴上限" class="flex-1 min-w-[120px]">
+                <NInputNumber v-model:value="axisYMaxMul" :show-button="false" :step="0.1">
+                  <template #suffix>×V₀</template>
+                </NInputNumber>
+              </NFormItem>
+              <NFormItem label="X轴时长" class="flex-1 min-w-[120px]">
+                <NInputNumber v-model:value="axisXScale" :show-button="false" :step="0.001" :min="0.001">
+                  <template #suffix>s</template>
+                </NInputNumber>
+              </NFormItem>
+              <NFormItem class="flex-none">
+                <NButton secondary type="warning" @click="resetAxisRange">
+                  <template #icon><NIcon :component="Reset" /></template>
+                  重置
+                </NButton>
+              </NFormItem>
             </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <label class="text-[10px] text-gray-400">Y轴上限</label>
-            <div class="flex items-center gap-0.5">
-              <input
-                type="number"
-                step="0.1"
-                v-model.number="axisYMaxMul"
-                class="w-14 px-1.5 py-0.5 bg-[#0d0d1a] border border-gray-600 rounded text-[10px] text-green-400 font-mono focus:border-green-500 focus:outline-none"
-              />
-              <span class="text-[10px] text-gray-500">×V₀</span>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <label class="text-[10px] text-gray-400">X轴时长</label>
-            <div class="flex items-center gap-0.5">
-              <input
-                type="number"
-                step="0.001"
-                min="0.001"
-                v-model.number="axisXScale"
-                class="w-16 px-1.5 py-0.5 bg-[#0d0d1a] border border-gray-600 rounded text-[10px] text-green-400 font-mono focus:border-green-500 focus:outline-none"
-              />
-              <span class="text-[10px] text-gray-500">s</span>
-            </div>
-          </div>
-          <button
-            class="inline-flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-300 px-1.5 py-0.5 border border-gray-600 rounded hover:border-gray-500 transition-all"
-            @click="resetAxisRange"
-          >
-            <NIcon :component="Reset" /> 重置
-          </button>
+          </NForm>
         </div>
-        <div v-if="dampingParams" class="mt-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 leading-5">
+        <div
+          v-if="dampingParams"
+          class="mt-2 text-xs text-[color:var(--app-text-muted)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-2 leading-5"
+        >
           <div>阻尼系数 α = R/(2L) = {{ fmt(dampingParams.alpha) }} rad/s</div>
           <div>固有角频率 ω₀ = 1/√(LC) = {{ fmt(dampingParams.omega0) }} rad/s</div>
           <div>阻尼比 ζ = α/ω₀ = {{ fmt(dampingParams.zeta, 3) }} → {{ dampingTypeLabel[simulation.dampingType] }}</div>
@@ -342,71 +315,52 @@
     </section>
 
     <!-- ============ LTspice 瞬态分析参数 (.tran) ============ -->
-    <div v-if="simulation?.success" class="mb-3 rounded-lg border border-gray-200 bg-white px-4 py-3">
+    <div
+      v-if="simulation?.success"
+      class="mb-3 rounded-lg border border-[color:var(--app-border)] bg-[var(--app-surface)] px-4 py-3"
+    >
       <div class="flex items-center gap-2 mb-2">
-        <span class="text-xs font-semibold text-gray-700">📊 编辑仿真命令</span>
-        <span class="font-mono text-[10px] text-gray-400">.tran</span>
+        <span class="font-semibold text-[color:var(--app-text)]">📊 编辑仿真命令</span>
+        <span class="font-mono text-xs text-[color:var(--app-text-faint)]">.tran</span>
       </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div>
-          <label class="text-[10px] text-gray-500 block mb-0.5">Stop Time</label>
-          <div class="flex items-center gap-1">
-            <input
-              type="number"
-              step="any"
-              min="0.001"
-              v-model.number="simStopTime"
-              class="w-full px-2 py-1 bg-gray-50 border border-gray-300 rounded text-xs text-gray-700 font-mono focus:border-blue-500 focus:outline-none"
-            />
-            <span class="text-[10px] text-gray-500 whitespace-nowrap">s</span>
-          </div>
+      <NForm label-placement="top" :show-feedback="false">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <NFormItem label="Stop Time">
+            <NInputNumber v-model:value="simStopTime" :show-button="false" :min="0.001">
+              <template #suffix>s</template>
+            </NInputNumber>
+          </NFormItem>
+          <NFormItem label="开始保存数据的延迟 (Tdelay)">
+            <NInputNumber v-model:value="simTdelay" :show-button="false" :min="0">
+              <template #suffix>s</template>
+            </NInputNumber>
+          </NFormItem>
+          <NFormItem label="最大步长">
+            <NInputNumber :value="simStopTime / 1000" :show-button="false" disabled>
+              <template #suffix>s</template>
+            </NInputNumber>
+          </NFormItem>
+          <NFormItem>
+            <NButton secondary type="success" block @click="redrawAll">
+              <template #icon><NIcon :component="Play" /></template>
+              运行
+            </NButton>
+          </NFormItem>
         </div>
-        <div>
-          <label class="text-[10px] text-gray-500 block mb-0.5">开始保存数据的延迟 (Tdelay)</label>
-          <div class="flex items-center gap-1">
-            <input
-              type="number"
-              step="any"
-              min="0"
-              v-model.number="simTdelay"
-              class="w-full px-2 py-1 bg-gray-50 border border-gray-300 rounded text-xs text-gray-700 font-mono focus:border-blue-500 focus:outline-none"
-            />
-            <span class="text-[10px] text-gray-500 whitespace-nowrap">s</span>
-          </div>
-        </div>
-        <div>
-          <label class="text-[10px] text-gray-500 block mb-0.5">最大步长</label>
-          <div class="flex items-center gap-1">
-            <input
-              type="number"
-              step="any"
-              min="0"
-              :value="simStopTime / 1000"
-              disabled
-              class="w-full px-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs text-gray-400 font-mono"
-            />
-            <span class="text-[10px] text-gray-400 whitespace-nowrap">s</span>
-          </div>
-        </div>
-        <div class="flex items-end">
-          <button
-            class="inline-flex items-center gap-1 w-full justify-center px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold transition-all"
-            @click="redrawAll"
-          >
-            <NIcon :component="Play" /> 运行
-          </button>
-        </div>
-      </div>
+      </NForm>
     </div>
 
     <!-- ============ 电容电压时域放电波形 ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
       <h2
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
       >
         电容电压时域放电波形
       </h2>
-      <div v-if="!simulation" class="mt-3 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-4 text-center leading-5">
+      <div
+        v-if="!simulation"
+        class="mt-3 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-4 text-center leading-5"
+      >
         ⚡ 请先完成电路搭建并点击「仿真」,仿真成功后点击导线查看波形
       </div>
       <div v-else class="mt-3">
@@ -422,129 +376,122 @@
           "
         ></canvas>
         <!-- 电容电压波形坐标轴范围调节器 -->
-        <div class="mt-2 flex items-center gap-3 flex-wrap">
-          <span class="text-[10px] text-gray-500 font-semibold">📐 坐标范围</span>
-          <div class="flex items-center gap-1">
-            <label class="text-[10px] text-gray-400">Y轴下限</label>
-            <div class="flex items-center gap-0.5">
-              <input
-                type="number"
-                step="0.1"
-                v-model.number="capYMinMul"
-                class="w-14 px-1.5 py-0.5 bg-[#0d0d1a] border border-gray-600 rounded text-[10px] text-green-400 font-mono focus:border-green-500 focus:outline-none"
-              />
-              <span class="text-[10px] text-gray-500">×V₀</span>
+        <div class="mt-2">
+          <div class="mb-1">📐 坐标范围</div>
+          <NForm label-placement="top" :show-feedback="false">
+            <div class="flex items-end gap-3 flex-wrap">
+              <NFormItem label="Y轴下限" class="flex-1 min-w-[120px]">
+                <NInputNumber v-model:value="capYMinMul" :show-button="false" :step="0.1">
+                  <template #suffix>×V₀</template>
+                </NInputNumber>
+              </NFormItem>
+              <NFormItem label="Y轴上限" class="flex-1 min-w-[120px]">
+                <NInputNumber v-model:value="capYMaxMul" :show-button="false" :step="0.1">
+                  <template #suffix>×V₀</template>
+                </NInputNumber>
+              </NFormItem>
+              <NFormItem label="X轴时长" class="flex-1 min-w-[120px]">
+                <NInputNumber v-model:value="capXScale" :show-button="false" :step="0.001" :min="0.001">
+                  <template #suffix>s</template>
+                </NInputNumber>
+              </NFormItem>
+              <NFormItem class="flex-none">
+                <NButton secondary type="warning" @click="resetCapAxisRange">
+                  <template #icon><NIcon :component="Reset" /></template>
+                  重置
+                </NButton>
+              </NFormItem>
             </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <label class="text-[10px] text-gray-400">Y轴上限</label>
-            <div class="flex items-center gap-0.5">
-              <input
-                type="number"
-                step="0.1"
-                v-model.number="capYMaxMul"
-                class="w-14 px-1.5 py-0.5 bg-[#0d0d1a] border border-gray-600 rounded text-[10px] text-green-400 font-mono focus:border-green-500 focus:outline-none"
-              />
-              <span class="text-[10px] text-gray-500">×V₀</span>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <label class="text-[10px] text-gray-400">X轴时长</label>
-            <div class="flex items-center gap-0.5">
-              <input
-                type="number"
-                step="0.001"
-                min="0.001"
-                v-model.number="capXScale"
-                class="w-16 px-1.5 py-0.5 bg-[#0d0d1a] border border-gray-600 rounded text-[10px] text-green-400 font-mono focus:border-green-500 focus:outline-none"
-              />
-              <span class="text-[10px] text-gray-500">s</span>
-            </div>
-          </div>
-          <button
-            class="inline-flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-300 px-1.5 py-0.5 border border-gray-600 rounded hover:border-gray-500 transition-all"
-            @click="resetCapAxisRange"
-          >
-            <NIcon :component="Reset" /> 重置
-          </button>
+          </NForm>
         </div>
       </div>
     </section>
 
     <!-- ============ 计算模板 · 振荡周期 · 衰减系数 ============ -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
       <h2
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
       >
         计算模板
       </h2>
-      <div v-if="!simulation" class="mt-3 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-3 text-center">
+      <div
+        v-if="!simulation"
+        class="mt-3 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-3 text-center"
+      >
         仿真后自动展示公式与计算结果
       </div>
       <div v-else class="mt-3">
         <!-- 公式区 -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <div class="bg-white/80 rounded-lg p-3 border border-blue-100">
-              <div class="text-[11px] text-gray-500 mb-1">阻尼系数</div>
-              <div class="font-mono text-gray-800">α = R / (2L)</div>
-              <div class="text-blue-600 font-semibold mt-1">= {{ fmt(dampingParams.alpha) }} rad/s</div>
+        <div
+          class="bg-[var(--app-surface-sunken)] rounded-lg p-4 border border-[color:var(--app-surface-brand-strong)]"
+        >
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div
+              class="bg-[color-mix(in_srgb,var(--app-surface),transparent_20%)] rounded-lg p-3 border border-[color:var(--app-surface-brand-strong)]"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">阻尼系数</div>
+              <div class="font-mono text-[color:var(--app-text)]">α = R / (2L)</div>
+              <div class="text-[color:var(--app-brand)] font-semibold mt-1">= {{ fmt(dampingParams.alpha) }} rad/s</div>
             </div>
-            <div class="bg-white/80 rounded-lg p-3 border border-blue-100">
-              <div class="text-[11px] text-gray-500 mb-1">固有角频率</div>
-              <div class="font-mono text-gray-800">ω₀ = 1 / √(LC)</div>
-              <div class="text-blue-600 font-semibold mt-1">= {{ fmt(dampingParams.omega0) }} rad/s</div>
+            <div
+              class="bg-[color-mix(in_srgb,var(--app-surface),transparent_20%)] rounded-lg p-3 border border-[color:var(--app-surface-brand-strong)]"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">固有角频率</div>
+              <div class="font-mono text-[color:var(--app-text)]">ω₀ = 1 / √(LC)</div>
+              <div class="text-[color:var(--app-brand)] font-semibold mt-1">
+                = {{ fmt(dampingParams.omega0) }} rad/s
+              </div>
             </div>
-            <div class="bg-white/80 rounded-lg p-3 border border-blue-100">
-              <div class="text-[11px] text-gray-500 mb-1">临界阻尼条件</div>
-              <div class="font-mono text-gray-800">R<sub>c</sub> = 2√(L/C)</div>
-              <div class="text-blue-600 font-semibold mt-1">= {{ fmt(dampingParams.Rc) }} Ω</div>
+            <div
+              class="bg-[color-mix(in_srgb,var(--app-surface),transparent_20%)] rounded-lg p-3 border border-[color:var(--app-surface-brand-strong)]"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">临界阻尼条件</div>
+              <div class="font-mono text-[color:var(--app-text)]">R<sub>c</sub> = 2√(L/C)</div>
+              <div class="text-[color:var(--app-brand)] font-semibold mt-1">= {{ fmt(dampingParams.Rc) }} Ω</div>
             </div>
           </div>
-          <div class="mt-3 text-[11px] text-gray-500 text-center">
+          <div class="mt-3 text-xs text-[color:var(--app-text-muted)] text-center">
             阻尼判据: ζ = α/ω₀ = {{ fmt(dampingParams.zeta, 3) }} — ζ &lt; 1 欠阻尼(衰减振荡) | ζ = 1 临界阻尼 | ζ &gt;
             1 过阻尼
           </div>
         </div>
         <!-- 振荡周期 + 瞬时值 + 衰减系数 -->
-        <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-stretch">
-          <div class="bg-white rounded-lg border border-gray-200 p-3">
-            <div class="text-xs font-semibold text-gray-700 mb-2">🔄 振荡周期</div>
-            <div class="font-mono text-sm text-gray-600">T = 2π / ω<sub>d</sub></div>
-            <div class="text-lg font-bold text-blue-600 mt-1">
-              {{ fmt(dampingParams.T, 4) }} <span class="text-xs font-normal text-gray-500">s</span>
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-3 items-stretch">
+          <div class="flex-1 bg-[var(--app-surface)] rounded-lg p-2">
+            <div class="font-semibold text-[color:var(--app-text)] mb-2">🔄 振荡周期</div>
+            <div class="font-mono text-[color:var(--app-text-muted)]">T = 2π / ω<sub>d</sub></div>
+            <div class="text-lg font-bold text-[color:var(--app-brand)] mt-1">
+              {{ fmt(dampingParams.T, 4) }}
+              <span class="text-xs font-normal text-[color:var(--app-text-muted)]">s</span>
             </div>
-            <div v-if="simulation.dampingType === 'under'" class="text-[11px] text-gray-400 mt-1">
+            <div v-if="simulation.dampingType === 'under'" class="text-xs text-[color:var(--app-text-faint)] mt-1">
               ω<sub>d</sub> = {{ fmt(dampingParams.omegaD) }} rad/s
             </div>
-            <div v-else class="text-[11px] text-amber-500 mt-1">非欠阻尼状态,无振荡周期</div>
+            <div v-else class="text-xs text-[color:var(--app-warning)] mt-1">非欠阻尼状态,无振荡周期</div>
           </div>
-          <div class="flex sm:flex-col items-center justify-center gap-2 py-2">
-            <div class="text-[10px] text-gray-400 uppercase tracking-wider">瞬时值</div>
+          <div class="flex-1 flex flex-col items-center justify-center gap-2 p-2">
+            <div class="text-xs text-[color:var(--app-text-faint)] uppercase tracking-wider">瞬时值</div>
             <div
-              class="bg-gradient-to-b from-emerald-50 to-teal-50 rounded-lg px-3 py-2 border border-emerald-200 min-w-[120px] text-center"
+              class="bg-gradient-to-b from-[var(--app-success-bg)] to-[var(--app-success-bg)] rounded-lg px-3 py-2 border border-[color:var(--app-success-border)] min-w-[120px] text-center"
             >
-              <div class="text-[10px] text-gray-500">u<sub>C</sub>(t)</div>
-              <div class="text-sm font-bold text-emerald-700">
+              <div class="text-xs text-[color:var(--app-text-muted)]">u<sub>C</sub>(t)</div>
+              <div class="font-bold text-[color:var(--app-success)]">
                 {{ fmt(instVoltage, 4) }} <span class="text-xs font-normal">V</span>
               </div>
-              <div class="text-[10px] text-gray-400 mt-0.5">t = {{ fmt(instTime * 1000, 2) }} ms</div>
+              <div class="text-xs text-[color:var(--app-text-faint)] mt-0.5">t = {{ fmt(instTime * 1000, 2) }} ms</div>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="1000"
-              v-model.number="instSliderValue"
-              class="w-24 sm:w-20 cursor-pointer accent-emerald-500"
-            />
+            <NSlider v-model:value="instSliderValue" :min="0" :max="1000" class="w-24 sm:w-20" />
           </div>
-          <div class="bg-white rounded-lg border border-gray-200 p-3">
-            <div class="text-xs font-semibold text-gray-700 mb-2">📉 衰减系数</div>
-            <div class="font-mono text-sm text-gray-600">α = R / (2L)</div>
-            <div class="text-lg font-bold text-orange-600 mt-1">
-              {{ fmt(dampingParams.alpha) }} <span class="text-xs font-normal text-gray-500">rad/s</span>
+          <div class="flex-1 bg-[var(--app-surface)] rounded-lg p-2">
+            <div class="text-xs font-semibold text-[color:var(--app-text)] mb-2">📉 衰减系数</div>
+            <div class="font-mono text-[color:var(--app-text-muted)]">α = R / (2L)</div>
+            <div class="text-lg font-bold text-[color:var(--app-warning)] mt-1">
+              {{ fmt(dampingParams.alpha) }}
+              <span class="text-xs font-normal text-[color:var(--app-text-muted)]">rad/s</span>
             </div>
-            <div class="text-[11px] text-gray-400 mt-1">时间常数 τ = 1/α = {{ fmt(dampingParams.tau, 4) }} s</div>
+            <div class="text-xs text-[color:var(--app-text-faint)] mt-1">
+              时间常数 τ = 1/α = {{ fmt(dampingParams.tau, 4) }} s
+            </div>
           </div>
         </div>
       </div>
@@ -554,7 +501,18 @@
 
 <script setup>
 import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
-import { NIcon, NButton, NScrollbar, NDropdown } from 'naive-ui'
+import {
+  NIcon,
+  NButton,
+  NScrollbar,
+  NDropdown,
+  NForm,
+  NFormItem,
+  NInputNumber,
+  NSelect,
+  NSlider,
+  NSwitch,
+} from 'naive-ui'
 import { Flash, PaintBrush, Close, Reset, Play, Maximize, Minimize, Catalog } from '@vicons/carbon'
 import { CIRCUIT_PRESET_OPTIONS, findPreset } from '@/utils/circuitPresets'
 import { useDampingCircuitStore } from '@/stores/dampingCircuit'
@@ -587,7 +545,6 @@ function applyPreset(id) {
   }
   pendingPlaceType.value = null
   focusedCompIndex.value = null
-  compInputValues.value = {}
   wireClicked.value = false
 }
 
@@ -611,7 +568,6 @@ let thumbTimer = null
 
 const pendingPlaceType = ref(null) // 触摸端:点选元件后等待点台面放置
 const focusedCompIndex = ref(null) // 双击 3D 元件定位的参数项高亮
-const compInputValues = ref({}) // 输入中间态(避免 parseFloat 吞掉 "0." 等小数输入过程)
 
 // 公差(独立一份,直写本页 store)
 const toleranceEnabled = ref(store.toleranceEnabled)
@@ -692,7 +648,11 @@ const dampingStateLabel = computed(() => {
 })
 const dampingStateColor = computed(() => {
   const t = simulation.value?.dampingType
-  return t === 'under' ? 'text-blue-600' : t === 'critical' ? 'text-amber-600' : 'text-red-600'
+  return t === 'under'
+    ? 'text-[color:var(--app-brand)]'
+    : t === 'critical'
+      ? 'text-[color:var(--app-warning)]'
+      : 'text-[color:var(--app-error)]'
 })
 
 const instTime = computed(() => {
@@ -868,10 +828,9 @@ function onWire({ a, b }) {
 }
 function onDeleteComponent(index) {
   store.removeComponent(index)
-  // 参数面板索引重排同步:高亮索引修正,输入中间态作废
+  // 参数面板索引重排同步:高亮索引修正
   if (focusedCompIndex.value === index) focusedCompIndex.value = null
   else if (focusedCompIndex.value > index) focusedCompIndex.value--
-  compInputValues.value = {}
 }
 function onDeleteWire(index) {
   store.removeWire(index)
@@ -880,7 +839,6 @@ function onDeleteWire(index) {
 // 双击 3D 元件:滚动到参数面板对应输入框并聚焦,短暂高亮提示
 async function onFocusComponent(index) {
   focusedCompIndex.value = index
-  compInputValues.value = {}
   await nextTick()
   const el = document.getElementById('damp-comp-' + index)
   if (el) {
@@ -909,49 +867,30 @@ function onReset() {
   store.resetCircuit()
   pendingPlaceType.value = null
   focusedCompIndex.value = null
-  compInputValues.value = {}
   wireClicked.value = false
 }
 
-// ===== 参数输入(中间态保留,失焦时钳制并写回) =====
-function getCompDisplay(idx) {
-  if (idx in compInputValues.value) return compInputValues.value[idx]
-  return store.components[idx]?.value ?? ''
-}
-function onCompInput(idx, event) {
-  compInputValues.value[idx] = event.target.value
-}
-function onCompBlur(idx) {
-  const raw = compInputValues.value[idx]
-  if (raw !== undefined) {
-    store.updateComponentValue(idx, raw)
-    delete compInputValues.value[idx]
-  }
+// ===== 参数输入(数值直接写回 store,量程钳制交由 store.updateComponentValue) =====
+function onCompValueChange(idx, num) {
+  store.updateComponentValue(idx, num)
 }
 
-// ===== 信号源波形参数编辑 =====
-const signalInputValues = ref({}) // 中间态:避免 parseFloat 吞掉小数输入过程
+// ===== 信号源波形参数编辑(频率/周期/占空比/脉宽经 store 双向同步) =====
 function onSignalChange(idx, prop, value) {
   store.updateComponentSignal(idx, prop, value)
 }
-function onSignalInput(idx, prop, event) {
-  signalInputValues.value[`${idx}-${prop}`] = event.target.value
-}
-function onSignalBlur(idx, prop, event) {
-  const key = `${idx}-${prop}`
-  delete signalInputValues.value[key]
-  store.updateComponentSignal(idx, prop, event.target.value)
-}
 
 // ===== 公差切换(与 03 tab 相同交互,数据独立) =====
-function onToleranceToggle() {
-  store.toleranceEnabled = toleranceEnabled.value
-  if (toleranceEnabled.value) {
+function onToleranceToggle(val) {
+  toleranceEnabled.value = val
+  store.toleranceEnabled = val
+  if (val) {
     store.tolerancePercent = tolerancePercent.value
   }
 }
-function onToleranceChange() {
-  store.tolerancePercent = tolerancePercent.value
+function onToleranceChange(val) {
+  tolerancePercent.value = val
+  store.tolerancePercent = val
 }
 
 // ===== 元件文案(与 03 tab 一致) =====
@@ -1395,7 +1334,7 @@ watch([capYMinMul, capYMaxMul, capXScale], () => {
   z-index: var(--z-overlay);
   overflow-y: auto;
   padding: 16px;
-  background: var(--paper);
+  background: var(--app-bg);
   border-radius: 0;
 }
 /* 全屏:参数栏隐藏后栅格收成两栏(元件库左 + 画布),避免右侧空列;PC 保持元件库在左 */

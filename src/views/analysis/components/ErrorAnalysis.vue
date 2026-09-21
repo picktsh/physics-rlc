@@ -1,59 +1,42 @@
 <template>
-  <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+  <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-600">实测谐振频率</label>
-        <div class="relative">
-          <input
-            v-model.number="measuredFr"
-            type="number"
-            placeholder="输入实测值"
-            class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm"
-          />
-          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">Hz</span>
-        </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-xs text-[color:var(--app-text-muted)]">实测谐振频率</label>
+        <NInputNumber v-model:value="measuredFr" placeholder="输入实测值" class="w-full">
+          <template #suffix>Hz</template>
+        </NInputNumber>
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-600">实测通频带</label>
-        <div class="relative">
-          <input
-            v-model.number="measuredBW"
-            type="number"
-            placeholder="输入实测值"
-            class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm"
-          />
-          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">Hz</span>
-        </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-xs text-[color:var(--app-text-muted)]">实测通频带</label>
+        <NInputNumber v-model:value="measuredBW" placeholder="输入实测值" class="w-full">
+          <template #suffix>Hz</template>
+        </NInputNumber>
       </div>
-      <div class="flex flex-col gap-1 justify-end">
-        <button
-          @click="calculateError"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
-        >
-          计算误差
-        </button>
+      <div class="flex flex-col gap-2 justify-end">
+        <NButton secondary type="primary" @click="calculateError">计算误差</NButton>
       </div>
     </div>
 
     <div v-if="showResult" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div class="text-xs text-amber-700 mb-2">谐振频率误差对比</div>
-        <div class="text-sm font-semibold text-gray-800">
-          理论: <span class="text-blue-600">{{ theoryFr }}</span> Hz | 实测:
-          <span class="text-green-600">{{ measuredFr }}</span> Hz
+      <div class="bg-[var(--app-warning-bg)] border border-[color:var(--app-warning-border)] rounded-lg p-4">
+        <div class="text-xs text-[color:var(--app-warning)] mb-2">谐振频率误差对比</div>
+        <div class="font-semibold text-[color:var(--app-text)]">
+          理论: <span class="text-[color:var(--app-brand)]">{{ theoryFr }}</span> Hz | 实测:
+          <span class="text-[color:var(--app-success)]">{{ measuredFr }}</span> Hz
         </div>
-        <div class="text-xs text-gray-600 mt-1">
-          相对误差: <span class="text-red-500 font-bold">{{ freqRelError }}%</span>
+        <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
+          相对误差: <span class="text-[color:var(--app-error)] font-bold">{{ freqRelError }}%</span>
         </div>
       </div>
-      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div class="text-xs text-amber-700 mb-2">通频带误差对比</div>
-        <div class="text-sm font-semibold text-gray-800">
-          理论: <span class="text-blue-600">{{ theoryBW }}</span> Hz | 实测:
-          <span class="text-green-600">{{ measuredBW }}</span> Hz
+      <div class="bg-[var(--app-warning-bg)] border border-[color:var(--app-warning-border)] rounded-lg p-4">
+        <div class="text-xs text-[color:var(--app-warning)] mb-2">通频带误差对比</div>
+        <div class="font-semibold text-[color:var(--app-text)]">
+          理论: <span class="text-[color:var(--app-brand)]">{{ theoryBW }}</span> Hz | 实测:
+          <span class="text-[color:var(--app-success)]">{{ measuredBW }}</span> Hz
         </div>
-        <div class="text-xs text-gray-600 mt-1">
-          相对误差: <span class="text-red-500 font-bold">{{ bwRelError }}%</span>
+        <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
+          相对误差: <span class="text-[color:var(--app-error)] font-bold">{{ bwRelError }}%</span>
         </div>
       </div>
     </div>
@@ -62,6 +45,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { NButton, NInputNumber, useMessage } from 'naive-ui'
 
 const props = defineProps({
   results: {
@@ -69,6 +53,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const message = useMessage()
 
 const measuredFr = ref(null)
 const measuredBW = ref(null)
@@ -80,13 +66,13 @@ const bwRelError = ref('0')
 
 function calculateError() {
   if (isNaN(measuredFr.value) || isNaN(measuredBW.value) || measuredFr.value === null || measuredBW.value === null) {
-    alert('请输入完整的实测数据')
+    message.warning('请输入完整的实测数据')
     return
   }
   const fr = props.results.fr
   const bw = props.results.BW
   if (fr <= 0 || bw <= 0) {
-    alert('请先搭建电路并点击「开始仿真」获取理论值')
+    message.warning('请先搭建电路并点击「开始仿真」获取理论值')
     return
   }
   theoryFr.value = fr.toFixed(4)

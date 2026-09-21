@@ -50,30 +50,30 @@ watch(subTab, (val) => {
   padding: 4px;
   margin-bottom: 16px;
   border-radius: 8px;
-  background: var(--panel-bg);
-  border: 1px solid var(--line);
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border);
 }
 .sub-tab {
   padding: 7px 22px;
   border-radius: 8px;
-  font-family: var(--font-head);
+  font-family: var(--app-font-heading);
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: var(--muted);
+  color: var(--app-text-muted);
   white-space: nowrap;
   transition:
     color 0.18s ease,
     background-color 0.18s ease;
 }
 .sub-tab:hover {
-  color: var(--navy);
-  background: var(--tab-hover-bg);
+  color: var(--app-brand);
+  background: var(--app-surface-brand);
 }
 .sub-tab.active,
 .sub-tab.active:hover {
-  background: var(--tab-active-bg);
-  color: var(--navy-deep);
+  background: var(--app-surface-brand-strong);
+  color: var(--app-brand-strong);
   font-weight: 700;
 }
 </style>

@@ -11,12 +11,12 @@ const iconSrc = `${import.meta.env.BASE_URL}favicon.svg`
 
 <template>
   <div class="flex flex-col items-center gap-2">
-    <div class="flex w-max overflow-hidden rounded-lg bg-white p-8px">
+    <div class="flex w-max overflow-hidden rounded-lg bg-[var(--app-surface)] p-2">
       <n-qr-code
         :size="128"
         :value="url"
         padding="0"
-        color="var(--navy)"
+        color="var(--app-brand)"
         :icon-src="iconSrc"
         type="svg"
       />

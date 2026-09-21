@@ -1,133 +1,129 @@
 <template>
-  <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+  <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
     <!-- 粘贴区域 -->
     <div class="mb-4">
-      <textarea
-        v-model="pasteText"
+      <NInput
+        v-model:value="pasteText"
+        type="textarea"
         placeholder="1.6 4.2&#10;1.9 6.5&#10;2.1 8.2&#10;2.25 9.0&#10;2.4 7.8&#10;2.7 5.2&#10;3.0 3.4"
-        class="w-full p-3 border border-gray-300 rounded-lg text-sm resize-y min-h-[80px]"
-      ></textarea>
-      <div class="text-xs text-gray-500 mt-1">
+        :autosize="{ minRows: 5, maxRows: 10 }"
+      />
+      <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
         格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=100mH、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252
         kHz）
       </div>
       <div class="mt-2 flex gap-2">
-        <button
-          @click="pasteFromClipboard"
-          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold shadow-sm transition-all"
-        >
-          粘贴
-        </button>
-        <button
-          @click="parsePasteData"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
-        >
-          解析并导入
-        </button>
+        <NButton secondary @click="pasteFromClipboard">粘贴</NButton>
+        <NButton secondary type="primary" @click="parsePasteData">解析并导入</NButton>
       </div>
     </div>
 
     <!-- 数据表格 -->
     <table class="w-full text-xs border-collapse mb-3">
       <thead>
-        <tr class="bg-gray-50">
-          <th class="border border-gray-200 px-2 py-1.5">序号</th>
-          <th class="border border-gray-200 px-2 py-1.5">频率 (kHz)</th>
-          <th class="border border-gray-200 px-2 py-1.5">电流 (mA)</th>
-          <th class="border border-gray-200 px-2 py-1.5">操作</th>
+        <tr class="bg-[var(--app-surface-sunken)]">
+          <th class="border border-[color:var(--app-border)] px-2 py-1.5">序号</th>
+          <th class="border border-[color:var(--app-border)] px-2 py-1.5">频率 (kHz)</th>
+          <th class="border border-[color:var(--app-border)] px-2 py-1.5">电流 (mA)</th>
+          <th class="border border-[color:var(--app-border)] px-2 py-1.5">操作</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(d, idx) in localData" :key="idx">
-          <td class="border border-gray-200 px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-          <td class="border border-gray-200 px-2 py-1.5">
-            <input
-              type="text"
-              :value="toFixed4(localData[idx].freq)"
-              @change="localData[idx].freq = parseFloat($event.target.value) || 0"
-              class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs"
-            />
+          <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ idx + 1 }}</td>
+          <td class="border border-[color:var(--app-border)] px-2 py-1.5">
+            <NInputNumber v-model:value="localData[idx].freq" :show-button="false" :precision="4" :min="0" />
           </td>
-          <td class="border border-gray-200 px-2 py-1.5">
-            <input
-              type="text"
-              :value="toFixed4(localData[idx].current)"
-              @change="localData[idx].current = parseFloat($event.target.value) || 0"
-              class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs"
-            />
+          <td class="border border-[color:var(--app-border)] px-2 py-1.5">
+            <NInputNumber v-model:value="localData[idx].current" :show-button="false" :precision="4" :min="0" />
           </td>
-          <td class="border border-gray-200 px-2 py-1.5 text-center">
-            <button @click="deleteRow(idx)" class="text-red-500 hover:text-red-700">删除</button>
+          <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
+            <NButton text type="error" @click="deleteRow(idx)">删除</NButton>
           </td>
         </tr>
       </tbody>
     </table>
 
     <div class="flex gap-2 flex-wrap">
-      <button @click="addRow" class="text-blue-600 text-sm hover:text-blue-800">+ 添加数据行</button>
-      <button
-        @click="$emit('plot')"
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
-      >
-        绘制实测曲线
-      </button>
-      <button
-        @click="calculateQValue"
-        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-all"
-      >
-        计算 Q 值
-      </button>
+      <NButton secondary type="primary" @click="addRow">+ 添加数据行</NButton>
+      <NButton secondary type="primary" @click="$emit('plot')">绘制实测曲线</NButton>
+      <NButton secondary type="success" @click="calculateQValue">计算 Q 值</NButton>
     </div>
 
     <!-- Q 值计算结果 -->
-    <div v-if="qResult.show" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-      <h3 class="text-base font-bold text-green-800 mb-3 flex items-center gap-2">
+    <div
+      v-if="qResult.show"
+      class="mt-4 p-4 bg-[var(--app-success-bg)] border border-[color:var(--app-success-border)] rounded-lg"
+    >
+      <h3 class="text-base font-bold text-[color:var(--app-success)] mb-3 flex items-center gap-2">
         <span class="text-xl">📊</span> Q 值计算结果
       </h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        <div class="p-3 bg-white rounded border border-green-100">
-          <div class="text-gray-600 text-xs mb-1">谐振频率 f₀</div>
-          <div class="text-xl font-bold text-green-700">{{ qResult.fr }} kHz</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">谐振频率 f₀</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.fr }} kHz</div>
         </div>
-        <div class="p-3 bg-white rounded border border-green-100">
-          <div class="text-gray-600 text-xs mb-1">最大电流 Iₘₓ</div>
-          <div class="text-xl font-bold text-green-700">{{ qResult.imax }} mA</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">最大电流 Iₘₓ</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.imax }} mA</div>
         </div>
-        <div class="p-3 bg-white rounded border border-green-100">
-          <div class="text-gray-600 text-xs mb-1">品质因数 Q</div>
-          <div class="text-xl font-bold text-green-700">{{ qResult.Q }}</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">品质因数 Q</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.Q }}</div>
         </div>
-        <div class="p-3 bg-white rounded border border-green-100">
-          <div class="text-gray-600 text-xs mb-1">带宽 BW</div>
-          <div class="text-xl font-bold text-green-700">{{ qResult.BW }} kHz</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">带宽 BW</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.BW }} kHz</div>
         </div>
-        <div class="p-3 bg-white rounded border border-green-100">
-          <div class="text-gray-600 text-xs mb-1">下截止频率 f₁</div>
-          <div class="text-xl font-bold text-green-700">{{ qResult.f1 }} kHz</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">下截止频率 f₁</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.f1 }} kHz</div>
         </div>
-        <div class="p-3 bg-white rounded border border-green-100">
-          <div class="text-gray-600 text-xs mb-1">上截止频率 f₂</div>
-          <div class="text-xl font-bold text-green-700">{{ qResult.f2 }} kHz</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">上截止频率 f₂</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.f2 }} kHz</div>
         </div>
       </div>
-      <div class="mt-4 p-3 bg-white rounded border border-green-100 text-xs text-gray-700">
+      <div
+        class="mt-4 p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)] text-xs text-[color:var(--app-text)]"
+      >
         <div class="font-semibold mb-1">计算公式：</div>
         <div class="mb-1">• 谐振频率：通过实测数据峰值拟合得到 f₀</div>
-        <div class="mb-2" style="line-height: 1.9;">
+        <div class="mb-2" style="line-height: 1.9">
           • 半功率点电流：I = I
-          <sub>max</sub> × 
-          <span style="display: inline-block; vertical-align: middle; text-align: center; margin: 0 5px; font-size: 16px; line-height: 1.3;">
-            <span style="border-bottom: 2px solid #1f2937; display: block; padding: 2px 8px; font-weight: bold;">1</span>
-            <span style="display: block; padding: 2px 8px; font-weight: bold;">√2 ≈ 0.707</span>
+          <sub>max</sub> ×
+          <span
+            style="
+              display: inline-block;
+              vertical-align: middle;
+              text-align: center;
+              margin: 0 5px;
+              font-size: 16px;
+              line-height: 1.3;
+            "
+          >
+            <span style="border-bottom: 2px solid #1f2937; display: block; padding: 2px 8px; font-weight: bold">1</span>
+            <span style="display: block; padding: 2px 8px; font-weight: bold">√2 ≈ 0.707</span>
           </span>
           × I
           <sub>max</sub>
         </div>
-        <div class="mb-2" style="line-height: 1.9;">
-          • 品质因数：Q = 
-          <span style="display: inline-block; vertical-align: middle; text-align: center; margin: 0 5px; font-size: 16px; line-height: 1.3;">
-            <span style="border-bottom: 2px solid #1f2937; display: block; padding: 2px 8px; font-weight: bold;">f₀</span>
-            <span style="display: block; padding: 2px 8px; font-weight: bold;">f₂ - f₁</span>
+        <div class="mb-2" style="line-height: 1.9">
+          • 品质因数：Q =
+          <span
+            style="
+              display: inline-block;
+              vertical-align: middle;
+              text-align: center;
+              margin: 0 5px;
+              font-size: 16px;
+              line-height: 1.3;
+            "
+          >
+            <span style="border-bottom: 2px solid #1f2937; display: block; padding: 2px 8px; font-weight: bold"
+              >f₀</span
+            >
+            <span style="display: block; padding: 2px 8px; font-weight: bold">f₂ - f₁</span>
           </span>
           = f₀/BW
         </div>
@@ -136,123 +132,132 @@
     </div>
 
     <!-- 误差分析 -->
-    <div v-if="qResult.show" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <h3 class="text-base font-bold text-blue-800 mb-3 flex items-center gap-2">
+    <div
+      v-if="qResult.show"
+      class="mt-4 p-4 bg-[var(--app-surface-brand)] border border-[color:var(--app-surface-brand-strong)] rounded-lg"
+    >
+      <h3 class="text-base font-bold text-[color:var(--app-brand-strong)] mb-3 flex items-center gap-2">
         <span class="text-xl"></span> 误差分析
       </h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <div class="p-3 bg-white rounded border border-blue-100">
-          <div class="text-gray-600 text-xs mb-1">理论 Q 值（基于标称元件）</div>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              :value="errorAnalysis.manualQ || errorAnalysis.theoreticalQ"
-              @change="errorAnalysis.manualQ = $event.target.value ? parseFloat($event.target.value) : null"
-              class="w-full px-2 py-1 border border-gray-300 rounded text-lg font-bold text-blue-700"
-              placeholder="手动输入或留空"
-            />
-            <button
-              v-if="errorAnalysis.manualQ"
-              @click="errorAnalysis.manualQ = null"
-              class="px-2 py-1 text-red-500 hover:text-red-700 text-xs"
-              title="清除手动输入"
-            >
-              ✕
-            </button>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
+          <NForm label-placement="top" :show-feedback="false">
+            <NFormItem label="理论 Q 值（基于标称元件）">
+              <div class="flex w-full items-center gap-2">
+                <NInputNumber
+                  :value="
+                    errorAnalysis.manualQ ??
+                    (typeof errorAnalysis.theoreticalQ === 'number' ? errorAnalysis.theoreticalQ : null)
+                  "
+                  :show-button="false"
+                  placeholder="手动输入或留空"
+                  @update:value="(v) => (errorAnalysis.manualQ = v)"
+                />
+                <NButton
+                  v-if="errorAnalysis.manualQ"
+                  text
+                  type="error"
+                  title="清除手动输入"
+                  @click="errorAnalysis.manualQ = null"
+                >
+                  ✕
+                </NButton>
+              </div>
+            </NFormItem>
+          </NForm>
+          <div v-if="!errorAnalysis.manualQ" class="text-xs text-[color:var(--app-text-muted)] mt-1">
+            自动计算 (R/L/C)
           </div>
-          <div v-if="!errorAnalysis.manualQ" class="text-xs text-gray-500 mt-1">自动计算 (R/L/C)</div>
         </div>
-        <div class="p-3 bg-white rounded border border-blue-100">
-          <div class="text-gray-600 text-xs mb-1">实测 Q 值</div>
-          <div class="text-xl font-bold text-blue-700">{{ qResult.Q }}</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">实测 Q 值</div>
+          <div class="text-xl font-bold text-[color:var(--app-brand-strong)]">{{ qResult.Q }}</div>
         </div>
-        <div class="p-3 bg-white rounded border border-blue-100">
-          <div class="text-gray-600 text-xs mb-1">绝对误差 ΔQ</div>
-          <div class="text-lg font-bold text-blue-700">{{ Math.abs(errorAnalysis.diff).toFixed(2) }}</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">绝对误差 ΔQ</div>
+          <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">
+            {{ Math.abs(errorAnalysis.diff).toFixed(2) }}
+          </div>
         </div>
-        <div class="p-3 bg-white rounded border border-blue-100">
-          <div class="text-gray-600 text-xs mb-1">相对误差 δ</div>
-          <div class="text-lg font-bold text-blue-700">{{ errorAnalysis.relativeError }}%</div>
+        <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
+          <div class="text-[color:var(--app-text-muted)] text-xs mb-1">相对误差 δ</div>
+          <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">{{ errorAnalysis.relativeError }}%</div>
         </div>
       </div>
-      <div class="mt-4 p-3 bg-white rounded border border-blue-100 text-xs text-gray-700">
+      <div
+        class="mt-4 p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)] text-xs text-[color:var(--app-text)]"
+      >
         <div class="font-semibold mb-2">误差来源分析：</div>
-        <ul class="list-disc list-inside space-y-1 text-gray-600">
+        <ul class="list-disc list-inside space-y-1 text-[color:var(--app-text-muted)]">
           <li><strong>元件公差：</strong>R、L、C 实际值与标称值的偏差（通常±5%~±10%）</li>
           <li><strong>测量误差：</strong>电流表、频率计的精度限制及读数误差</li>
           <li><strong>环境因素：</strong>温度变化导致元件参数漂移，电磁干扰</li>
           <li><strong>方法误差：</strong>半功率点定位不精确，抛物线拟合的近似性</li>
           <li><strong>电路寄生参数：</strong>导线电阻、电感分布电容等未计入模型</li>
         </ul>
-        <div class="mt-2 p-2 bg-blue-50 rounded text-[12px] text-blue-800">
+        <div class="mt-2 p-2 bg-[var(--app-surface-brand)] rounded text-xs text-[color:var(--app-brand-strong)]">
           💡 提示：若相对误差超过 15%，请检查实验操作是否规范，或重新采集数据
         </div>
       </div>
     </div>
 
     <!-- 历史记录 -->
-    <div class="mt-4 pt-4 border-t border-gray-200">
+    <div class="mt-4 pt-4 border-t border-[color:var(--app-border)]">
       <div class="flex items-center gap-3 mb-3 flex-wrap">
-        <span class="text-sm font-semibold text-gray-700">实测历史记录</span>
+        <span class="font-semibold text-[color:var(--app-text)]">实测历史记录</span>
         <span
           >共
-          <span class="bg-blue-600 text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{
+          <span class="bg-[var(--app-primary)] text-white rounded-full px-2.5 py-0.5 text-xs font-semibold">{{
             history.length
           }}</span>
           条记录</span
         >
-        <button
-          @click="$emit('export-history')"
-          class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all"
+        <NButton secondary class="ml-auto" @click="$emit('export-history')">
+          <template #icon><NIcon :component="Save" /></template>
+          保存
+        </NButton>
+        <NUpload
+          class="w-auto"
+          :show-file-list="false"
+          accept=".json"
+          :default-upload="false"
+          @change="handleImportFile"
         >
-          <NIcon :component="Save" /> 保存
-        </button>
-        <label
-          class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all cursor-pointer"
-        >
-          打开
-          <input type="file" accept=".json" class="hidden" @change="$emit('import-history', $event.target.files[0])" />
-        </label>
-        <button
-          @click="$emit('clear-history')"
-          class="ml-auto inline-flex items-center gap-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition-all"
-        >
-          <NIcon :component="TrashCan" /> 清空记录
-        </button>
+          <NButton secondary>
+            <template #icon><NIcon :component="FolderOpen" /></template>
+            打开
+          </NButton>
+        </NUpload>
+        <NButton secondary type="error" @click="$emit('clear-history')">
+          <template #icon><NIcon :component="TrashCan" /></template>
+          清空记录
+        </NButton>
       </div>
       <div class="max-h-48 overflow-y-auto">
         <table v-if="history.length > 0" class="w-full text-xs border-collapse">
           <thead>
-            <tr class="bg-gray-50">
-              <th class="border border-gray-200 px-2 py-1.5">时间</th>
-              <th class="border border-gray-200 px-2 py-1.5">数据点数</th>
-              <th class="border border-gray-200 px-2 py-1.5">频率范围</th>
-              <th class="border border-gray-200 px-2 py-1.5">操作</th>
+            <tr class="bg-[var(--app-surface-sunken)]">
+              <th class="border border-[color:var(--app-border)] px-2 py-1.5">时间</th>
+              <th class="border border-[color:var(--app-border)] px-2 py-1.5">数据点数</th>
+              <th class="border border-[color:var(--app-border)] px-2 py-1.5">频率范围</th>
+              <th class="border border-[color:var(--app-border)] px-2 py-1.5">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(r, idx) in history" :key="r.id">
-              <td class="border border-gray-200 px-2 py-1.5 whitespace-nowrap text-xs">{{ r.time }}</td>
-              <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.count }}</td>
-              <td class="border border-gray-200 px-2 py-1.5 text-center">{{ r.freqRange }}</td>
-              <td class="border border-gray-200 px-2 py-1.5 whitespace-nowrap text-center">
-                <button
-                  @click="$emit('load-history', idx)"
-                  class="text-blue-600 border border-blue-600 bg-white rounded px-2 py-0.5 text-xs mr-1 hover:bg-blue-50"
-                >
-                  加载
-                </button>
-                <button
-                  @click="$emit('delete-history', idx)"
-                  class="text-red-600 border border-red-600 bg-white rounded px-2 py-0.5 text-xs hover:bg-red-50"
-                >
-                  删除
-                </button>
+              <td class="border border-[color:var(--app-border)] px-2 py-1.5 whitespace-nowrap text-xs">
+                {{ r.time }}
+              </td>
+              <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ r.count }}</td>
+              <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ r.freqRange }}</td>
+              <td class="border border-[color:var(--app-border)] px-2 py-1.5 whitespace-nowrap text-center">
+                <NButton secondary type="primary" class="mr-1" @click="$emit('load-history', idx)">加载</NButton>
+                <NButton secondary type="error" @click="$emit('delete-history', idx)">删除</NButton>
               </td>
             </tr>
           </tbody>
         </table>
-        <div v-else class="text-center py-6 text-gray-400 text-sm">暂无实测数据历史记录</div>
+        <div v-else class="text-center py-4 text-[color:var(--app-text-faint)]">暂无实测数据历史记录</div>
       </div>
     </div>
   </div>
@@ -260,8 +265,8 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { NIcon } from 'naive-ui'
-import { Save, TrashCan } from '@vicons/carbon'
+import { NButton, NForm, NFormItem, NIcon, NInput, NInputNumber, NUpload, useMessage } from 'naive-ui'
+import { Save, TrashCan, FolderOpen } from '@vicons/carbon'
 
 // Q 值计算结果
 const qResult = ref({
@@ -271,7 +276,7 @@ const qResult = ref({
   Q: 0,
   BW: 0,
   f1: 0,
-  f2: 0
+  f2: 0,
 })
 
 // 误差分析结果
@@ -279,7 +284,7 @@ const errorAnalysis = ref({
   theoreticalQ: '-',
   manualQ: null, // 手动输入的 Q 值，null 表示使用自动计算值
   diff: 0,
-  relativeError: 0
+  relativeError: 0,
 })
 
 const props = defineProps({
@@ -308,6 +313,7 @@ const emit = defineEmits([
 ])
 
 const pasteText = ref('')
+const message = useMessage()
 const localData = ref([...props.data])
 
 // 仅在外部数据引用变化时同步（避免与内部编辑形成死循环）
@@ -338,17 +344,13 @@ watch(
   { deep: true },
 )
 
-function toFixed4(val) {
-  return typeof val === 'number' && !isNaN(val) ? val.toFixed(4) : '0.0000'
-}
-
 // 从系统剪贴板读取文本填入粘贴区；浏览器权限拒绝时提示用户手动粘贴
 async function pasteFromClipboard() {
   try {
     const text = await navigator.clipboard.readText()
     if (text) pasteText.value = text
   } catch {
-    alert('无法访问剪贴板，请手动粘贴到输入框')
+    message.warning('无法访问剪贴板，请手动粘贴到输入框')
   }
 }
 
@@ -374,6 +376,11 @@ function addRow() {
   localData.value.push({ freq: 0, current: 0 })
 }
 
+// NUpload 选到本地 JSON 后,把原生 File 透传给父组件导入(:default-upload=false 不走上传)
+function handleImportFile({ file }) {
+  if (file?.file) emit('import-history', file.file)
+}
+
 function deleteRow(index) {
   localData.value.splice(index, 1)
 }
@@ -382,7 +389,7 @@ function deleteRow(index) {
 function calculateQValue() {
   const data = localData.value
   if (data.length < 5) {
-    alert('至少需要 5 个数据点才能进行 Q 值计算')
+    message.warning('至少需要 5 个数据点才能进行 Q 值计算')
     return
   }
 
@@ -413,9 +420,9 @@ function calculateQValue() {
     // 顶点公式：x_peak = x1 - (x2-x0)*(y2-y0)/(2*(y2-2*y1+y0))
     const denom = 2 * (y2 - 2 * y1 + y0)
     if (Math.abs(denom) > 1e-6) {
-      const xPeak = x1 - (x2 - x0) * (y2 - y0) / denom
+      const xPeak = x1 - ((x2 - x0) * (y2 - y0)) / denom
       const yPeak = y1 - (y2 - y0) ** 2 / (8 * denom)
-      
+
       // 更新结果
       qResult.value.fr = parseFloat(xPeak.toFixed(4))
       qResult.value.imax = parseFloat(yPeak.toFixed(4))
@@ -435,8 +442,8 @@ function calculateQValue() {
     if (data[i].current <= halfPower) {
       // 线性插值求精确点
       if (i > 0) {
-        const frac = (data[i].current - halfPower) / (data[i].current - data[i-1].current)
-        f1 = data[i].freq + frac * (data[i-1].freq - data[i].freq)
+        const frac = (data[i].current - halfPower) / (data[i].current - data[i - 1].current)
+        f1 = data[i].freq + frac * (data[i - 1].freq - data[i].freq)
       } else {
         f1 = data[i].freq
       }
@@ -450,8 +457,8 @@ function calculateQValue() {
     if (data[i].current <= halfPower) {
       // 线性插值求精确点
       if (i < data.length - 1) {
-        const frac = (data[i].current - halfPower) / (data[i].current - data[i+1].current)
-        f2 = data[i].freq + frac * (data[i+1].freq - data[i].freq)
+        const frac = (data[i].current - halfPower) / (data[i].current - data[i + 1].current)
+        f2 = data[i].freq + frac * (data[i + 1].freq - data[i].freq)
       } else {
         f2 = data[i].freq
       }
@@ -479,17 +486,18 @@ function calculateQValue() {
     const C_F = C / 1e6
     // 理论 Q 值公式：Q = (1/R) * sqrt(L/C)
     const theoreticalQ = (1 / R) * Math.sqrt(L_H / C_F)
-    
+
     errorAnalysis.value.theoreticalQ = parseFloat(theoreticalQ.toFixed(2))
   }
 
   // 使用手动输入的 Q 值或自动计算的 Q 值
-  const usedTheoreticalQ = errorAnalysis.value.manualQ !== null ? errorAnalysis.value.manualQ : errorAnalysis.value.theoreticalQ
-  
+  const usedTheoreticalQ =
+    errorAnalysis.value.manualQ !== null ? errorAnalysis.value.manualQ : errorAnalysis.value.theoreticalQ
+
   if (usedTheoreticalQ && usedTheoreticalQ > 0) {
     const diff = Q - usedTheoreticalQ
     const relativeError = Math.abs(diff / usedTheoreticalQ) * 100
-    
+
     errorAnalysis.value.diff = parseFloat(diff.toFixed(2))
     errorAnalysis.value.relativeError = parseFloat(relativeError.toFixed(1))
   }

@@ -114,7 +114,7 @@ defineExpose({ addAttachments, inputText })
 </script>
 
 <template>
-  <form class="px-3 py-2 border-t border-gray-200 bg-white shrink-0" @submit.prevent="handleSend">
+  <form class="px-3 py-2 border-t border-[color:var(--app-border)] bg-[var(--app-surface)] shrink-0" @submit.prevent="handleSend">
     <!-- 附件预览 -->
     <AttachmentPreview
       v-if="attachedFiles.length > 0"
@@ -140,7 +140,7 @@ defineExpose({ addAttachments, inputText })
       <!-- 左侧工具按钮 -->
       <NSpace align="center" :size="8">
         <!-- 添加文件按钮 -->
-        <NButton size="small" secondary>
+        <NButton secondary>
           <template #icon>
             <NIcon :component="Add" />
           </template>
@@ -163,7 +163,7 @@ defineExpose({ addAttachments, inputText })
           placement="top-start"
           :style="{ maxHeight: '320px', overflowY: 'auto' }"
         >
-          <NButton size="small" secondary>
+          <NButton secondary>
             <template #icon>
               <NIcon :component="Flash" />
             </template>
@@ -182,7 +182,7 @@ defineExpose({ addAttachments, inputText })
           :value="thinkingDepth"
           @select="(key) => (thinkingDepth = key)"
         >
-          <NButton size="small" :type="thinkingDepth !== 'off' ? 'primary' : 'default'" secondary>
+          <NButton :type="thinkingDepth !== 'off' ? 'primary' : 'default'" secondary>
             思考深度: {{ thinkingOptions.find((o) => o.key === thinkingDepth)?.label || '高' }}
           </NButton>
         </NDropdown>

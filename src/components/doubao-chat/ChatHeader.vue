@@ -63,7 +63,7 @@ function buildOptions() {
         render: () =>
           h(NPopover, { show: true, trigger: 'manual', placement: 'right' }, {
             trigger: () =>
-              h('div', { class: 'px-3 py-2 text-sm text-gray-400' }, session.title || '未命名会话'),
+              h('div', { class: 'px-3 py-2 text-[color:var(--app-text-faint)]' }, session.title || '未命名会话'),
             default: () =>
               h('div', { class: 'flex items-center gap-2 p-1', style: 'min-width: 200px' }, [
                 h(NInput, {
@@ -93,7 +93,7 @@ function buildOptions() {
           h(
             'div',
             {
-              class: 'group/item flex items-center gap-1 px-1 py-1',
+              class: 'group/item flex items-center gap-2 px-1 py-1',
               style: 'cursor: pointer;',
               onClick: () => {
                 showDropdown.value = false
@@ -107,7 +107,7 @@ function buildOptions() {
                 [
                   h(
                     NEllipsis,
-                    { class: ['text-sm font-medium', isCurrent ? 'text-primary' : ''] },
+                    { class: [' font-medium', isCurrent ? 'text-primary' : ''] },
                     { default: () => session.title || '未命名会话' },
                   ),
                   h(
@@ -121,7 +121,7 @@ function buildOptions() {
               h(
                 'div',
                 {
-                  class: 'flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 shrink-0',
+                  class: 'flex items-center gap-2 opacity-0 group-hover/item:opacity-100 shrink-0',
                   onClick: (e) => e.stopPropagation(),
                 },
                 [
@@ -171,7 +171,7 @@ function buildOptions() {
       h(
         'div',
         {
-          class: 'px-3 py-2 text-primary text-sm font-medium cursor-pointer hover:bg-gray-50 rounded',
+          class: 'px-3 py-2 text-primary font-medium cursor-pointer hover:bg-[var(--app-surface-sunken)] rounded',
           onClick: () => {
             showDropdown.value = false
             emit('create')
@@ -186,18 +186,18 @@ function buildOptions() {
 </script>
 
 <template>
-  <div class="flex items-center justify-between px-4 py-3 bg-blue-600 text-white shrink-0">
+  <div class="flex items-center justify-between px-4 py-3 bg-[var(--app-primary)] text-white shrink-0">
     <div class="flex items-center gap-2">
       <NButton quaternary circle size="small" style="color: white; background: rgba(255, 255, 255, 0.2)">
         <NIcon :component="Chat" :size="20" />
       </NButton>
       <div>
-        <div class="text-sm font-semibold">豆包 AI 助手</div>
+        <div class="font-semibold">豆包 AI 助手</div>
         <div class="text-xs opacity-80">{{ loading ? '思考中...' : '有问题？问豆包~' }}</div>
       </div>
     </div>
 
-    <div class="flex items-center gap-1">
+    <div class="flex items-center gap-2">
       <!-- 历史会话下拉菜单 - 使用 NDropdown -->
       <NDropdown
         v-model:show="showDropdown"

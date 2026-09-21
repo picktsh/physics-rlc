@@ -264,7 +264,7 @@ async function onExportSelect(key) {
     <!-- 工具条：导入 + 导出（NDropdown 收拢） -->
     <n-space justify="space-between" align="center" :wrap="true">
       <n-space :size="8" align="center" :wrap="true">
-        <n-button @click="triggerFileInput">
+        <n-button secondary @click="triggerFileInput">
           <template #icon>
             <NIcon :component="DocumentAdd" />
           </template>
@@ -280,7 +280,7 @@ async function onExportSelect(key) {
         :disabled="!activeContext.content"
         @select="onExportSelect"
       >
-        <n-button type="primary" :disabled="!activeContext.content">
+        <n-button secondary type="primary" :disabled="!activeContext.content">
           <template #icon>
             <NIcon :component="Export" />
           </template>
@@ -318,12 +318,12 @@ async function onExportSelect(key) {
     <div class="body flex min-h-96 gap-4">
       <article
         ref="docBodyRef"
-        class="doc-body markdown-body min-w-0 flex-1 rounded-lg bg-[var(--card-bg)] p-6"
+        class="doc-body markdown-body min-w-0 flex-1 rounded-lg bg-[var(--app-surface)] p-4"
         data-doc-body
         v-html="renderedHtml"
       />
       <aside v-if="toc.length >= 2" class="toc hidden w-56 shrink-0 lg:block">
-        <div class="sticky top-4 rounded-lg bg-[var(--card-bg)] p-3 text-sm">
+        <div class="sticky top-4 rounded-lg bg-[var(--app-surface)] p-3">
           <div class="mb-2 font-semibold opacity-70">目录</div>
           <ul class="m-0 list-none p-0">
             <li
@@ -348,7 +348,7 @@ async function onExportSelect(key) {
       <div class="drop-inner">
         <NIcon :component="CloudUpload" :size="48" />
         <div class="mt-2 text-lg font-semibold">松开以导入</div>
-        <div class="mt-1 text-sm opacity-90">
+        <div class="mt-1 opacity-90">
           .md / .txt 建 tab · .zip 解压带图预览 · .pdf / 图片 新窗口打开
         </div>
       </div>
@@ -385,8 +385,8 @@ async function onExportSelect(key) {
 }
 .toc-item.active {
   opacity: 1;
-  border-left-color: var(--navy);
-  color: var(--navy);
+  border-left-color: var(--app-brand);
+  color: var(--app-brand);
 }
 .toc-l1 {
   font-weight: 600;
@@ -410,7 +410,7 @@ async function onExportSelect(key) {
   z-index: var(--z-overlay);
   background: rgba(32, 128, 240, 0.12);
   backdrop-filter: blur(2px);
-  border: 3px dashed var(--navy);
+  border: 3px dashed var(--app-brand);
   pointer-events: none;
   display: flex;
   align-items: center;

@@ -27,7 +27,9 @@
         gap: 14px;
         background-color: #f3f5f9;
       }
-      /* loading 背景/圆环同步四套配色(与 styles/theme.css 主题变量一致) */
+      /* loading 背景/圆环同步四套配色:此处的字面色值系 styles/theme.css 中 --app-bg / --app-brand /
+         --app-border 等 token 在各主题下的取值(内联必须在 CSS 加载前生效,属“故意重复”);
+         ⚠ 改动 theme.css 对应 token 取值时,必须同步修改此处 */
       html[data-theme='dark'] #app-loading {
         background-color: #0d1322;
       }

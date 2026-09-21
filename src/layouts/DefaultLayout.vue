@@ -20,6 +20,8 @@ const collapsed = ref(sessionStorage.getItem('railCollapsed') === '1')
 watch(collapsed, (val) => sessionStorage.setItem('railCollapsed', val ? '1' : '0'))
 
 const drawerOpen = ref(false)
+// 路由入场动画的容器:切换时重放 class(不 remount KeepAlive、不要求页面单根)
+const routeAnimRef = ref(null)
 
 function onToggleMenu() {
   if (isMobile.value) drawerOpen.value = !drawerOpen.value
@@ -31,50 +33,73 @@ watch(
   () => route.fullPath,
   () => (drawerOpen.value = false),
 )
+
+// 路由切换后重放入场动画:class 移除→强制回流→重新添加。
+// 用稳定 wrapper 承载动画,兼容多根 fragment 页面(Transition 不行)且不破坏 KeepAlive 保活
+watch(
+  () => route.fullPath,
+  () => {
+    const el = routeAnimRef.value
+    if (!el) return
+    el.classList.remove('route-anim-run')
+    void el.offsetWidth
+    el.classList.add('route-anim-run')
+  },
+)
 </script>
 
 <template>
-  <div class="app-shell flex min-h-dvh flex-col bg-[var(--paper)]" :class="{ 'sidebar-collapsed': collapsed && !isMobile }">
+  <div
+    class="app-shell flex min-h-dvh flex-col bg-[var(--app-bg)]"
+    :class="{ 'sidebar-collapsed': collapsed && !isMobile }"
+  >
     <AppHeader @toggle-menu="onToggleMenu" />
 
     <div class="flex min-h-0 flex-1 items-stretch">
       <aside
         v-if="!isMobile"
-        class="app-sidebar flex shrink-0 flex-col overflow-y-auto border-r border-[var(--line)] bg-[var(--rail-bg)] p-8px"
+        class="app-sidebar flex shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-[var(--app-border)] bg-[var(--app-rail-bg)] p-2"
       >
         <AppSidebar />
         <!-- 侧栏底部站点二维码:折叠为仅图标导轨时由 CSS 隐藏 -->
-        <div class="sidebar-qr mt-auto shrink-0 border-t border-[var(--line)] pt-16px text-[var(--muted)]">
+        <div class="sidebar-qr mt-auto shrink-0 border-t border-[var(--app-border)] pt-4 text-[var(--app-text-muted)]">
           <SiteQrcode />
         </div>
       </aside>
 
-      <main class="min-w-0 flex-1 px-[clamp(14px,2.5vw,40px)] pt-24px pb-56px max-sm:px-12px max-sm:pt-16px max-sm:pb-40px">
-        <div class="mx-auto max-w-[1560px]">
-          <header class="mb-24px border-b border-[var(--line)] pb-12px">
-            <h1 class="text-[clamp(22px,2.6vw,30px)] font-bold leading-[1.35] tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)]">
-              {{ route.meta.title }}
-            </h1>
-            <p v-if="route.meta.desc" class="mt-8px text-14px tracking-[0.4px] text-[var(--faint)]">{{ route.meta.desc }}</p>
-          </header>
+      <main class="min-w-0 flex-1">
+        <div class="p-4 lg:p-[16px_40px_40px]">
+          <div class="mx-auto max-w-[1560px]">
+            <header class="mb-4 border-b border-[var(--app-border)] pb-3">
+              <h1
+                class="text-[clamp(22px,2.6vw,30px)] font-bold leading-[1.35] tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)]"
+              >
+                {{ route.meta.title }}
+              </h1>
+              <p v-if="route.meta.desc" class="mt-2 tracking-[0.4px] text-[var(--app-text-faint)]">
+                {{ route.meta.desc }}
+              </p>
+            </header>
 
-          <RouterView v-slot="{ Component }">
-            <KeepAlive :include="keepAliveNames">
-              <component :is="Component" />
-            </KeepAlive>
-          </RouterView>
+            <div ref="routeAnimRef" class="route-anim">
+              <RouterView v-slot="{ Component }">
+                <KeepAlive :include="keepAliveNames">
+                  <component :is="Component" />
+                </KeepAlive>
+              </RouterView>
+            </div>
+          </div>
         </div>
+        <AppFooter />
       </main>
     </div>
-
-    <AppFooter />
 
     <!-- 移动端:侧栏转为左滑抽屉,其余布局与桌面一致 -->
     <NDrawer v-if="isMobile" v-model:show="drawerOpen" :width="280" placement="left">
       <NDrawerContent :native-scrollbar="false">
         <AppSidebar @navigate="drawerOpen = false" />
         <!-- 抽屉底部二维码:方便用手机扫码演示 / 分享给其他手机 -->
-        <div class="mt-auto shrink-0 border-t border-[var(--line)] pt-16px text-[var(--muted)]">
+        <div class="mt-auto shrink-0 border-t border-[var(--app-border)] pt-4 text-[var(--app-text-muted)]">
           <SiteQrcode />
         </div>
       </NDrawerContent>
@@ -106,5 +131,24 @@ watch(
   width: var(--app-sidebar-w);
   height: calc(100dvh - var(--app-header-h));
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* 路由切换入场动画:由 script 在 route.fullPath 变化时重放 route-anim-run */
+.route-anim.route-anim-run {
+  animation: route-fade-in 0.18s ease;
+}
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-anim.route-anim-run {
+    animation: none;
+  }
 }
 </style>

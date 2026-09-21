@@ -40,7 +40,7 @@ html {
 html,
 body {
   min-height: 100%;
-  background-color: var(--paper);
+  background-color: var(--app-bg);
 }
 
 body {
@@ -48,12 +48,12 @@ body {
   padding: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  font-family: var(--font-body);
+  font-family: var(--app-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.75;
-  color: var(--ink);
-  font-size: 15px;
+  color: var(--app-text);
+  font-size: 14px;
   transition:
     background-color 0.25s ease,
     color 0.25s ease;
@@ -79,7 +79,7 @@ fieldset {
 /* 统一边框样式 */
 hr {
   border: none;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--app-border);
 }
 
 /* 图片/媒体自适应 */

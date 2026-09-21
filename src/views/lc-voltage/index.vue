@@ -3,53 +3,56 @@
     <!-- 图表区：2列布局 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <!-- ===== 行1列1: UL/UC 波形 ===== -->
-      <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] flex flex-col h-full">
+      <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] flex flex-col h-full">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">UL / UC 双通道时域波形</span>
-          <span class="text-xs text-gray-500">谐振时两波形峰值相等·相位相反</span>
+          <span class="font-semibold text-[color:var(--app-text)]">UL / UC 双通道时域波形</span>
+          <span class="text-xs text-[color:var(--app-text-muted)]">谐振时两波形峰值相等·相位相反</span>
         </div>
         <div class="p-3 space-y-3 flex-1 flex flex-col">
           <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1">
+            <div class="flex items-center gap-2 text-xs font-semibold text-[color:var(--app-text)] mb-1">
               <span class="inline-block w-2.5 h-2.5 rounded-full" style="background: #d9962b"></span>电感电压 U<sub
                 >L</sub
               >
             </div>
-            <canvas ref="ulCanvasRef" class="w-full border border-gray-100 rounded" style="height: 130px"></canvas>
+            <canvas
+              ref="ulCanvasRef"
+              class="w-full border border-[color:var(--app-border-light)] rounded"
+              style="height: 130px"
+            ></canvas>
           </div>
           <div>
-            <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 mb-1">
+            <div class="flex items-center gap-2 text-xs font-semibold text-[color:var(--app-text)] mb-1">
               <span class="inline-block w-2.5 h-2.5 rounded-full" style="background: #2563eb"></span>电容电压 U<sub
                 >C</sub
               >
             </div>
-            <canvas ref="ucCanvasRef" class="w-full border border-gray-100 rounded" style="height: 130px"></canvas>
+            <canvas
+              ref="ucCanvasRef"
+              class="w-full border border-[color:var(--app-border-light)] rounded"
+              style="height: 130px"
+            ></canvas>
           </div>
           <div class="mt-auto space-y-3">
             <div
               ref="resGainRef"
-              class="text-xs font-semibold text-center text-green-700 bg-green-50 rounded p-2"
+              class="text-xs font-semibold text-center text-[color:var(--app-success)] bg-[var(--app-success-bg)] rounded p-2"
             ></div>
             <div class="flex items-center gap-2">
-              <button
+              <NButton
+                secondary
+                class="flex-1"
+                :type="isNoiseScanning ? 'error' : noiseEnabled ? 'warning' : 'default'"
                 @click="toggleNoiseScan"
-                :class="[
-                  'inline-flex items-center justify-center gap-1 flex-1 py-2 rounded-lg text-sm font-semibold transition-all',
-                  isNoiseScanning
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : noiseEnabled
-                      ? 'bg-amber-500 text-white hover:bg-amber-600'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300',
-                ]"
               >
-                <NIcon
-                  :component="isNoiseScanning ? Stop : noiseEnabled ? ChartBar : VolumeUp"
-                />
+                <template #icon>
+                  <NIcon :component="isNoiseScanning ? Stop : noiseEnabled ? ChartBar : VolumeUp" />
+                </template>
                 {{ isNoiseScanning ? '停止噪声扫描' : noiseEnabled ? '噪声模式已开启' : '开启噪声' }}
-              </button>
-              <span v-if="noiseEnabled" class="text-xs text-amber-600 font-semibold whitespace-nowrap"
+              </NButton>
+              <span v-if="noiseEnabled" class="text-xs text-[color:var(--app-warning)] font-semibold whitespace-nowrap"
                 >±0.5% 随机误差</span
               >
             </div>
@@ -58,40 +61,40 @@
       </div>
 
       <!-- ===== 行1列2: 李萨如图 (UL vs UC) ===== -->
-      <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] flex flex-col h-full">
+      <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] flex flex-col h-full">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">李萨如图 (UL–UC XY 轨迹)</span>
+          <span class="font-semibold text-[color:var(--app-text)]">李萨如图 (UL–UC XY 轨迹)</span>
         </div>
-        <div class="text-xs text-gray-600 px-4 pt-3 pb-1 bg-gray-50 border-b border-gray-200">
+        <div
+          class="text-xs text-[color:var(--app-text-muted)] px-4 pt-3 pb-1 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)]"
+        >
           示波器·李萨如图 ( X轴：<strong>U<sub>L</sub></strong> 电感电压 | Y轴：<strong>U<sub>C</sub></strong> 电容电压
           )
         </div>
-        <div class="flex justify-center p-3 bg-gray-50 flex-1 flex items-center">
+        <div class="flex justify-center p-3 bg-[var(--app-surface-sunken)] flex-1 flex items-center">
           <canvas
             ref="xyULUCCanvasRef"
-            class="w-full max-w-[360px] aspect-square border border-gray-200 rounded"
+            class="w-full max-w-[360px] aspect-square border border-[color:var(--app-border)] rounded"
             style="height: 360px"
           ></canvas>
         </div>
-        <div ref="ulucLissajousStatusRef" class="text-sm font-semibold text-center py-2 transition-all">
-          UL / UC 振幅比 = —
-        </div>
+        <div ref="ulucLissajousStatusRef" class="font-semibold text-center py-2 transition-all">UL / UC 振幅比 = —</div>
       </section>
 
       <!-- ===== 行2列1: 幅频特性曲线 ===== -->
-      <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] flex flex-col h-full">
+      <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] flex flex-col h-full">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">辅助 · 幅频特性曲线 ( f–I )</span>
-          <span class="text-xs text-gray-500">峰值点对应 UL=UC 谐振频率</span>
+          <span class="font-semibold text-[color:var(--app-text)]">辅助 · 幅频特性曲线 ( f–I )</span>
+          <span class="text-xs text-[color:var(--app-text-muted)]">峰值点对应 UL=UC 谐振频率</span>
         </div>
-        <div class="relative p-3 bg-gray-50 flex-1 flex items-center">
+        <div class="relative p-3 bg-[var(--app-surface-sunken)] flex-1 flex items-center">
           <canvas
             ref="ampCanvasRef"
-            class="w-full border border-gray-200 rounded"
+            class="w-full border border-[color:var(--app-border)] rounded"
             style="height: 380px"
             @click="handleAmpClick"
           ></canvas>
@@ -99,165 +102,156 @@
                坐标由 drawAmpChart 每次重绘同步写入 halfPowerMark -->
           <div
             v-if="halfPowerMark"
-            class="absolute -translate-y-full pointer-events-none text-[10px] text-[#d9962b] leading-none"
+            class="absolute -translate-y-full pointer-events-none text-xs text-[color:var(--app-warning)] leading-none"
             :style="{ left: halfPowerMark.x + 'px', top: halfPowerMark.y + 'px' }"
           >
             <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}mA</span>
           </div>
         </div>
-        <div class="flex justify-center gap-6 px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs flex-wrap">
+        <div
+          class="flex justify-center gap-4 px-4 py-2 bg-[var(--app-surface-sunken)] border-t border-[color:var(--app-border)] text-xs flex-wrap"
+        >
           <span
-            ><span class="text-gray-500">f₀ = </span
-            ><span ref="mF0Ref" class="font-semibold text-gray-800">—</span></span
+            ><span class="text-[color:var(--app-text-muted)]">f₀ = </span
+            ><span ref="mF0Ref" class="font-semibold text-[color:var(--app-text)]">—</span></span
           >
           <span
-            ><span class="text-gray-500">Δf = </span
-            ><span ref="mDfRef" class="font-semibold text-gray-800">—</span></span
+            ><span class="text-[color:var(--app-text-muted)]">Δf = </span
+            ><span ref="mDfRef" class="font-semibold text-[color:var(--app-text)]">—</span></span
           >
           <span
-            ><span class="text-gray-500">Q = </span><span ref="mQRef" class="font-semibold text-gray-800">—</span
-            ><span ref="mQLabelRef" class="ml-1 font-semibold text-green-600"></span
+            ><span class="text-[color:var(--app-text-muted)]">Q = </span
+            ><span ref="mQRef" class="font-semibold text-[color:var(--app-text)]">—</span
+            ><span ref="mQLabelRef" class="ml-1 font-semibold text-[color:var(--app-success)]"></span
           ></span>
         </div>
       </section>
 
       <!-- ===== 行2列2: 李萨如图 (Us vs Ur) ===== -->
-      <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] flex flex-col h-full">
+      <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] flex flex-col h-full">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">李萨如图 (Us-Ur XY 轨迹)</span>
+          <span class="font-semibold text-[color:var(--app-text)]">李萨如图 (Us-Ur XY 轨迹)</span>
         </div>
-        <div class="text-xs text-gray-600 px-4 pt-3 pb-1 bg-gray-50 border-b border-gray-200">
+        <div
+          class="text-xs text-[color:var(--app-text-muted)] px-4 pt-3 pb-1 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)]"
+        >
           示波器·李萨如图 ( X轴：<strong>Us</strong> 回路激励总电压 | Y轴：<strong>Ur</strong>
           电阻分压，等效表征回路电流 )
         </div>
-        <div class="flex justify-center p-3 bg-gray-50 flex-1 flex items-center">
+        <div class="flex justify-center p-3 bg-[var(--app-surface-sunken)] flex-1 flex items-center">
           <canvas
             ref="xyCanvasRef"
-            class="w-full max-w-[360px] aspect-square border border-gray-200 rounded"
+            class="w-full max-w-[360px] aspect-square border border-[color:var(--app-border)] rounded"
             style="height: 360px"
           ></canvas>
         </div>
-        <div ref="phaseStatusRef" class="text-sm font-semibold text-center py-2 transition-all">
-          相位差 φ = 0.0° | 待计算
-        </div>
-        <div ref="qHintRef" class="hidden text-xs text-gray-600 text-center px-4 pb-2 leading-relaxed"></div>
+        <div ref="phaseStatusRef" class="font-semibold text-center py-2 transition-all">相位差 φ = 0.0° | 待计算</div>
+        <div
+          ref="qHintRef"
+          class="hidden text-xs text-[color:var(--app-text-muted)] text-center px-4 pb-2 leading-relaxed"
+        ></div>
       </div>
     </div>
 
     <!-- 操作控制 -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
       <div
-        class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+        class="card-hd flex items-center justify-between px-3 py-2 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
       >
-        <span class="text-xs sm:text-sm font-semibold text-gray-800">操作控制</span>
+        <span class="text-xs font-semibold text-[color:var(--app-text)]">操作控制</span>
       </div>
-      <div class="flex flex-wrap items-center gap-2 sm:gap-3 p-2 sm:p-3">
-        <button
-          @click="autoScan"
-          class="inline-flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all"
-        >
-          <NIcon :component="isScanning ? Stop : Reset" /> {{ isScanning ? '停止' : '自动扫频' }}
-        </button>
-        <button
-          @click="exportCSV"
-          class="inline-flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg text-xs sm:text-sm hover:bg-gray-300 transition-all"
-        >
-          <NIcon :component="Download" /> 导出CSV
-        </button>
-        <button
-          @click="clearData"
-          class="inline-flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 rounded-lg text-xs sm:text-sm hover:bg-red-100 transition-all"
-        >
-          <NIcon :component="TrashCan" /> 清空
-        </button>
-        <span class="text-xs sm:text-sm text-gray-600">阈值</span>
-        <input
-          type="number"
-          v-model.number="threshold"
-          step="1"
-          min="5"
-          max="20"
-          class="w-12 sm:w-14 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-        />
-        <span class="text-xs text-gray-500">%</span>
-        <div class="w-full border-t border-dashed border-gray-200 my-1"></div>
-        <div class="flex items-center gap-1 sm:gap-2 flex-1 min-w-[160px] sm:min-w-[200px]">
-          <label class="font-semibold text-gray-700 text-xs sm:text-sm whitespace-nowrap">f</label>
-          <input
-            type="number"
-            v-model.number="f"
-            step="1"
-            class="w-16 sm:w-20 h-7 sm:h-8 border border-gray-300 rounded px-1 text-xs sm:text-sm text-center"
-          />
-          <span class="text-xs text-gray-500">Hz</span>
-          <input
-            type="range"
-            :min="freqMin"
-            :max="freqMax"
-            step="1"
-            v-model.number="f"
-            class="flex-1 min-w-[60px] cursor-pointer"
-          />
-          <span class="text-xs sm:text-sm font-semibold text-blue-600 min-w-[70px] sm:min-w-[80px] text-right"
-            >{{ t4(f) }} Hz</span
-          >
+      <div class="p-2">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <NButton secondary type="primary" @click="autoScan">
+            <template #icon><NIcon :component="isScanning ? Stop : Reset" /></template>
+            {{ isScanning ? '停止' : '自动扫频' }}
+          </NButton>
+          <NButton secondary @click="exportCSV">
+            <template #icon><NIcon :component="Download" /></template>
+            导出CSV
+          </NButton>
+          <NButton secondary type="error" @click="clearData">
+            <template #icon><NIcon :component="TrashCan" /></template>
+            清空
+          </NButton>
+          <!-- 阈值：标签走 prefix、单位 % 走 suffix；ml-auto 右对齐到行尾，与下方搜索谐振右边缘齐 -->
+          <label class="ml-auto">
+            <NInputNumber v-model:value="threshold" :show-button="false" :step="1" :min="5" :max="20" class="w-32">
+              <template #prefix>阈值:</template>
+              <template #suffix>%</template>
+            </NInputNumber>
+          </label>
         </div>
-        <button
-          @click="searchResonance"
-          class="inline-flex items-center justify-center gap-1 w-full sm:w-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition-all"
-        >
-          <NIcon :component="Search" /> 搜索谐振
-        </button>
+        <div class="my-2 border-t border-dashed border-[color:var(--app-border)]"></div>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <!-- f：变量符号作 prefix、单位 Hz 作 suffix、固定 4 位小数；滑块 flex-1 填满消除空旷 -->
+          <NInputNumber v-model:value="f" :show-button="false" :step="1" :precision="4" class="w-32 sm:w-36">
+            <template #prefix>f:</template>
+            <template #suffix>Hz</template>
+          </NInputNumber>
+          <NSlider v-model:value="f" :min="freqMin" :max="freqMax" :step="1" class="min-w-[140px] flex-1" />
+          <NButton secondary type="primary" class="w-full sm:w-auto" @click="searchResonance">
+            <template #icon><NIcon :component="Search" /></template>
+            搜索谐振
+          </NButton>
+        </div>
       </div>
     </section>
 
     <!-- 底部: 数据表格 + 实时面板 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <!-- 数据表格 -->
-      <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+      <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
         <div
-          class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-3 py-2 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-xs sm:text-sm font-semibold text-gray-800">实验数据记录</span>
-          <span class="text-xs text-gray-500 hide-on-mobile">UL、UC 幅值对比支撑谐振判定</span>
+          <span class="text-xs font-semibold text-[color:var(--app-text)]">实验数据记录</span>
+          <span class="text-xs text-[color:var(--app-text-muted)] hide-on-mobile">UL、UC 幅值对比支撑谐振判定</span>
         </div>
         <div class="max-h-72 overflow-y-auto overflow-x-auto table-responsive">
           <table class="text-xs border-collapse">
             <thead>
-              <tr class="bg-gray-50 sticky top-0">
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">#</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">f (Hz)</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">I (mA)</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">U<sub>L</sub> (V)</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5">U<sub>C</sub> (V)</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5 hide-on-mobile">|Z| (Ω)</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5 hide-on-mobile">φ (°)</th>
-                <th class="border border-gray-200 px-1.5 sm:px-2 py-1.5 hide-on-mobile">Q</th>
+              <tr class="bg-[var(--app-surface-sunken)] sticky top-0">
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">#</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">f (Hz)</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">I (mA)</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">U<sub>L</sub> (V)</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">U<sub>C</sub> (V)</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5 hide-on-mobile">|Z| (Ω)</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5 hide-on-mobile">φ (°)</th>
+                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5 hide-on-mobile">Q</th>
               </tr>
             </thead>
             <tbody id="lcTableBody">
               <tr v-if="collected.length === 0">
-                <td colspan="8" class="text-center text-gray-400 py-8 text-xs">暂无数据，请采集</td>
+                <td colspan="8" class="text-center text-[color:var(--app-text-faint)] py-4 text-xs">
+                  暂无数据，请采集
+                </td>
               </tr>
               <tr
                 v-for="(d, idx) in collected"
                 :key="idx"
-                :class="{ 'bg-[#e8f0fe] font-semibold text-[#1e40af]': Math.abs(d.f - f0) < 1e-4 }"
+                :class="{
+                  'bg-[var(--app-surface-brand-strong)] font-semibold text-[color:var(--app-brand-strong)]':
+                    Math.abs(d.f - f0) < 1e-4,
+                }"
               >
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ idx + 1 }}</td>
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">
                   {{ t4(d.f) }}{{ Math.abs(d.f - f0) < 1e-4 ? ' ⭐' : '' }}
                 </td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.I * 1e3) }}</td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.UL) }}</td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center">{{ t4(d.UC) }}</td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center hide-on-mobile">{{ t4(d.Z) }}</td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center hide-on-mobile">
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ t4(d.I * 1e3) }}</td>
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ t4(d.UL) }}</td>
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ t4(d.UC) }}</td>
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center hide-on-mobile">
+                  {{ t4(d.Z) }}
+                </td>
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center hide-on-mobile">
                   {{ t4((d.phi * 180) / Math.PI) }}
                 </td>
-                <td class="border border-gray-200 px-1.5 sm:px-2 py-1.5 text-center hide-on-mobile">
+                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center hide-on-mobile">
                   {{ d.Q !== undefined ? t4(d.Q) : '-' }}
                 </td>
               </tr>
@@ -267,87 +261,92 @@
       </div>
 
       <!-- 实时面板 -->
-      <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+      <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
         <div
-          class="card-hd flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-3 py-2 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-xs sm:text-sm font-semibold text-gray-800">实时数据面板</span>
-          <span class="text-xs text-gray-500 hide-on-mobile">UL/UC 幅值 + 李萨如相位协同判定</span>
+          <span class="text-xs font-semibold text-[color:var(--app-text)]">实时数据面板</span>
+          <span class="text-xs text-[color:var(--app-text-muted)] hide-on-mobile">UL/UC 幅值 + 李萨如相位协同判定</span>
         </div>
         <div class="p-4 space-y-2">
           <template v-if="selectedPoint">
-            <div class="text-xs text-blue-600 font-semibold mb-2 flex items-center gap-2">
+            <div class="text-xs text-[color:var(--app-brand)] font-semibold mb-2 flex items-center gap-2">
               📌 已选中采集点 f = {{ t4(selectedPoint.f) }} Hz
-              <button
+              <NButton
+                text
+                class="ml-auto text-[color:var(--app-text-faint)] hover:text-[color:var(--app-error)]"
                 @click="
                   () => {
                     selectedPoint = null
                     drawAmpChart()
                   }
                 "
-                class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 ml-auto"
               >
                 <NIcon :component="Close" /> 取消
-              </button>
+              </NButton>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">回路电流 I</span
-              ><span class="font-semibold text-gray-800">{{ t4(selectedPoint.I * 1e3) }} mA</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">回路电流 I</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.I * 1e3) }} mA</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">总阻抗 |Z|</span
-              ><span class="font-semibold text-gray-800">{{ t4(selectedPoint.Z) }} Ω</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">总阻抗 |Z|</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.Z) }} Ω</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">相位差 φ</span
-              ><span class="font-semibold text-gray-800">{{ t4((selectedPoint.phi * 180) / Math.PI) }}°</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">相位差 φ</span
+              ><span class="font-semibold text-[color:var(--app-text)]"
+                >{{ t4((selectedPoint.phi * 180) / Math.PI) }}°</span
+              >
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">Ur 有效值</span
-              ><span class="font-semibold text-gray-800">{{ t4((selectedPoint.I * R) / 1000 / Math.SQRT2) }} V</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">Ur 有效值</span
+              ><span class="font-semibold text-[color:var(--app-text)]"
+                >{{ t4((selectedPoint.I * R) / 1000 / Math.SQRT2) }} V</span
+              >
             </div>
-            <div class="border-t border-dashed border-gray-200 my-1"></div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">UL 有效值</span
-              ><span class="font-semibold text-gray-800">{{ t4(selectedPoint.UL / Math.SQRT2) }} V</span>
+            <div class="border-t border-dashed border-[color:var(--app-border)] my-1"></div>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">UL 有效值</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.UL / Math.SQRT2) }} V</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">UC 有效值</span
-              ><span class="font-semibold text-gray-800">{{ t4(selectedPoint.UC / Math.SQRT2) }} V</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">UC 有效值</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.UC / Math.SQRT2) }} V</span>
             </div>
-            <div class="flex gap-6 py-1.5 text-sm">
-              <span class="text-gray-500 font-semibold">UL / UC 谐振判定</span>
+            <div class="flex gap-4 py-1.5">
+              <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
               <span :class="['font-semibold', selUlucClass]">{{ selUlucText }}</span>
             </div>
           </template>
           <template v-else>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">回路电流 I</span
-              ><span class="font-semibold text-gray-800">{{ t4(I_peak * 1e3) }} mA</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">回路电流 I</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(I_peak * 1e3) }} mA</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">总阻抗 |Z|</span
-              ><span class="font-semibold text-gray-800">{{ t4(Z) }} Ω</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">总阻抗 |Z|</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(Z) }} Ω</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">相位差 φ</span
-              ><span class="font-semibold text-gray-800">{{ t4((phi * 180) / Math.PI) }}°</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">相位差 φ</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4((phi * 180) / Math.PI) }}°</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">Ur 有效值</span
-              ><span class="font-semibold text-gray-800">{{ t4(Ur_peak / Math.SQRT2) }} V</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">Ur 有效值</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(Ur_peak / Math.SQRT2) }} V</span>
             </div>
-            <div class="border-t border-dashed border-gray-200 my-1"></div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">UL 有效值</span
-              ><span class="font-semibold text-gray-800">{{ t4(UL_peak / Math.SQRT2) }} V</span>
+            <div class="border-t border-dashed border-[color:var(--app-border)] my-1"></div>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">UL 有效值</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(UL_peak / Math.SQRT2) }} V</span>
             </div>
-            <div class="flex gap-6 py-1.5 border-b border-dashed border-gray-100 text-sm">
-              <span class="text-gray-500">UC 有效值</span
-              ><span class="font-semibold text-gray-800">{{ t4(UC_peak / Math.SQRT2) }} V</span>
+            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
+              <span class="text-[color:var(--app-text-muted)]">UC 有效值</span
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(UC_peak / Math.SQRT2) }} V</span>
             </div>
-            <div class="flex gap-6 py-1.5 text-sm">
-              <span class="text-gray-500 font-semibold">UL / UC 谐振判定</span>
+            <div class="flex gap-4 py-1.5">
+              <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
               <span :class="['font-semibold', ulucClass]">{{ ulucText }}</span>
             </div>
           </template>
@@ -356,54 +355,74 @@
     </div>
 
     <!-- 误差分析 -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
       <div
-        class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+        class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
       >
-        <span class="text-sm font-semibold text-gray-800">误差分析 · 数据预处理</span>
+        <span class="font-semibold text-[color:var(--app-text)]">误差分析 · 数据预处理</span>
       </div>
       <div class="p-4">
         <div class="flex gap-4 flex-wrap text-xs mb-3">
-          <span class="bg-gray-100 px-3 py-1.5 rounded"
-            >总采集 <strong class="text-blue-600">{{ collected.length }}</strong></span
+          <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
+            >总采集 <strong class="text-[color:var(--app-brand)]">{{ collected.length }}</strong></span
           >
-          <span class="bg-gray-100 px-3 py-1.5 rounded"
-            >有效保留 <strong class="text-blue-600">{{ validData.length }}</strong></span
+          <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
+            >有效保留 <strong class="text-[color:var(--app-brand)]">{{ validData.length }}</strong></span
           >
-          <span class="bg-gray-100 px-3 py-1.5 rounded"
-            >剔除异常 <strong class="text-red-600">{{ rejectedData.length }}</strong></span
+          <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
+            >剔除异常 <strong class="text-[color:var(--app-error)]">{{ rejectedData.length }}</strong></span
           >
-          <span class="bg-gray-100 px-3 py-1.5 rounded"
-            >平均误差 <strong class="text-blue-600">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span
+          <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
+            >平均误差
+            <strong class="text-[color:var(--app-brand)]">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span
           >
-          <span class="bg-gray-100 px-3 py-1.5 rounded"
-            >最大误差 <strong class="text-red-600">{{ maxErr > 0 ? t4(maxErr) + '%' : '—' }}</strong></span
+          <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
+            >最大误差
+            <strong class="text-[color:var(--app-error)]">{{ maxErr > 0 ? t4(maxErr) + '%' : '—' }}</strong></span
           >
         </div>
         <div class="max-h-28 overflow-y-auto mb-2">
           <table v-if="rejectedData.length > 0" class="w-full text-xs border-collapse">
             <thead>
-              <tr class="bg-red-50 sticky top-0">
-                <th class="border border-red-200 px-2 py-1 text-red-800">#</th>
-                <th class="border border-red-200 px-2 py-1 text-red-800">f (Hz)</th>
-                <th class="border border-red-200 px-2 py-1 text-red-800">I实测 (mA)</th>
-                <th class="border border-red-200 px-2 py-1 text-red-800">I理论 (mA)</th>
-                <th class="border border-red-200 px-2 py-1 text-red-800">误差%</th>
+              <tr class="bg-[var(--app-error-bg)] sticky top-0">
+                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">#</th>
+                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
+                  f (Hz)
+                </th>
+                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
+                  I实测 (mA)
+                </th>
+                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
+                  I理论 (mA)
+                </th>
+                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
+                  误差%
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(p, i) in rejectedData" :key="i">
-                <td class="border border-red-100 px-2 py-1 text-center">{{ i + 1 }}</td>
-                <td class="border border-red-100 px-2 py-1 text-center">{{ t4(p.f) }}</td>
-                <td class="border border-red-100 px-2 py-1 text-center">{{ t4(p.I * 1e3) }}</td>
-                <td class="border border-red-100 px-2 py-1 text-center">{{ t4(p.theoryI * 1e3) }}</td>
-                <td class="border border-red-100 px-2 py-1 text-center">{{ p.err.toFixed(2) }}%</td>
+                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">{{ i + 1 }}</td>
+                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">{{ t4(p.f) }}</td>
+                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">{{ t4(p.I * 1e3) }}</td>
+                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">
+                  {{ t4(p.theoryI * 1e3) }}
+                </td>
+                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">
+                  {{ p.err.toFixed(2) }}%
+                </td>
               </tr>
             </tbody>
           </table>
-          <div v-else class="text-center text-gray-400 py-4 text-xs">无剔除数据，所有采集点均在阈值内</div>
+          <div v-else class="text-center text-[color:var(--app-text-faint)] py-4 text-xs">
+            无剔除数据，所有采集点均在阈值内
+          </div>
         </div>
-        <div class="text-xs text-amber-800 bg-amber-50 rounded px-3 py-2 leading-relaxed">{{ analysisText }}</div>
+        <div
+          class="text-xs text-[color:var(--app-warning)] bg-[var(--app-warning-bg)] rounded px-3 py-2 leading-relaxed"
+        >
+          {{ analysisText }}
+        </div>
       </div>
     </section>
   </div>
@@ -413,18 +432,11 @@
 import { ref, reactive, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
-import { NIcon } from 'naive-ui'
+import { NButton, NIcon, NInputNumber, NSlider, useDialog, useMessage } from 'naive-ui'
+const message = useMessage()
+const dialog = useDialog()
 import { storeToRefs } from 'pinia'
-import {
-  Search,
-  Stop,
-  ChartBar,
-  VolumeUp,
-  Reset,
-  TrashCan,
-  Close,
-  Download,
-} from '@vicons/carbon'
+import { Search, Stop, ChartBar, VolumeUp, Reset, TrashCan, Close, Download } from '@vicons/carbon'
 import { canvasTheme } from '@/utils/canvasTheme'
 import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
 
@@ -1204,7 +1216,7 @@ function collectPoint() {
 // ---- 导出CSV ----
 function exportCSV() {
   if (!collected.value.length) {
-    alert('暂无数据可导出。')
+    message.warning('暂无数据可导出。')
     return
   }
   const bom = '\uFEFF'
@@ -1246,11 +1258,18 @@ function exportCSV() {
 // ---- 清空数据 ----
 function clearData() {
   if (!collected.value.length) return
-  if (!confirm('确认清空所有数据？')) return
-  collected.value = []
-  validData.value = []
-  rejectedData.value = []
-  filterData()
+  dialog.warning({
+    title: '确认清空',
+    content: '确认清空所有数据？',
+    positiveText: '清空',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      collected.value = []
+      validData.value = []
+      rejectedData.value = []
+      filterData()
+    },
+  })
 }
 
 // ---- 幅频图点击事件 - 选中已采集点显示数据 ----
@@ -1354,7 +1373,7 @@ function autoScan() {
 function searchResonance() {
   const freq = f0.value
   f.value = freq
-  alert(
+  message.success(
     '✅ 搜寻完成！谐振频率 f₀ = ' +
       t4(freq) +
       ' Hz\nUL = ' +
@@ -1486,8 +1505,8 @@ const ulucText = computed(() => {
 const ulucClass = computed(() => {
   const pd = (phi.value * 180) / Math.PI
   const diff = Math.abs(UL_peak.value - UC_peak.value)
-  if (diff < 0.001 || Math.abs(pd) < 3) return 'text-green-600'
-  return UL_peak.value > UC_peak.value ? 'text-amber-600' : 'text-blue-600'
+  if (diff < 0.001 || Math.abs(pd) < 3) return 'text-[color:var(--app-success)]'
+  return UL_peak.value > UC_peak.value ? 'text-[color:var(--app-warning)]' : 'text-[color:var(--app-brand)]'
 })
 
 // 选中点的谐振判定
@@ -1511,8 +1530,10 @@ const selUlucClass = computed(() => {
   if (!selectedPoint.value) return ''
   const pd = (selectedPoint.value.phi * 180) / Math.PI
   const diff = Math.abs(selectedPoint.value.UL - selectedPoint.value.UC)
-  if (diff < 0.001 || Math.abs(pd) < 3) return 'text-green-600'
-  return selectedPoint.value.UL > selectedPoint.value.UC ? 'text-amber-600' : 'text-blue-600'
+  if (diff < 0.001 || Math.abs(pd) < 3) return 'text-[color:var(--app-success)]'
+  return selectedPoint.value.UL > selectedPoint.value.UC
+    ? 'text-[color:var(--app-warning)]'
+    : 'text-[color:var(--app-brand)]'
 })
 
 // ---- 参数变化监听 ----

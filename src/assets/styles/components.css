@@ -18,10 +18,33 @@
  * 标记类 card-hd 配合各组件的原子类使用;此处用主题变量 + !important
  * 压过模板里写死的灰阶原子类,使标题条随配色联动 */
 [class~='card-hd'] {
-  background: var(--soft-bg) !important;
-  border-bottom: 1px solid var(--line) !important;
+  background: var(--app-surface-sunken) !important;
+  border-bottom: 1px solid var(--app-border) !important;
   padding-left: 16px;
   padding-right: 16px;
+}
+
+/* ========== naive 表单控件铺满字段宽度(全站 NForm 统一) ==========
+ * NFormItem 内容区 .n-form-item-blank 默认 display:flex,而 NInputNumber/NInput
+ * 根元素无 width:100%(NSelect 有),导致数字框只占内容宽、表单右缘参差。
+ * 统一让表单内输入控件撑满字段宽度;仅作用于 .n-form-item 内,影响面可控。
+ * 嵌套在非 flex 包裹(如固定宽 w-24)时 flex 属性自然失效,width 生效。 */
+.n-form-item .n-form-item-blank .n-input-number,
+.n-form-item .n-form-item-blank .n-input {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ========== KaTeX 公式展示统一(单一数据源) ==========
+ * 块级公式(display 模式,内含 .katex-display)给 p-2、行内公式给 p-1 的呼吸内边距。
+ * 该 padding 同时把 KaTeX 行盒(vlist/strut 相对定位顶出容器的几 px)吸收进 padding box,
+ * 配合公式滚动容器的 overflow-y-hidden 消除伪纵向滚动条,且不裁切公式墨迹。 */
+.formula-k {
+  padding: 4px;
+}
+.formula-k:has(.katex-display) {
+  padding: 8px;
 }
 
 /* ========== 文档中心:markdown 渲染正文排版 ==========
@@ -142,7 +165,7 @@
   margin: 1.5em 0;
 }
 .markdown-body a {
-  color: var(--navy);
+  color: var(--app-brand);
   text-decoration: none;
 }
 .markdown-body a:hover {

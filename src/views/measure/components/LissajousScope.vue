@@ -3,14 +3,14 @@
     <!-- 图表区：2列布局 (模仿 LCVoltageMethod) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <!-- 列1: 示波器·李萨如图 -->
-      <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] flex flex-col h-full">
+      <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] flex flex-col h-full">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">示波器 · 李萨如图</span>
-          <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-semibold">X-Y MODE</span>
+          <span class="font-semibold text-[color:var(--app-text)]">示波器 · 李萨如图</span>
+          <span class="bg-[var(--app-primary)] text-white px-2 py-0.5 rounded text-xs font-semibold">X-Y MODE</span>
         </div>
-        <div class="bg-gray-50 overflow-hidden relative flex-1 flex flex-col">
+        <div class="bg-[var(--app-surface-sunken)] overflow-hidden relative flex-1 flex flex-col">
           <canvas ref="scopeCanvasRef" class="w-full block cursor-crosshair" :height="canvasHeight"></canvas>
           <div class="absolute bottom-2 left-3 text-xs text-white/50 font-mono pointer-events-none">
             {{ cursorInfo }}
@@ -19,102 +19,103 @@
       </section>
 
       <!-- 列2: 幅频特性曲线 -->
-      <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] flex flex-col h-full">
+      <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] flex flex-col h-full">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">幅频特性曲线 f-I</span>
-          <span class="text-xs text-gray-500"></span>
+          <span class="font-semibold text-[color:var(--app-text)]">幅频特性曲线 f-I</span>
+          <span class="text-xs text-[color:var(--app-text-muted)]"></span>
         </div>
-        <div class="flex gap-2 items-center px-4 py-2 text-xs text-gray-600 flex-wrap border-b border-gray-100">
-          <span>横坐标:</span>
-          <input
-            type="number"
-            v-model.number="freqMin"
-            placeholder="最小"
-            class="w-16 px-1.5 py-1 border border-gray-300 rounded text-xs"
-          />
-          <span>~</span>
-          <input
-            type="number"
-            v-model.number="freqMax"
-            placeholder="最大"
-            class="w-16 px-1.5 py-1 border border-gray-300 rounded text-xs"
-          />
-          <span>Hz</span>
-          <button @click="applyFreqRange" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">
-            应用
-          </button>
-        </div>
-        <div class="p-3 bg-gray-50 flex-1 flex items-center">
+        <NForm label-placement="top" :show-feedback="false">
+          <div class="px-4 py-2 border-b border-[color:var(--app-border-light)]">
+            <NFormItem label="横坐标">
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="w-24">
+                  <NInputNumber v-model:value="freqMin" :show-button="false" placeholder="最小" />
+                </div>
+                <span>~</span>
+                <div class="w-24">
+                  <NInputNumber v-model:value="freqMax" :show-button="false" placeholder="最大">
+                    <template #suffix>Hz</template>
+                  </NInputNumber>
+                </div>
+                <NButton secondary type="primary" @click="applyFreqRange">应用</NButton>
+              </div>
+            </NFormItem>
+          </div>
+        </NForm>
+        <div class="p-3 bg-[var(--app-surface-sunken)] flex-1 flex items-center">
           <canvas ref="ampCanvasRef" class="w-full block cursor-crosshair" :height="canvasHeight"></canvas>
         </div>
       </section>
     </div>
 
     <!-- 操作控制 (模仿 LCVoltageMethod 操作控制) -->
-    <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+    <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
       <div
-        class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+        class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
       >
-        <span class="text-sm font-semibold text-gray-800">操作控制</span>
+        <span class="font-semibold text-[color:var(--app-text)]">操作控制</span>
       </div>
       <div class="flex gap-3 flex-wrap p-3">
-        <button
-          @click="toggleSweep"
-          class="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-          :class="isSweeping ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
-        >
-          <NIcon :component="isSweeping ? Stop : Reset" /> {{ isSweeping ? '停止扫描' : '自动扫描' }}
-        </button>
-        <button
-          @click="exportCSV"
-          class="inline-flex items-center gap-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-all"
-        >
-          <NIcon :component="Download" /> 导出CSV
-        </button>
-        <button
-          @click="clearData"
-          class="inline-flex items-center gap-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm hover:bg-red-100 transition-all"
-        >
-          <NIcon :component="TrashCan" /> 清空数据
-        </button>
+        <NButton secondary :type="isSweeping ? 'error' : 'default'" @click="toggleSweep">
+          <template #icon><NIcon :component="isSweeping ? Stop : Reset" /></template>
+          {{ isSweeping ? '停止扫描' : '自动扫描' }}
+        </NButton>
+        <NButton secondary @click="exportCSV">
+          <template #icon><NIcon :component="Download" /></template>
+          导出CSV
+        </NButton>
+        <NButton secondary type="error" @click="clearData">
+          <template #icon><NIcon :component="TrashCan" /></template>
+          清空数据
+        </NButton>
       </div>
     </section>
 
     <!-- 底部: 数据表格 + 实时面板 (模仿 LCVoltageMethod) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <!-- 实验数据记录 -->
-      <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+      <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">实验数据记录</span>
-          <span class="text-xs text-gray-500">{{ acquiredData.length }} 个数据点</span>
+          <span class="font-semibold text-[color:var(--app-text)]">实验数据记录</span>
+          <span class="text-xs text-[color:var(--app-text-muted)]">{{ acquiredData.length }} 个数据点</span>
         </div>
         <div class="max-h-80 overflow-y-auto overflow-x-auto p-3">
           <table class="w-full text-xs border-collapse">
             <thead>
-              <tr class="bg-gray-50">
-                <th class="border border-gray-200 px-2 py-1.5">#</th>
-                <th class="border border-gray-200 px-2 py-1.5">f (Hz)</th>
-                <th class="border border-gray-200 px-2 py-1.5">I (mA)</th>
-                <th class="border border-gray-200 px-2 py-1.5">Urpp (V)</th>
-                <th class="border border-gray-200 px-2 py-1.5">|Z| (Ω)</th>
-                <th class="border border-gray-200 px-2 py-1.5">φ (°)</th>
-                <th class="border border-gray-200 px-2 py-1.5">标记</th>
+              <tr class="bg-[var(--app-surface-sunken)]">
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">#</th>
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">f (Hz)</th>
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">I (mA)</th>
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">Urpp (V)</th>
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">|Z| (Ω)</th>
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">φ (°)</th>
+                <th class="border border-[color:var(--app-border)] px-2 py-1.5">标记</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(d, idx) in acquiredData" :key="idx" :class="{ 'bg-red-50': idx === resonanceIdx }">
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ d.freq.toFixed(4) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ d.current.toFixed(4) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ d.urpp.toFixed(4) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ d.impedance.toFixed(4) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">{{ d.phase.toFixed(4) }}</td>
-                <td class="border border-gray-200 px-2 py-1.5 text-center">
-                  <span v-if="idx === resonanceIdx" class="text-red-600 font-bold">★ 谐振</span>
+              <tr
+                v-for="(d, idx) in acquiredData"
+                :key="idx"
+                :class="{ 'bg-[var(--app-error-bg)]': idx === resonanceIdx }"
+              >
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ idx + 1 }}</td>
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ d.freq.toFixed(4) }}</td>
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
+                  {{ d.current.toFixed(4) }}
+                </td>
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ d.urpp.toFixed(4) }}</td>
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
+                  {{ d.impedance.toFixed(4) }}
+                </td>
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
+                  {{ d.phase.toFixed(4) }}
+                </td>
+                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
+                  <span v-if="idx === resonanceIdx" class="text-[color:var(--app-error)] font-bold">★ 谐振</span>
                 </td>
               </tr>
             </tbody>
@@ -123,39 +124,53 @@
       </section>
 
       <!-- 实时数据面板 -->
-      <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+      <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
         <div
-          class="card-hd flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200 rounded-t-lg"
+          class="card-hd flex items-center justify-between px-4 py-2.5 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)] rounded-t-lg"
         >
-          <span class="text-sm font-semibold text-gray-800">实时数据面板</span>
+          <span class="font-semibold text-[color:var(--app-text)]">实时数据面板</span>
         </div>
         <div class="p-4 space-y-2">
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
-              <div class="text-xs text-gray-600 mb-1">电阻电压 峰峰值 (Vpp)</div>
-              <div class="text-lg font-bold font-mono text-blue-600">{{ measures.Urpp.toFixed(4) }}</div>
+            <div
+              class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">电阻电压 峰峰值 (Vpp)</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">
+                {{ measures.Urpp.toFixed(4) }}
+              </div>
             </div>
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
-              <div class="text-xs text-gray-600 mb-1">电阻电压 有效值 (Vrms)</div>
-              <div class="text-lg font-bold font-mono text-green-600">{{ measures.Ur.toFixed(4) }}</div>
+            <div
+              class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">电阻电压 有效值 (Vrms)</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-success)]">
+                {{ measures.Ur.toFixed(4) }}
+              </div>
             </div>
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
-              <div class="text-xs text-gray-600 mb-1">回路电流 I (mA)</div>
-              <div class="text-lg font-bold font-mono text-yellow-600">{{ measures.I.toFixed(4) }}</div>
+            <div
+              class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">回路电流 I (mA)</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ measures.I.toFixed(4) }}</div>
             </div>
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
-              <div class="text-xs text-gray-600 mb-1">阻抗 |Z| (Ω)</div>
-              <div class="text-lg font-bold font-mono text-blue-600">{{ measures.Z.toFixed(4) }}</div>
+            <div
+              class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">阻抗 |Z| (Ω)</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ measures.Z.toFixed(4) }}</div>
             </div>
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
-              <div class="text-xs text-gray-600 mb-1">相位 φ (°)</div>
-              <div class="text-lg font-bold font-mono text-red-600">{{ measures.phi.toFixed(4) }}</div>
+            <div
+              class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
+            >
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">相位 φ (°)</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-error)]">{{ measures.phi.toFixed(4) }}</div>
             </div>
           </div>
-          <div class="border-t border-dashed border-gray-200 pt-3 mt-1">
-            <div class="flex gap-6 py-1 text-sm">
-              <span class="text-gray-500">理论谐振频率 f₀</span>
-              <span class="font-semibold text-gray-800">{{ measures.f0.toFixed(4) }} Hz</span>
+          <div class="border-t border-dashed border-[color:var(--app-border)] pt-3 mt-1">
+            <div class="flex gap-4 py-1">
+              <span class="text-[color:var(--app-text-muted)]">理论谐振频率 f₀</span>
+              <span class="font-semibold text-[color:var(--app-text)]">{{ measures.f0.toFixed(4) }} Hz</span>
             </div>
           </div>
         </div>
@@ -166,7 +181,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
-import { NIcon } from 'naive-ui'
+import { NButton, NForm, NFormItem, NIcon, NInputNumber, useMessage } from 'naive-ui'
 import { Stop, Reset, Download, TrashCan } from '@vicons/carbon'
 import { impedance, current, resonantFreq } from '@/utils/physics'
 import { canvasTheme } from '@/utils/canvasTheme'
@@ -179,6 +194,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update-freq'])
+
+const message = useMessage()
 
 const scopeCanvasRef = ref(null)
 const ampCanvasRef = ref(null)
@@ -634,12 +651,12 @@ function toggleSweep() {
 // 自动扫描
 async function autoSweep() {
   if (props.params.L <= 0 || props.params.C <= 0 || props.params.R <= 0) {
-    alert('请先拖拽元件搭建RLC电路并点击「开始仿真」')
+    message.warning('请先拖拽元件搭建RLC电路并点击「开始仿真」')
     return
   }
   const f0 = resonantFreq(props.params.L, props.params.C)
   if (!isFinite(f0) || f0 <= 0) {
-    alert('电路参数异常，请检查 R、L、C 元件参数')
+    message.error('电路参数异常，请检查 R、L、C 元件参数')
     return
   }
   // 以谐振频率 f0 为中心动态生成扫频范围，保证必定经过谐振点
@@ -693,7 +710,7 @@ async function autoSweep() {
 
 // 导出CSV
 function exportCSV() {
-  if (acquiredData.value.length === 0) return alert('请先采集数据')
+  if (acquiredData.value.length === 0) return message.warning('请先采集数据')
   const f0 = resonantFreq(props.params.L, props.params.C)
   const resIdx = resonanceIdx.value
   let csv = '序号,频率(Hz),电流(mA),Urpp(V),阻抗(Ω),相位(°),标记\r\n'
@@ -706,7 +723,7 @@ function exportCSV() {
   csv += `对应频率:,${peak.freq.toFixed(4)} Hz\r\n`
   csv += `理论谐振频率:,${f0.toFixed(4)} Hz\r\n`
   navigator.clipboard.writeText(csv).then(() => {
-    alert(`✅ CSV已复制到剪贴板！\n共 ${acquiredData.value.length} 个数据点`)
+    message.success(`✅ CSV已复制到剪贴板！共 ${acquiredData.value.length} 个数据点`)
   })
 }
 
@@ -721,7 +738,7 @@ function clearData() {
 // 应用频率范围
 function applyFreqRange() {
   if (!freqMin.value || !freqMax.value || freqMin.value <= 0 || freqMax.value <= 0 || freqMax.value <= freqMin.value) {
-    alert('请输入有效的频率范围（起始>0，终止>起始）')
+    message.warning('请输入有效的频率范围（起始>0，终止>起始）')
     return
   }
   fixedRange.value = { fMin: freqMin.value, fMax: freqMax.value }

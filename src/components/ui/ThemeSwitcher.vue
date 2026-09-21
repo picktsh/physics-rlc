@@ -33,8 +33,8 @@ const { theme, themes, setTheme } = useTheme()
   flex-shrink: 0;
   padding: 5px 7px;
   border-radius: 999px;
-  background: var(--card-bg);
-  border: 1px solid var(--line);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
   box-shadow: 0 10px 26px -14px rgba(16, 24, 40, 0.45);
   transition:
     background-color 0.25s ease,
@@ -56,13 +56,13 @@ const { theme, themes, setTheme } = useTheme()
   transform: scale(1.12);
 }
 .ts-item:focus-visible {
-  outline: 2px solid var(--navy);
+  outline: 2px solid var(--app-brand);
   outline-offset: 2px;
 }
 .ts-item.active {
   box-shadow:
-    0 0 0 2px var(--card-bg),
-    0 0 0 4px var(--accent-solid);
+    0 0 0 2px var(--app-surface),
+    0 0 0 4px var(--app-primary);
 }
 .ts-ball {
   display: block;

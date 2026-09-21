@@ -8,11 +8,11 @@
       <div class="c3d-bar-actions">
         <!-- 供父页注入板块级操作按钮(如导入示例/全屏/仿真/清空),与 3D 视角按钮同处一行 flex-wrap -->
         <slot name="actions" />
-        <NButton :type="autoRotate3D ? 'primary' : 'default'" @click="toggle3DRotate">
+        <NButton secondary :type="autoRotate3D ? 'primary' : 'default'" @click="toggle3DRotate">
           <template #icon><NIcon :component="autoRotate3D ? Pause : Play" /></template>
           {{ autoRotate3D ? '停止旋转' : '自动旋转' }}
         </NButton>
-        <NButton @click="reset3DView">
+        <NButton secondary @click="reset3DView">
           <template #icon><NIcon :component="Location" /></template>
           复位视角
         </NButton>
@@ -33,8 +33,8 @@
         @pointerup="onPointerUp"
       />
       <div v-if="components.length === 0" class="c3d-empty">
-        <span class="text-gray-300 text-3xl leading-none">🧊</span>
-        <span class="text-xs text-gray-400">{{ emptyText }}</span>
+        <span class="text-[color:var(--app-text-faint)] text-3xl leading-none">🧊</span>
+        <span class="text-xs text-[color:var(--app-text-faint)]">{{ emptyText }}</span>
       </div>
     </div>
   </div>
@@ -569,13 +569,13 @@ watch([() => props.components, () => props.wires, () => props.junctions], () => 
 .c3d-bar-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--app-text);
 }
 .c3d-bar-tip {
   flex: 1 1 120px;
   min-width: 0;
   font-size: 11px;
-  color: var(--faint);
+  color: var(--app-text-faint);
 }
 .c3d-bar-actions {
   margin-left: auto;

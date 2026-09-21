@@ -112,7 +112,7 @@ onMounted(() => {
     <Transition name="chat-pop">
       <div
         v-if="isOpen && !isMobile"
-        class="w-[480px] h-[640px] max-h-[85vh] rounded-lg bg-white shadow-2xl overflow-hidden border border-gray-200"
+        class="w-[480px] h-[640px] max-h-[85vh] rounded-lg bg-[var(--app-surface)] shadow-2xl overflow-hidden border border-[color:var(--app-border)]"
       >
         <DoubaoChatWindow
           ref="pcWindowRef"
@@ -140,7 +140,7 @@ onMounted(() => {
 
     <!-- 移动端：naive-ui 全屏弹窗，block-scroll 自动锁定背景滚动 -->
     <NModal :show="isOpen && isMobile" :block-scroll="true" :auto-focus="false" @update:show="isOpen = $event">
-      <div class="w-screen h-[100dvh] bg-white overflow-hidden">
+      <div class="w-screen h-[100dvh] bg-[var(--app-surface)] overflow-hidden">
         <DoubaoChatWindow
           ref="mobileWindowRef"
           :sessions="sessions"

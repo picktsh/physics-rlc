@@ -86,19 +86,19 @@ function closeExpand() {
   <section
     v-for="cat in rawCategories"
     :key="cat.id"
-    class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4"
+    class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4"
   >
-    <div class="flex items-center justify-between mb-3.5">
+    <div class="flex items-center justify-between mb-3">
       <h2
-        class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] pl-12px !mb-0"
+        class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] pl-3 !mb-0"
       >
         {{ cat.title }}
       </h2>
-      <span class="shrink-0 text-xs text-[#8a97ab] bg-[#f2f5fa] border border-[#e2e7f0] rounded-full px-2.5 py-[3px]">
+      <span class="shrink-0 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] border border-[color:var(--app-border)] rounded-full px-2.5 py-[3px]">
         {{ cat.videos.length }} 个视频
       </span>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
       <VideoCard v-for="video in cat.videos" :key="video.bv || video.dy" :video="video" @expand="expandVideo" />
     </div>
   </section>
@@ -106,7 +106,7 @@ function closeExpand() {
     href="https://search.bilibili.com/all?keyword=rlc%E4%B8%B2%E8%81%94%E8%B0%90%E6%8C%AF"
     target="_blank"
     rel="noopener noreferrer"
-    class="flex items-center justify-center gap-2 rounded-lg bg-[var(--soft-blue-strong)] px-16px py-12px text-15px font-medium text-[var(--navy-deep)] transition-all duration-200 hover:bg-[var(--soft-blue)] hover:shadow-[var(--card-shadow)]"
+    class="flex items-center justify-center gap-2 rounded-lg bg-[var(--app-surface-brand-strong)] px-4 py-3 text-base font-medium text-[var(--app-brand-strong)] transition-all duration-200 hover:bg-[var(--app-surface-brand)] hover:shadow-[var(--app-shadow)]"
   >
     <NIcon :component="Search" :size="18" />
     在哔哩哔哩发现更多 RLC 串联谐振视频

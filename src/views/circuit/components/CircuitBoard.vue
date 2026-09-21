@@ -1,146 +1,146 @@
 <template>
-  <div
-    :class="isFullscreen ? 'board-fs' : 'rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]'"
-  >
+  <div :class="isFullscreen ? 'board-fs' : 'rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]'">
     <!-- 三栏布局(桌面):左=2D 元件库(竖排) / 中=2D+3D 画布 / 右=元件参数与公差;窄屏自动退化为单列上下堆叠 -->
     <div class="board-grid lg:grid lg:grid-cols-[136px_minmax(0,1fr)_228px] lg:gap-4">
       <!-- 元件库(货架式);全屏时改为顶部横向滚动一排 -->
       <NScrollbar class="board-palette" :x-scrollable="isNarrow">
-      <div class="palette components-palette flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0">
         <div
-          v-for="comp in componentTypes"
-          :key="comp.type"
-          draggable="true"
-          @dragstart="handleDragStart($event, comp.type)"
-          @click="selectPaletteComponent(comp.type)"
-          :class="[
-            'component-item flex flex-col items-center justify-center gap-1.5 p-2 border border-gray-200 rounded-lg cursor-pointer text-xs text-gray-600 transition-all lg:flex-1',
-            pendingPlaceType === comp.type
-              ? 'bg-blue-50 ring-2 ring-[#3b82f6]'
-              : 'bg-white hover:bg-gray-100 hover:border-gray-300',
-          ]"
+          class="palette components-palette flex gap-2 mb-3 flex-wrap justify-center lg:flex-col lg:flex-nowrap lg:justify-start lg:mb-0"
         >
-          <!-- 2D 平面元件符号(教科书电路图样式) -->
-          <svg
-            v-if="comp.type === 'R'"
-            viewBox="0 0 48 32"
-            class="w-14 h-10"
-            fill="none"
-            stroke="#2563eb"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+          <div
+            v-for="comp in componentTypes"
+            :key="comp.type"
+            draggable="true"
+            @dragstart="handleDragStart($event, comp.type)"
+            @click="selectPaletteComponent(comp.type)"
+            :class="[
+              'component-item flex flex-col items-center justify-center gap-2 p-2 border border-[color:var(--app-border)] rounded-lg cursor-pointer text-xs text-[color:var(--app-text-muted)] transition-all lg:flex-1',
+              pendingPlaceType === comp.type
+                ? 'bg-[var(--app-surface-brand)] ring-2 ring-[color:var(--app-primary)]'
+                : 'bg-[var(--app-surface)] hover:bg-[var(--app-surface-muted)] hover:border-[color:var(--app-border-dark)]',
+            ]"
           >
-            <line x1="4" y1="16" x2="10" y2="16" />
-            <rect x="10" y="6" width="28" height="20" />
-            <line x1="38" y1="16" x2="44" y2="16" />
-          </svg>
-          <svg
-            v-else-if="comp.type === 'L'"
-            viewBox="0 0 48 32"
-            class="w-14 h-10"
-            fill="none"
-            stroke="#2563eb"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="4" y1="16" x2="10" y2="16" />
-            <path d="M10 16a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0" />
-            <line x1="34" y1="16" x2="44" y2="16" />
-          </svg>
-          <svg
-            v-else-if="comp.type === 'C'"
-            viewBox="0 0 48 32"
-            class="w-14 h-10"
-            fill="none"
-            stroke="#2563eb"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <line x1="4" y1="16" x2="22" y2="16" />
-            <line x1="22" y1="6" x2="22" y2="26" />
-            <line x1="26" y1="6" x2="26" y2="26" />
-            <line x1="26" y1="16" x2="44" y2="16" />
-          </svg>
-          <svg
-            v-else-if="comp.type === 'RV'"
-            viewBox="0 0 48 32"
-            class="w-14 h-10"
-            fill="none"
-            stroke="#2563eb"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="4" y1="16" x2="10" y2="16" />
-            <rect x="10" y="6" width="28" height="20" />
-            <line x1="16" y1="22" x2="30.5" y2="11" />
-            <path d="M26.2 8.9 L30.5 11 L27.5 15" />
-            <line x1="38" y1="16" x2="44" y2="16" />
-          </svg>
-          <svg
-            v-else-if="comp.type === 'CV'"
-            viewBox="0 0 48 32"
-            class="w-14 h-10"
-            fill="none"
-            stroke="#2563eb"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <line x1="4" y1="16" x2="13" y2="16" />
-            <line x1="13" y1="9" x2="13" y2="23" />
-            <line x1="22" y1="9" x2="22" y2="23" />
-            <line x1="22" y1="16" x2="44" y2="16" />
-            <line x1="15" y1="21" x2="20.5" y2="10" />
-            <path d="M17 8.8 L20.5 10 L18.6 13.9" />
-          </svg>
-          <svg
-            v-else
-            viewBox="0 0 48 32"
-            class="w-14 h-10"
-            fill="none"
-            stroke="#2563eb"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="4" y1="16" x2="12" y2="16" />
-            <circle cx="24" cy="16" r="12" />
-            <path d="M17 16q3.5-8 7 0t7 0" />
-            <line x1="36" y1="16" x2="44" y2="16" />
-          </svg>
-          <span>{{ comp.name }}</span>
+            <!-- 2D 平面元件符号(教科书电路图样式) -->
+            <svg
+              v-if="comp.type === 'R'"
+              viewBox="0 0 48 32"
+              class="w-14 h-10"
+              fill="none"
+              stroke="#2563eb"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="16" x2="10" y2="16" />
+              <rect x="10" y="6" width="28" height="20" />
+              <line x1="38" y1="16" x2="44" y2="16" />
+            </svg>
+            <svg
+              v-else-if="comp.type === 'L'"
+              viewBox="0 0 48 32"
+              class="w-14 h-10"
+              fill="none"
+              stroke="#2563eb"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="16" x2="10" y2="16" />
+              <path d="M10 16a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0" />
+              <line x1="34" y1="16" x2="44" y2="16" />
+            </svg>
+            <svg
+              v-else-if="comp.type === 'C'"
+              viewBox="0 0 48 32"
+              class="w-14 h-10"
+              fill="none"
+              stroke="#2563eb"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="4" y1="16" x2="22" y2="16" />
+              <line x1="22" y1="6" x2="22" y2="26" />
+              <line x1="26" y1="6" x2="26" y2="26" />
+              <line x1="26" y1="16" x2="44" y2="16" />
+            </svg>
+            <svg
+              v-else-if="comp.type === 'RV'"
+              viewBox="0 0 48 32"
+              class="w-14 h-10"
+              fill="none"
+              stroke="#2563eb"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="16" x2="10" y2="16" />
+              <rect x="10" y="6" width="28" height="20" />
+              <line x1="16" y1="22" x2="30.5" y2="11" />
+              <path d="M26.2 8.9 L30.5 11 L27.5 15" />
+              <line x1="38" y1="16" x2="44" y2="16" />
+            </svg>
+            <svg
+              v-else-if="comp.type === 'CV'"
+              viewBox="0 0 48 32"
+              class="w-14 h-10"
+              fill="none"
+              stroke="#2563eb"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="4" y1="16" x2="13" y2="16" />
+              <line x1="13" y1="9" x2="13" y2="23" />
+              <line x1="22" y1="9" x2="22" y2="23" />
+              <line x1="22" y1="16" x2="44" y2="16" />
+              <line x1="15" y1="21" x2="20.5" y2="10" />
+              <path d="M17 8.8 L20.5 10 L18.6 13.9" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 48 32"
+              class="w-14 h-10"
+              fill="none"
+              stroke="#2563eb"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="4" y1="16" x2="12" y2="16" />
+              <circle cx="24" cy="16" r="12" />
+              <path d="M17 16q3.5-8 7 0t7 0" />
+              <line x1="36" y1="16" x2="44" y2="16" />
+            </svg>
+            <span>{{ comp.name }}</span>
+          </div>
         </div>
-      </div>
       </NScrollbar>
 
       <!-- 中栏:2D 画布 + 3D 实体模型 -->
       <div class="min-w-0">
         <div class="circuit-controls flex items-center gap-2 mb-2 flex-wrap">
           <NDropdown trigger="click" :options="presetOptions" @select="applyPreset">
-            <NButton>
+            <NButton secondary>
               <template #icon><NIcon :component="Catalog" /></template>
               导入示例
             </NButton>
           </NDropdown>
-          <NButton :type="circuitMode === 'wire' ? 'primary' : 'default'" @click="setCircuitMode('wire')">
+          <NButton secondary :type="circuitMode === 'wire' ? 'primary' : 'default'" @click="setCircuitMode('wire')">
             <template #icon><NIcon :component="Link" /></template>
             接线
           </NButton>
-          <NButton :type="circuitMode === 'delete' ? 'error' : 'default'" @click="setCircuitMode('delete')">
+          <NButton secondary :type="circuitMode === 'delete' ? 'error' : 'default'" @click="setCircuitMode('delete')">
             <template #icon><NIcon :component="TrashCan" /></template>
             删除
           </NButton>
-          <NButton :title="isFullscreen ? '退出全屏 (Esc)' : '全屏编辑,便于排列元件'" @click="toggle">
+          <NButton secondary :title="isFullscreen ? '退出全屏 (Esc)' : '全屏编辑,便于排列元件'" @click="toggle">
             <template #icon><NIcon :component="isFullscreen ? Minimize : Maximize" /></template>
             {{ isFullscreen ? '退出全屏' : '全屏' }}
           </NButton>
-          <NButton class="ml-auto" type="primary" @click="$emit('simulate')">
+          <NButton class="ml-auto" secondary type="primary" @click="$emit('simulate')">
             <template #icon><NIcon :component="Rocket" /></template>
             仿真
           </NButton>
-          <NButton tertiary type="error" @click="$emit('reset')">
+          <NButton secondary type="error" @click="$emit('reset')">
             <template #icon><NIcon :component="Reset" /></template>
             清空
           </NButton>
@@ -149,7 +149,7 @@
         <div class="relative">
           <canvas
             ref="canvasRef"
-            class="c2d-stage w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-gray-300 rounded-lg blueprint-grid cursor-crosshair touch-none"
+            class="c2d-stage w-full h-[200px] sm:h-[240px] md:h-[280px] border-2 border-dashed border-[color:var(--app-border-dark)] rounded-lg blueprint-grid cursor-crosshair touch-none"
             @drop="handleDrop"
             @dragover="allowDrop"
             @mousedown="handlePointerDown"
@@ -161,7 +161,7 @@
           <!-- 空态引导:淡色居中提示,不抢画布焦点 -->
           <div
             v-if="components.length === 0"
-            class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pointer-events-none select-none"
+            class="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none select-none"
           >
             <svg viewBox="0 0 64 40" class="w-16 h-10 opacity-40">
               <!-- 画布空态淡线示意:R-L-C-V 串联链 + 虚线连接 -->
@@ -175,7 +175,7 @@
               <text x="50" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#9db0c8">C</text>
               <circle cx="61" cy="20" r="2.5" fill="none" stroke="#9db0c8" stroke-width="1.6" />
             </svg>
-            <span class="text-xs text-gray-400">从左侧拖入元件,在画布上搭建 RLC 串联电路</span>
+            <span class="text-xs text-[color:var(--app-text-faint)]">从左侧拖入元件,在画布上搭建 RLC 串联电路</span>
           </div>
         </div>
 
@@ -203,59 +203,60 @@
       <!-- 右栏:元件参数编辑 + 公差设置;全屏时隐藏(画布占满,参数编辑退出全屏再做) -->
       <div v-if="!isFullscreen" class="min-w-0">
         <!-- 元件参数编辑器 -->
-        <div v-if="components.length > 0" class="mt-3">
-          <div class="text-xs sm:text-sm font-semibold text-gray-700 mb-2">📝 元件参数编辑</div>
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-1 gap-2">
-            <div
-              v-for="(comp, idx) in components"
-              :id="'cb-comp-' + idx"
-              :key="idx"
-              :class="['p-2 rounded-lg', selectedComponentIndex === idx ? 'border-2 border-blue-500' : '']"
-            >
-              <label class="text-xs text-gray-600">{{ getComponentLabel(comp.type) }} #{{ idx + 1 }}</label>
-              <div class="flex gap-1 items-center mt-1">
-                <input
-                  type="number"
-                  step="any"
-                  :value="getCompDisplay(idx)"
-                  @input="onCompInput(idx, $event)"
-                  @blur="onCompBlur(idx)"
-                  class="w-full min-w-0 px-2 py-1.5 border border-gray-300 rounded text-sm"
-                />
-                <span class="text-xs text-gray-500 whitespace-nowrap">{{ getComponentUnit(comp.type) }}</span>
+        <div v-if="components.length > 0">
+          <div>📝 元件参数编辑</div>
+          <NForm label-placement="top" :show-feedback="false">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-1 gap-2">
+              <div
+                v-for="(comp, idx) in components"
+                :id="'cb-comp-' + idx"
+                :key="idx"
+                :class="[
+                  'p-2 rounded-lg',
+                  selectedComponentIndex === idx ? 'border-2 border-[color:var(--app-primary)]' : '',
+                ]"
+              >
+                <NFormItem :label="`${getComponentLabel(comp.type)} #${idx + 1}`">
+                  <NInputNumber
+                    :value="comp.value"
+                    :show-button="false"
+                    :min="VALUE_RANGE[comp.type]?.min"
+                    :max="VALUE_RANGE[comp.type]?.max"
+                    @update:value="(v) => onCompValueChange(idx, v)"
+                  >
+                    <template #suffix>{{ getComponentUnit(comp.type) }}</template>
+                  </NInputNumber>
+                </NFormItem>
               </div>
             </div>
-          </div>
+          </NForm>
         </div>
 
         <!-- 元件公差设置 -->
-        <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+        <div class="mt-3 p-3 bg-[var(--app-surface-sunken)] rounded-lg">
           <div class="flex items-center gap-3 mb-2">
-            <div class="text-xs sm:text-sm font-semibold text-gray-700">📐 元件公差</div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" v-model="toleranceEnabled" class="sr-only peer" @change="onToleranceToggle" />
-              <div
-                class="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
-              ></div>
-            </label>
-            <span class="text-xs text-gray-500">{{ toleranceEnabled ? '已开启' : '已关闭' }}</span>
+            <div class="text-xs font-semibold text-[color:var(--app-text)]">📐 元件公差</div>
+            <NSwitch :value="toleranceEnabled" @update:value="onToleranceToggle" />
+            <span class="text-xs text-[color:var(--app-text-muted)]">{{ toleranceEnabled ? '已开启' : '已关闭' }}</span>
           </div>
           <div v-if="toleranceEnabled" class="flex items-center gap-3">
-            <span class="text-xs text-gray-600 whitespace-nowrap">公差范围：</span>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              step="0.5"
-              v-model.number="tolerancePercent"
-              class="flex-1 cursor-pointer"
-              @input="onToleranceChange"
+            <span class="text-xs text-[color:var(--app-text-muted)] whitespace-nowrap">公差范围：</span>
+            <NSlider
+              v-model:value="tolerancePercent"
+              :min="1"
+              :max="20"
+              :step="0.5"
+              class="flex-1"
+              @update:value="onToleranceChange"
             />
-            <span class="text-xs font-semibold text-blue-600 min-w-[40px] text-right"
+            <span class="text-xs font-semibold text-[color:var(--app-brand)] min-w-[40px] text-right"
               >±{{ tolerancePercent.toFixed(1) }}%</span
             >
           </div>
-          <div v-if="toleranceEnabled" class="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1">
+          <div
+            v-if="toleranceEnabled"
+            class="text-xs text-[color:var(--app-warning)] bg-[var(--app-warning-bg)] rounded px-2 py-1 mt-1"
+          >
             💡 开启后每次仿真实物参数将在标称值的 ±{{ tolerancePercent.toFixed(1) }}% 范围内随机波动
           </div>
         </div>
@@ -266,7 +267,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
-import { NIcon, NButton, NScrollbar, NDropdown } from 'naive-ui'
+import { NIcon, NButton, NScrollbar, NDropdown, NForm, NFormItem, NInputNumber, NSlider, NSwitch } from 'naive-ui'
 import { Link, TrashCan, Rocket, Reset, Maximize, Minimize, Catalog } from '@vicons/carbon'
 import { CIRCUIT_PRESET_OPTIONS, findPreset } from '@/utils/circuitPresets'
 import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
@@ -284,9 +285,10 @@ const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
 const toleranceEnabled = ref(calcStore.toleranceEnabled)
 const tolerancePercent = ref(calcStore.tolerancePercent)
 
-function onToleranceToggle() {
-  calcStore.toleranceEnabled = toleranceEnabled.value
-  if (toleranceEnabled.value) {
+function onToleranceToggle(val) {
+  toleranceEnabled.value = val
+  calcStore.toleranceEnabled = val
+  if (val) {
     calcStore.tolerancePercent = tolerancePercent.value
   }
 }
@@ -359,34 +361,15 @@ function applyPreset(id) {
   wireIntermediatePoints.value = []
   selectedComponentIndex.value = null
   pendingPlaceType.value = null
-  compInputValues.value = {}
   nextTick(drawCircuit)
 }
 
-// 元件输入编辑状态（解决输入小数时 parseFloat 吞掉中间状态的问题）
-const compInputValues = ref({})
-
-function getCompDisplay(idx) {
-  if (idx in compInputValues.value) return compInputValues.value[idx]
-  return props.components[idx]?.value ?? ''
-}
-
-function onCompInput(idx, event) {
-  compInputValues.value[idx] = event.target.value
-}
-
-function onCompBlur(idx) {
-  const raw = compInputValues.value[idx]
-  if (raw !== undefined) {
-    const num = parseFloat(raw)
-    if (!isNaN(num)) {
-      const newComponents = [...props.components]
-      const range = VALUE_RANGE[newComponents[idx].type]
-      newComponents[idx].value = range ? Math.min(Math.max(num, range.min), range.max) : num
-      emit('update:components', newComponents)
-    }
-    delete compInputValues.value[idx]
-  }
+// 元件参数编辑:数值直接写回(量程钳制交由 NInputNumber 的 min/max)
+function onCompValueChange(idx, num) {
+  if (num === null || Number.isNaN(num)) return
+  const newComponents = [...props.components]
+  newComponents[idx] = { ...newComponents[idx], value: num }
+  emit('update:components', newComponents)
 }
 
 const componentTypes = [
@@ -1268,7 +1251,7 @@ watch([() => props.components, () => props.wires, () => props.junctions], () => 
   z-index: var(--z-overlay);
   overflow-y: auto;
   padding: 16px;
-  background: var(--paper);
+  background: var(--app-bg);
   border-radius: 0;
 }
 /* 全屏时画布抬高以充分利用视口:2D 由 ResizeObserver 自动重绘,3D 由 Circuit3DCanvas 自身观察者自适应 */
@@ -1293,4 +1276,3 @@ watch([() => props.components, () => props.wires, () => props.junctions], () => 
   }
 }
 </style>
-

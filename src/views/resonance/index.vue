@@ -9,23 +9,23 @@ const modules = navRoutes.find((item) => item.name === 'resonance')?.children ??
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-16px sm:grid-cols-2 xl:grid-cols-4">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <RouterLink
       v-for="mod in modules"
       :key="mod.name"
       :to="mod.path"
-      class="group flex flex-col gap-8px rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] no-underline transition hover:-translate-y-2px"
+      class="group flex flex-col gap-2 rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] no-underline transition hover:-translate-y-2px"
     >
-      <div class="flex items-center gap-12px">
+      <div class="flex items-center gap-3">
         <span
-          class="flex size-48px shrink-0 items-center justify-center rounded-lg bg-[var(--soft-blue)] text-[var(--navy)]"
+          class="flex size-48px shrink-0 items-center justify-center rounded-lg bg-[var(--app-surface-brand)] text-[var(--app-brand)]"
         >
           <NIcon :component="mod.icon" :size="26" />
         </span>
-        <h2 class="text-20px font-bold text-[var(--ink)] [font-family:var(--font-head)]">{{ mod.label }}</h2>
+        <h2 class="text-20px font-bold text-[var(--app-text)] [font-family:var(--app-font-heading)]">{{ mod.label }}</h2>
       </div>
-      <p class="flex-1 text-14px leading-[1.7] text-[var(--muted)]">{{ mod.desc }}</p>
-      <span class="inline-flex items-center gap-4px text-14px font-semibold text-[var(--navy)]">
+      <p class="flex-1 leading-[1.7] text-[var(--app-text-muted)]">{{ mod.desc }}</p>
+      <span class="inline-flex items-center gap-1 font-semibold text-[var(--app-brand)]">
         进入 <NIcon :component="ArrowRight" :size="16" />
       </span>
     </RouterLink>

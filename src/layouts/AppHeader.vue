@@ -12,10 +12,10 @@ const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
 
 <template>
   <header
-    class="app-header sticky top-0 z-[var(--z-chrome)] flex items-center gap-12px border-b border-[var(--line)] bg-[var(--card-bg-90)] backdrop-blur-[8px] transition-colors"
+    class="app-header sticky top-0 z-[var(--z-chrome)] flex items-center gap-3 border-b border-[var(--app-border)] bg-[color-mix(in srgb, var(--app-surface), transparent 10%)] backdrop-blur-[8px] transition-colors"
   >
     <button
-      class="inline-flex size-40px shrink-0 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--tab-hover-bg)] hover:text-[var(--navy)]"
+      class="inline-flex size-40px shrink-0 items-center justify-center rounded-lg text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-brand)] hover:text-[var(--app-brand)]"
       type="button"
       aria-label="切换导航菜单"
       @click="$emit('toggle-menu')"
@@ -23,21 +23,21 @@ const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
       <NIcon :component="Menu" :size="24" />
     </button>
 
-    <RouterLink to="/home" class="flex min-w-0 items-center gap-8px text-[var(--navy)]">
-      <span class="inline-flex shrink-0 text-[var(--navy)]" aria-hidden="true">
+    <RouterLink to="/home" class="flex min-w-0 items-center gap-2 text-[var(--app-brand)]">
+      <span class="inline-flex shrink-0 text-[var(--app-brand)]" aria-hidden="true">
         <img :src="logoSrc" alt="" width="40" height="40" />
       </span>
       <span class="flex min-w-0 flex-col leading-[1.2]">
-        <strong class="truncate text-18px font-bold tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)]"
+        <strong class="truncate text-18px font-bold tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)]"
           >基于Web栈的RLC电路虚仿平台</strong
         >
-        <span class="truncate text-12px tracking-[0.3px] text-[var(--faint)] max-sm:hidden"
+        <span class="truncate text-xs tracking-[0.3px] text-[var(--app-text-faint)] max-sm:hidden"
           >RLC 串联谐振 · 理论仿真 · 实测比对 · 误差分析</span
         >
       </span>
     </RouterLink>
 
-    <div class="ml-auto flex shrink-0 items-center gap-8px">
+    <div class="ml-auto flex shrink-0 items-center gap-2">
       <ThemeSwitcher />
     </div>
   </header>

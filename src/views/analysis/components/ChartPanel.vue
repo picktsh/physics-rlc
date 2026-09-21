@@ -1,61 +1,70 @@
 <template>
-  <div class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)]">
+  <div class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
     <!-- 标签和频率范围 -->
-    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-      <div class="flex gap-1.5 overflow-x-auto scrollbar-hide">
-        <button
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+      <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+        <NButton
           v-for="tab in tabs"
           :key="tab.value"
-          :class="[
-            'px-2.5 md:px-4 py-1.5 md:py-2 text-xs md:text-sm rounded-lg transition-all whitespace-nowrap',
-            currentChart === tab.value
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
-          ]"
-          @click="switchChart(tab.value, $event)"
+          secondary
+          :type="currentChart === tab.value ? 'primary' : 'default'"
+          class="whitespace-nowrap"
+          @click="switchChart(tab.value)"
         >
           {{ tab.label }}
-        </button>
+        </NButton>
       </div>
-      <div class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-600 flex-wrap sm:ml-auto">
-        <span class="hidden sm:inline">频率范围:</span>
-        <input
-          type="range"
-          min="1"
-          max="10000"
-          :value="localFStart"
-          @input="syncFromSlider('start', $event)"
-          class="w-14 sm:w-20 cursor-pointer"
-        />
-        <input
-          type="number"
-          v-model.number="localFStart"
-          min="1"
-          class="w-14 sm:w-16 px-1 py-1 border border-gray-300 rounded text-xs sm:text-sm"
-          @change="applyFreqRange"
-        />
-        <span>~</span>
-        <input
-          type="number"
-          v-model.number="localFEnd"
-          min="1"
-          class="w-14 sm:w-16 px-1 py-1 border border-gray-300 rounded text-xs sm:text-sm"
-          @change="applyFreqRange"
-        />
-        <input
-          type="range"
-          min="1"
-          max="10000"
-          :value="localFEnd"
-          @input="syncFromSlider('end', $event)"
-          class="w-14 sm:w-20 cursor-pointer"
-        />
-        <span>Hz</span>
-      </div>
+      <NForm label-placement="top" :show-feedback="false" class="sm:ml-auto">
+        <NFormItem label="频率范围" class="flex-none">
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="w-14 sm:w-20">
+              <NSlider
+                :min="1"
+                :max="10000"
+                :step="1"
+                :value="localFStart"
+                @update:value="(v) => syncFromSlider('start', v)"
+              />
+            </div>
+            <div class="w-16 sm:w-20">
+              <NInputNumber
+                :min="1"
+                :show-button="false"
+                :value="localFStart"
+                @update:value="(v) => (localFStart = v)"
+                @blur="applyFreqRange"
+              />
+            </div>
+            <span>~</span>
+            <div class="w-16 sm:w-20">
+              <NInputNumber
+                :min="1"
+                :show-button="false"
+                :value="localFEnd"
+                @update:value="(v) => (localFEnd = v)"
+                @blur="applyFreqRange"
+              />
+            </div>
+            <div class="w-14 sm:w-20">
+              <NSlider
+                :min="1"
+                :max="10000"
+                :step="1"
+                :value="localFEnd"
+                @update:value="(v) => syncFromSlider('end', v)"
+              />
+            </div>
+            <span>Hz</span>
+          </div>
+        </NFormItem>
+      </NForm>
     </div>
 
     <!-- 实测提示:实测点仅叠加在幅频图上,避免在相频/阻抗页误以为丢失 -->
-    <div v-if="measuredData.length > 0 && currentChart !== 'amp'" class="mb-1.5 text-xs text-amber-600">
+    <div
+      v-if="measuredData.length > 0 && currentChart !== 'amp'"
+      class="mb-1.5 text-xs text-[color:var(--app-warning)]"
+    >
       📗 已有实测数据:绿色实测曲线叠加在「幅频特性 I-f」图上,请切换查看
     </div>
     <!-- 实测-仿真量级错配提示:实测电流远大于仿真峰时,蓝线会被压缩成底部直线,引导用户检查单位与参数 -->
@@ -63,16 +72,14 @@
       v-if="
         currentChart === 'amp' && measuredData.length > 0 && ampPeaks.meas > 0 && ampPeaks.meas > ampPeaks.theory * 1.5
       "
-      class="mb-1.5 text-xs text-amber-600"
+      class="mb-1.5 text-xs text-[color:var(--app-warning)]"
     >
       ⚠ 实测电流峰值 {{ ampPeaks.meas.toFixed(2) }} mA,高于仿真峰值
-      {{
-        ampPeaks.theory.toFixed(2)
-      }}
+      {{ ampPeaks.theory.toFixed(2) }}
       mA:蓝色仿真曲线被压缩变矮,请核对电流单位(mA)与仿真参数(R/L/C/V,元件修改后需重新仿真)
     </div>
     <!-- 图表Canvas(bg-transparent:保留容器 blueprint-grid 图纸底,画布不遮挡网格) -->
-    <div class="chart-container blueprint-grid rounded-lg p-3 border border-gray-200 relative">
+    <div class="chart-container blueprint-grid rounded-lg p-3 border border-[color:var(--app-border)] relative">
       <canvas
         ref="chartCanvasRef"
         class="w-full cursor-crosshair bg-transparent"
@@ -83,32 +90,32 @@
            坐标由 drawAmpChart 每次重绘同步写入 halfPowerMark -->
       <div
         v-if="halfPowerMark"
-        class="absolute -translate-y-full pointer-events-none text-[10px] text-[#e0523f] leading-none"
+        class="absolute -translate-y-full pointer-events-none text-xs text-[color:var(--app-error)] leading-none"
         :style="{ left: halfPowerMark.x + 'px', top: halfPowerMark.y + 'px' }"
       >
         <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}mA</span>
       </div>
       <div
         v-if="tooltip.show"
-        class="chart-tooltip absolute bg-white/95 border border-gray-200 rounded-lg px-3 py-2 text-xs shadow-lg pointer-events-none whitespace-nowrap"
+        class="chart-tooltip absolute bg-[color-mix(in_srgb,var(--app-surface),transparent_5%)] border border-[color:var(--app-border)] rounded-lg px-3 py-2 text-xs shadow-lg pointer-events-none whitespace-nowrap"
         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
         v-html="tooltip.content"
       ></div>
     </div>
 
     <!-- 图例 -->
-    <div class="legend flex justify-center gap-4 mt-3 text-xs text-gray-600 flex-wrap">
-      <div class="flex items-center gap-1">
-        <div class="w-4 h-0.5 bg-[#2563eb]"></div>
+    <div class="legend flex justify-center gap-4 mt-3 text-xs text-[color:var(--app-text-muted)] flex-wrap">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-0.5 bg-[var(--app-primary)]"></div>
         <span>理论曲线</span>
       </div>
-      <div class="flex items-center gap-1">
-        <div class="w-2 h-2 rounded-full bg-green-600"></div>
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-[var(--app-success)]"></div>
         <span>实测数据</span>
       </div>
-      <div class="flex items-center gap-1">
-        <div class="w-4 h-0 border-t-2 border-dashed border-gray-400"></div>
-        <span class="inline-flex items-center gap-1">
+      <div class="flex items-center gap-2">
+        <div class="w-4 h-0 border-t-2 border-dashed border-[color:var(--app-border-dark)]"></div>
+        <span class="inline-flex items-center gap-2">
           <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span>
           <span>截止电流</span>
         </span>
@@ -121,6 +128,7 @@
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
+import { NButton, NForm, NFormItem, NInputNumber, NSlider } from 'naive-ui'
 import { impedance, calculateRLC } from '@/utils/physics'
 import { canvasTheme } from '@/utils/canvasTheme'
 
@@ -719,8 +727,8 @@ function switchChart(type) {
   nextTick(() => drawChart())
 }
 
-function syncFromSlider(which, event) {
-  const val = parseInt(event.target.value)
+function syncFromSlider(which, val) {
+  val = Math.round(val)
   if (which === 'start') {
     if (val >= localFEnd.value) localFStart.value = localFEnd.value - 1
     else localFStart.value = val

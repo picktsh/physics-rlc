@@ -29,10 +29,10 @@ onMounted(() => {
 <template>
   <div class="fixed inset-0 flex items-center justify-center">
     <NCard class="w-300px rounded-lg text-center" :bordered="false">
-      <div class="mb-16px flex justify-center text-[#2563eb]">
+      <div class="mb-4 flex justify-center text-[color:var(--app-brand)]">
         <NIcon :component="Password" :size="48" />
       </div>
-      <div class="mb-16px text-18px font-700">请输入验证码</div>
+      <div class="mb-4 text-18px font-700">请输入验证码</div>
       <div ref="otpWrapRef">
         <NInputOtp
           block
@@ -43,8 +43,8 @@ onMounted(() => {
           @finish="appStore.otpVerify"
         />
       </div>
-      <div class="min-h-20px mt-8px mb-16px text-12px text-[#d03050]">{{ appStore.otpMsg }}</div>
-      <div class="text-12px text-gray-500">请联系管理员获取</div>
+      <div class="min-h-20px mt-2 mb-4 text-xs text-[color:var(--app-error)]">{{ appStore.otpMsg }}</div>
+      <div class="text-xs text-[color:var(--app-text-muted)]">请联系管理员获取</div>
     </NCard>
   </div>
 </template>

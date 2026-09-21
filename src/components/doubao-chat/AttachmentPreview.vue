@@ -16,7 +16,7 @@ const emit = defineEmits(['remove'])
       <img
         v-if="file.preview"
         :src="file.preview"
-        class="w-16 h-16 object-cover rounded-lg border border-gray-200"
+        class="w-16 h-16 object-cover rounded-lg border border-[color:var(--app-border)]"
       />
       <!-- 音频图标 -->
       <NTag v-else-if="file.isAudio" size="small" type="info" class="w-16 h-16 flex items-center justify-center">
@@ -28,11 +28,12 @@ const emit = defineEmits(['remove'])
       </NTag>
 
       <!-- 删除按钮 -->
+      <!-- 删除按钮:圆形实心用 NButton type="error"+circle,主题色自动跟随 --app-error -->
       <NButton
-        text
+        circle
         size="tiny"
         type="error"
-        class="absolute -top-1 -right-1 w-5 h-5 !p-0 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+        class="absolute -top-1 -right-1 !min-w-0 !w-5 !h-5 !p-0 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
         @click="emit('remove', idx)"
       >
         <NIcon :component="Close" :size="12" />

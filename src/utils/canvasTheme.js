@@ -11,6 +11,6 @@ export function canvasTheme() {
     labelDim: v('--canvas-label-dim', '#b3c1d4'), // 次要文字
     ink: v('--canvas-ink', '#1c2534'), // 深色文字(元件标签等)
     wire: v('--canvas-wire', '#2563eb'), // 电路导线/选中框
-    accent: v('--accent-solid', '#2563eb'), // 主题强调色(曲线)
+    accent: v('--app-primary', '#2563eb'), // 主题强调色(曲线)
   }
 }

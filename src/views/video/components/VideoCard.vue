@@ -53,21 +53,21 @@ const canHover = useMediaQuery('(hover: hover)')
 </script>
 
 <template>
-  <!-- 阴影走主题变量 --card-shadow:黑底自动转深,故不自带边框(见 main.css) -->
-  <div class="group overflow-hidden rounded-lg bg-white shadow-[var(--card-shadow)] transition-all duration-200">
+  <!-- 阴影走主题变量 --app-shadow:黑底自动转深,故不自带边框(见 main.css) -->
+  <div class="group overflow-hidden rounded-lg bg-[var(--app-surface)] shadow-[var(--app-shadow)] transition-all duration-200">
     <!-- 视频区:黑底由本容器提供;播放器常驻,iframe 是否挂载与占位转圈均由 VideoPlayer 依 isPlayerReady 内部控制,保证动画连续 -->
     <div ref="mediaEl" class="relative aspect-video overflow-hidden bg-black">
       <VideoPlayer ref="playerRef" :video="video" :ready="isPlayerReady" />
     </div>
-    <div class="relative flex items-start gap-1 px-3 py-2.5">
-      <p class="flex-1 text-[13px] leading-snug text-[#33415e] line-clamp-2" :title="video.title">
+    <div class="relative flex items-start gap-2 px-3 py-2.5">
+      <p class="flex-1 leading-snug text-[color:var(--app-text)] line-clamp-2" :title="video.title">
         {{ video.title }}
       </p>
       <NTooltip trigger="hover" placement="top" :disabled="!canHover">
         <template #trigger>
           <!-- PC:默认透明、hover 卡片才显形;触屏无 hover 能力则常驻淡背景描边 -->
           <button
-            class="mt-0.5 flex h-[26px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-transparent text-[#94a3b8] opacity-0 transition duration-200 group-hover:opacity-100 hover:border-[#e2e8f0] hover:bg-[#f1f5f9] hover:text-[#475569] [@media(hover:none)]:border-[#e2e8f0] [@media(hover:none)]:bg-[#f1f5f9] [@media(hover:none)]:text-[#475569] [@media(hover:none)]:opacity-100"
+            class="mt-0.5 flex h-[26px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-transparent text-[color:var(--app-text-faint)] opacity-0 transition duration-200 group-hover:opacity-100 hover:border-[color:var(--app-border)] hover:bg-[var(--app-surface-sunken)] hover:text-[color:var(--app-text-muted)] [@media(hover:none)]:border-[color:var(--app-border)] [@media(hover:none)]:bg-[var(--app-surface-sunken)] [@media(hover:none)]:text-[color:var(--app-text-muted)] [@media(hover:none)]:opacity-100"
             @click="handleExpand"
           >
             <NIcon :component="Maximize" :size="24" />

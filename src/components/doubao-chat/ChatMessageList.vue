@@ -26,10 +26,10 @@ defineExpose({ scrollToBottom })
 </script>
 
 <template>
-  <NScrollbar ref="scrollbarRef" class="flex-1 bg-gray-50">
+  <NScrollbar ref="scrollbarRef" class="flex-1 bg-[var(--app-surface-sunken)]">
     <div class="px-4 py-3 space-y-3">
       <!-- 空状态 -->
-      <div v-if="messages.length === 0" class="flex flex-col items-center justify-center min-h-[300px] text-gray-400">
+      <div v-if="messages.length === 0" class="flex flex-col items-center justify-center min-h-[300px] text-[color:var(--app-text-faint)]">
         <NEmpty description="你好！我是豆包 AI 助手">
           <template #extra>
             <span class="text-xs">支持图片、视频、文件</span>
@@ -46,12 +46,12 @@ defineExpose({ scrollToBottom })
         <!-- AI 回复消息 -->
         <div v-if="msg.role === 'assistant'" class="w-full relative group">
           <div
-            class="px-3 py-2 rounded-lg text-sm whitespace-pre-wrap break-words bg-white shadow-sm border border-gray-100 rounded-bl-sm"
+            class="px-3 py-2 rounded-lg whitespace-pre-wrap break-words bg-[var(--app-surface)] shadow-sm border border-[color:var(--app-border-light)] rounded-bl-sm"
           >
             <!-- 复制按钮（悬停显示） -->
             <NButton
               v-if="msg.content"
-              size="tiny"
+              secondary
               class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
               @click="handleCopy(msg.content)"
             >
@@ -85,7 +85,7 @@ defineExpose({ scrollToBottom })
         <!-- 用户消息 -->
         <div v-else class="max-w-[80%]">
           <div
-            class="px-3 py-2 rounded-lg text-sm whitespace-pre-wrap break-words bg-blue-600 text-white rounded-br-sm"
+            class="px-3 py-2 rounded-lg whitespace-pre-wrap break-words bg-[var(--app-primary)] text-white rounded-br-sm"
           >
             <!-- 附件预览 -->
             <div v-if="msg.attachments?.length" class="mb-2 space-y-2">
@@ -110,11 +110,11 @@ defineExpose({ scrollToBottom })
 
       <!-- 加载动画 -->
       <div v-if="loading && messages.length && messages[messages.length - 1].content === ''" class="flex justify-start">
-        <div class="bg-white px-3 py-2 rounded-lg rounded-bl-sm shadow-sm border border-gray-100">
-          <div class="flex gap-1">
-            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0s" />
-            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.15s" />
-            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.3s" />
+        <div class="bg-[var(--app-surface)] px-3 py-2 rounded-lg rounded-bl-sm shadow-sm border border-[color:var(--app-border-light)]">
+          <div class="flex gap-2">
+            <span class="w-2 h-2 bg-[var(--app-primary)] rounded-full animate-bounce" style="animation-delay: 0s" />
+            <span class="w-2 h-2 bg-[var(--app-primary)] rounded-full animate-bounce" style="animation-delay: 0.15s" />
+            <span class="w-2 h-2 bg-[var(--app-primary)] rounded-full animate-bounce" style="animation-delay: 0.3s" />
           </div>
         </div>
       </div>
@@ -128,13 +128,13 @@ defineExpose({ scrollToBottom })
   line-height: 1.6;
 }
 :deep(.prose pre) {
-  background: var(--panel-bg);
+  background: var(--app-surface-muted);
   padding: 0.75rem;
   border-radius: 0.5rem;
   overflow-x: auto;
 }
 :deep(.prose code) {
-  background: var(--panel-bg);
+  background: var(--app-surface-muted);
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
@@ -150,18 +150,18 @@ defineExpose({ scrollToBottom })
 }
 :deep(.prose th),
 :deep(.prose td) {
-  border: 1px solid var(--line);
+  border: 1px solid var(--app-border);
   padding: 0.5rem;
   text-align: left;
 }
 :deep(.prose th) {
-  background: var(--soft-bg);
+  background: var(--app-surface-sunken);
   font-weight: 600;
 }
 :deep(.prose blockquote) {
-  border-left: 4px solid var(--navy);
+  border-left: 4px solid var(--app-brand);
   padding-left: 1rem;
-  color: var(--muted);
+  color: var(--app-text-muted);
   font-style: italic;
 }
 </style>

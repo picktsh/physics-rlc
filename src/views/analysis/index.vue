@@ -2,6 +2,7 @@
 // 仿真分析页:计算结果 / 三大特性曲线 / 实测数据输入 / 误差分析。
 // 迁自旧 home/index.vue 的 analysis 段及其配套 handler(实测绘制扩窗、历史导入导出、加载)。
 import { ref, nextTick } from 'vue'
+import { useMessage } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 import ResultCards from './components/ResultCards.vue'
 import ChartPanel from './components/ChartPanel.vue'
@@ -13,6 +14,7 @@ import { useHistoryStore } from '@/stores/historyDB'
 
 const calcStore = useRLCCalculatorStore()
 const historyStore = useHistoryStore()
+const message = useMessage()
 
 const { params, results, ampCurveData, phaseCurveData, impedanceCurveData } = storeToRefs(calcStore)
 const { simulationHistory, measuredHistory } = storeToRefs(historyStore)
@@ -47,7 +49,7 @@ function fitWindowToMeasured(data) {
 function handlePlotMeasured() {
   const data = calcStore.measuredData
   if (!Array.isArray(data) || data.length === 0) {
-    alert('暂无实测数据:请先在上方输入或粘贴数据,再点击绘制')
+    message.warning('暂无实测数据:请先在上方输入或粘贴数据,再点击绘制')
     return
   }
   if (!calcStore.simulated) {
@@ -56,7 +58,7 @@ function handlePlotMeasured() {
   // 频率单位校验:表格单位为 kHz。Hz 数值直填会超量级,导致蓝色理论曲线贴底
   const maxFreqK = Math.max(...data.map((d) => Number(d.freq) || 0))
   if (maxFreqK > 500) {
-    alert(
+    message.warning(
       '提示:实测最大频率约 ' +
         maxFreqK.toFixed(1) +
         ' kHz,远超本实验量级。\n若你输入的是 2252 这类 Hz 数值,请除以 1000 改为 2.252(频率单位是 kHz)。',
@@ -66,7 +68,7 @@ function handlePlotMeasured() {
   const measMax = Math.max(...data.map((d) => Number(d.current) || 0))
   const simPeak = calcStore.results.Imax
   if (measMax > 0 && simPeak > 0 && measMax > simPeak * 2.5) {
-    alert(
+    message.warning(
       '提示:实测电流峰值 ' +
         measMax.toFixed(2) +
         ' mA,约为当前仿真峰值 ' +
@@ -94,7 +96,7 @@ function handleLoadSimHistory(idx) {
     fStart: r.params.fStart,
     fEnd: r.params.fEnd,
   })
-  alert(`已加载 ${r.time} 的仿真参数`)
+  message.success(`已加载 ${r.time} 的仿真参数`)
 }
 
 function handleLoadMeasHistory(idx) {
@@ -108,9 +110,9 @@ async function handleImportSimHistory(file) {
   if (!file) return
   try {
     const count = await historyStore.importSimulationHistory(file)
-    alert(`成功导入仿真记录（共 ${count} 条）`)
+    message.success(`成功导入仿真记录（共 ${count} 条）`)
   } catch (err) {
-    alert('文件解析失败：' + err.message)
+    message.error('文件解析失败：' + err.message)
   }
 }
 
@@ -118,17 +120,17 @@ async function handleImportMeasHistory(file) {
   if (!file) return
   try {
     const count = await historyStore.importMeasuredHistory(file)
-    alert(`成功导入实测记录（共 ${count} 条）`)
+    message.success(`成功导入实测记录（共 ${count} 条）`)
   } catch (err) {
-    alert('文件解析失败：' + err.message)
+    message.error('文件解析失败：' + err.message)
   }
 }
 </script>
 
 <template>
-  <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+  <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
     <h2
-      class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+      class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
     >
       计算结果
     </h2>
@@ -143,9 +145,9 @@ async function handleImportMeasHistory(file) {
     />
   </section>
 
-  <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+  <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
     <h2
-      class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+      class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
     >
       三大特性曲线
     </h2>
@@ -162,9 +164,9 @@ async function handleImportMeasHistory(file) {
     />
   </section>
 
-  <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+  <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
     <h2
-      class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+      class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
     >
       实测数据输入
     </h2>
@@ -181,9 +183,9 @@ async function handleImportMeasHistory(file) {
     />
   </section>
 
-  <section class="rounded-lg bg-[var(--card-bg)] p-16px shadow-[var(--card-shadow)] mb-4">
+  <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
     <h2
-      class="text-16px font-bold leading-normal tracking-[0.5px] text-[var(--ink)] [font-family:var(--font-head)] border-l-4 border-l-[var(--navy)] mb-16px"
+      class="text-base font-bold leading-normal tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)] border-l-4 border-l-[var(--app-brand)] mb-4"
     >
       误差分析
     </h2>
