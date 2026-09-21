@@ -267,6 +267,7 @@
 import { ref, watch } from 'vue'
 import { NButton, NForm, NFormItem, NIcon, NInput, NInputNumber, NUpload, useMessage } from 'naive-ui'
 import { Save, TrashCan, FolderOpen } from '@vicons/carbon'
+import { decimalsFor } from '@/utils/quantity'
 
 // Q 值计算结果
 const qResult = ref({
@@ -473,7 +474,7 @@ function calculateQValue() {
   qResult.value.f1 = parseFloat(f1.toFixed(4))
   qResult.value.f2 = parseFloat(f2.toFixed(4))
   qResult.value.BW = parseFloat(BW.toFixed(4))
-  qResult.value.Q = parseFloat(Q.toFixed(2))
+  qResult.value.Q = parseFloat(Q.toFixed(decimalsFor('Q')))
   // 结果直接由下方结果面板展开呈现,不弹窗打断
   qResult.value.show = true
 
@@ -487,7 +488,7 @@ function calculateQValue() {
     // 理论 Q 值公式：Q = (1/R) * sqrt(L/C)
     const theoreticalQ = (1 / R) * Math.sqrt(L_H / C_F)
 
-    errorAnalysis.value.theoreticalQ = parseFloat(theoreticalQ.toFixed(2))
+    errorAnalysis.value.theoreticalQ = parseFloat(theoreticalQ.toFixed(decimalsFor('Q')))
   }
 
   // 使用手动输入的 Q 值或自动计算的 Q 值

@@ -218,10 +218,12 @@
               >
                 <NFormItem :label="`${getComponentLabel(comp.type)} #${idx + 1}`">
                   <NInputNumber
-                    :value="comp.value"
+                    :value="toDisplayValue(comp.type, comp.value)"
                     :show-button="false"
                     :min="VALUE_RANGE[comp.type]?.min"
                     :max="VALUE_RANGE[comp.type]?.max"
+                    :precision="VALUE_CONFIG[comp.type]?.precision"
+                    :step="VALUE_CONFIG[comp.type]?.step ?? 1"
                     @update:value="(v) => onCompValueChange(idx, v)"
                   >
                     <template #suffix>{{ getComponentUnit(comp.type) }}</template>
@@ -275,6 +277,7 @@ import { useFullscreenSection } from '@/composables/useFullscreenSection'
 import { useMediaQuery } from '@vueuse/core'
 import Circuit3DCanvas from '@/components/Circuit3DCanvas.vue'
 import { canvasTheme } from '@/utils/canvasTheme'
+import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG, displayValue as toDisplayValue, storedValue } from '@/utils/quantity'
 
 const calcStore = useRLCCalculatorStore()
 
@@ -364,11 +367,11 @@ function applyPreset(id) {
   nextTick(drawCircuit)
 }
 
-// 元件参数编辑:数值直接写回(量程钳制交由 NInputNumber 的 min/max)
+// 元件参数编辑:显示单位值换算回内部存储值(L: H → mH)后写回(量程钳制交由 NInputNumber 的 min/max)
 function onCompValueChange(idx, num) {
   if (num === null || Number.isNaN(num)) return
   const newComponents = [...props.components]
-  newComponents[idx] = { ...newComponents[idx], value: num }
+  newComponents[idx] = { ...newComponents[idx], value: storedValue(props.components[idx].type, num) }
   emit('update:components', newComponents)
 }
 
@@ -1217,8 +1220,7 @@ function getComponentLabel(type) {
 }
 
 function getComponentUnit(type) {
-  const units = { R: 'Ω', RV: 'Ω', L: 'mH', C: 'μF', CV: 'μF', V: 'V' }
-  return units[type] || ''
+  return VALUE_CONFIG[type]?.unit || ''
 }
 
 // 2D 画布尺寸随板块全屏/窗口变化时重绘(drawCircuit 内部按 getBoundingClientRect 重算缓冲)

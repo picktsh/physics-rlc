@@ -62,7 +62,7 @@
               {{ r.results.fr.toFixed(4) }}
             </td>
             <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.results.Q.toFixed(4) }}
+              {{ r.results.Q.toFixed(decimalsFor('Q')) }}
             </td>
             <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
               {{ r.results.BW.toFixed(4) }}
@@ -87,6 +87,7 @@
 <script setup>
 import { NButton, NIcon, NUpload } from 'naive-ui'
 import { Save, FolderOpen, TrashCan } from '@vicons/carbon'
+import { decimalsFor } from '@/utils/quantity'
 
 defineProps({
   history: {

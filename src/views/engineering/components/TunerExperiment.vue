@@ -170,7 +170,7 @@
             class="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-[var(--app-surface-sunken)] rounded-lg text-[color:var(--app-text-faint)]"
           >
             <span
-              >品质因数 Q = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.Q.toFixed(1) }}</b></span
+              >品质因数 Q = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.Q.toFixed(decimalsFor('Q')) }}</b></span
             >
             <span
               >带宽 Δf = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.BW.toFixed(1) }}</b> Hz</span
@@ -309,6 +309,7 @@ import { NButton, NCheckbox, NSlider } from 'naive-ui'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import { canvasTheme } from '@/utils/canvasTheme'
+import { decimalsFor } from '@/utils/quantity'
 import {
   STATIONS,
   INTERFERER,

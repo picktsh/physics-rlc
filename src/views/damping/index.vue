@@ -109,7 +109,7 @@
           >
             <div class="font-semibold">{{ simulation.success ? '✅' : '⚠️' }} {{ simulation.message }}</div>
             <div v-if="simulation.success" class="mt-1">
-              等效参数:R = {{ fmt(simulation.params.R) }} Ω · L = {{ fmt(simulation.params.L) }} mH · C =
+              等效参数:R = {{ fmt(simulation.params.R) }} Ω · L = {{ fmt(simulation.params.L / 1000, 3) }} H · C =
               {{ fmt(simulation.params.C, 3) }} μF · V = {{ fmt(simulation.params.V) }} V
               <span class="block mt-0.5">
                 谐振频率 f₀ ≈ {{ fmt(simulation.fr, 1) }} Hz · 阻尼比 ζ ≈ {{ fmt(simulation.zeta, 3) }} →
@@ -139,8 +139,10 @@
                 >
                   <NFormItem :label="`${getComponentLabel(comp.type)} #${idx + 1}`">
                     <NInputNumber
-                      :value="comp.value"
+                      :value="toDisplayValue(comp.type, comp.value)"
                       :show-button="false"
+                      :precision="VALUE_CONFIG[comp.type]?.precision"
+                      :step="VALUE_CONFIG[comp.type]?.step ?? 1"
                       @update:value="(v) => onCompValueChange(idx, v)"
                     >
                       <template #suffix>{{ getComponentUnit(comp.type) }}</template>
@@ -162,6 +164,8 @@
                       <NInputNumber
                         :value="comp.signalFrequency || 100"
                         :show-button="false"
+                        :precision="4"
+                        :step="1"
                         @update:value="(v) => onSignalChange(idx, 'frequency', v)"
                       >
                         <template #suffix>Hz</template>
@@ -520,6 +524,7 @@ import { useFullscreenSection } from '@/composables/useFullscreenSection'
 import { useMediaQuery } from '@vueuse/core'
 import Circuit3DCanvas from '@/components/Circuit3DCanvas.vue'
 import { renderComponentThumbs } from '@/utils/circuit3d'
+import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG, displayValue as toDisplayValue, storedValue } from '@/utils/quantity'
 
 // 08 tab 电路搭建:直接使用 03 tab 同款 3D 实体模型(共享 Circuit3DCanvas + circuit3d 建模模块),
 // 无 2D 画布;数据为独立一份(本页 store),与 03 tab 的电路互不影响
@@ -870,9 +875,9 @@ function onReset() {
   wireClicked.value = false
 }
 
-// ===== 参数输入(数值直接写回 store,量程钳制交由 store.updateComponentValue) =====
+// ===== 参数输入(显示单位值换算回内部存储值后写 store,量程钳制交由 store.updateComponentValue) =====
 function onCompValueChange(idx, num) {
-  store.updateComponentValue(idx, num)
+  store.updateComponentValue(idx, storedValue(store.components[idx]?.type, num))
 }
 
 // ===== 信号源波形参数编辑(频率/周期/占空比/脉宽经 store 双向同步) =====
@@ -899,8 +904,7 @@ function getComponentLabel(type) {
   return labels[type] || type
 }
 function getComponentUnit(type) {
-  const units = { R: 'Ω', RV: 'Ω', L: 'mH', C: 'μF', CV: 'μF', V: 'V' }
-  return units[type] || ''
+  return VALUE_CONFIG[type]?.unit || ''
 }
 
 // ===== LTspice 风格 Canvas 绘制:阻尼状态曲线 =====

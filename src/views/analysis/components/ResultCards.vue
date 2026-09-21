@@ -2,37 +2,39 @@
   <div class="results-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
     <div class="result-card bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
       <div class="text-xs text-[color:var(--app-text-muted)] mb-1">谐振频率 f₀</div>
-      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.fr) }}</div>
+      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.fr, 'fr') }}</div>
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">Hz</div>
     </div>
     <div class="result-card bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
       <div class="text-xs text-[color:var(--app-text-muted)] mb-1">品质因数 Q</div>
-      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.Q) }}</div>
+      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.Q, 'Q') }}</div>
     </div>
     <div class="result-card bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
       <div class="text-xs text-[color:var(--app-text-muted)] mb-1">通频带 BW</div>
-      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.BW) }}</div>
+      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.BW, 'BW') }}</div>
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">Hz</div>
     </div>
     <div class="result-card bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
       <div class="text-xs text-[color:var(--app-text-muted)] mb-1">最大电流 Imax</div>
-      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.Imax) }}</div>
+      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.Imax, 'Imax') }}</div>
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">mA</div>
     </div>
     <div class="result-card bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
       <div class="text-xs text-[color:var(--app-text-muted)] mb-1">Imax/√2</div>
-      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.halfPower) }}</div>
+      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.halfPower, 'halfPower') }}</div>
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">mA</div>
     </div>
     <div class="result-card bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
       <div class="text-xs text-[color:var(--app-text-muted)] mb-1">截止频率 f₁/f₂</div>
-      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.f1) }} / {{ showVal(results.f2) }}</div>
+      <div class="text-lg font-bold text-[color:var(--app-brand)]">{{ showVal(results.f1, 'f1') }} / {{ showVal(results.f2, 'f2') }}</div>
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">Hz</div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { decimalsFor } from '@/utils/quantity'
+
 const props = defineProps({
   results: {
     type: Object,
@@ -44,8 +46,9 @@ const props = defineProps({
   },
 })
 
-function showVal(v) {
-  return props.simulated && v != null && v !== 0 ? v.toFixed(4) : '---'
+// 未登记的量沿用 fallback(4 位);Q 由 quantity 模块统一为 2 位
+function showVal(v, key) {
+  return props.simulated && v != null && v !== 0 ? v.toFixed(decimalsFor(key)) : '---'
 }
 </script>
 
