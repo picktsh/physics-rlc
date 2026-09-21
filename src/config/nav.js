@@ -15,6 +15,7 @@ import {
   ChartLineSmooth,
   Document,
 } from '@vicons/carbon'
+import { siteName } from '@/config/site'
 
 // keepAlive:true 的页面在布局层被 <KeepAlive> 缓存(后台扫频切走不丢进度),
 // 其缓存名取自对应视图组件的 defineOptions({ name }),须与 include 列表一致。
@@ -24,7 +25,7 @@ export const navRoutes = [
     path: '/home',
     label: '首页',
     icon: Home,
-    desc: '基于 Web 栈的 RLC 串联谐振虚仿平台 · 选择一个功能开始',
+    desc: `${siteName} · 选择一个功能开始`,
     component: () => import('@/views/home/index.vue'),
   },
   {

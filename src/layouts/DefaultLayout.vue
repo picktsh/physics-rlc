@@ -67,8 +67,9 @@ watch(
         </div>
       </aside>
 
-      <main class="min-w-0 flex-1">
-        <div class="p-4 lg:p-[16px_40px_40px]">
+      <main class="flex min-w-0 flex-1 flex-col">
+        <!-- flex-1 让内容层撑满 main 高度,把页脚推到主体底部,避免短内容时页脚悬在屏幕中间 -->
+        <div class="flex-1 p-4 lg:p-[16px_40px_40px]">
           <div class="mx-auto max-w-[1560px]">
             <header class="mb-4 border-b border-[var(--app-border)] pb-3">
               <h1

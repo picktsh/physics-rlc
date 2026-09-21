@@ -4,6 +4,7 @@
 import { NIcon } from 'naive-ui'
 import { Menu } from '@vicons/carbon'
 import ThemeSwitcher from '@/components/ui/ThemeSwitcher.vue'
+import { siteName, siteDesc } from '@/config/site'
 
 // 品牌 logo 直接复用站点图标 favicon.svg(与 SiteQrcode 同源);走 BASE_URL 相对路径,兼容 base:'./' 子路径部署
 defineEmits(['toggle-menu'])
@@ -12,7 +13,7 @@ const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
 
 <template>
   <header
-    class="app-header sticky top-0 z-[var(--z-chrome)] flex items-center gap-3 border-b border-[var(--app-border)] bg-[color-mix(in srgb, var(--app-surface), transparent 10%)] backdrop-blur-[8px] transition-colors"
+    class="app-header sticky top-0 z-[var(--z-chrome)] flex items-center gap-3 border-b border-[var(--app-border)] bg-[var(--app-rail-bg)] transition-colors"
   >
     <button
       class="inline-flex size-40px shrink-0 items-center justify-center rounded-lg text-[var(--app-text-muted)] transition-colors hover:bg-[var(--app-surface-brand)] hover:text-[var(--app-brand)]"
@@ -29,10 +30,10 @@ const logoSrc = `${import.meta.env.BASE_URL}favicon.svg`
       </span>
       <span class="flex min-w-0 flex-col leading-[1.2]">
         <strong class="truncate text-18px font-bold tracking-[0.5px] text-[var(--app-text)] [font-family:var(--app-font-heading)]"
-          >基于Web栈的RLC电路虚仿平台</strong
+          >{{ siteName }}</strong
         >
         <span class="truncate text-xs tracking-[0.3px] text-[var(--app-text-faint)] max-sm:hidden"
-          >RLC 串联谐振 · 理论仿真 · 实测比对 · 误差分析</span
+          >{{ siteDesc }}</span
         >
       </span>
     </RouterLink>

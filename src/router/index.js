@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { navRoutes } from '@/config/nav'
+import { siteName } from '@/config/site'
 import { useAppStore } from '@/stores/app'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
@@ -36,6 +37,11 @@ router.beforeEach((to) => {
     return { name: 'home' }
   }
   return true
+})
+
+router.afterEach((to) => {
+  // 浏览器标题单一来源于 config/site:首页只显站名,其余页面为「页面名 · 站名」
+  document.title = !to.meta.title || to.name === 'home' ? siteName : `${to.meta.title} · ${siteName}`
 })
 
 export default router
