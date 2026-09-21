@@ -17,13 +17,18 @@ const route = useRoute()
 
 const groups = navRoutes.filter((item) => item.children?.length)
 
+// 递归收集节点及其所有后代名:nested 容器(如「数据分析」)的子路由也计入,
+// 保证进入其子页(/measure 等)时所属分组能自动展开并高亮
+const descendantNames = (node) => [node.name, ...(node.children?.flatMap(descendantNames) ?? [])]
+const groupContains = (group, name) => !!group.children?.some((c) => descendantNames(c).includes(name))
+
 // 分组开合状态(按组名记忆);仅在路由进入组内子项时自动展开,不干预用户的手动开合
 const groupOpen = ref({})
 watch(
   () => route.name,
   (name) => {
     for (const g of groups) {
-      if (g.children.some((c) => c.name === name)) groupOpen.value[g.name] = true
+      if (groupContains(g, name)) groupOpen.value[g.name] = true
     }
   },
   { immediate: true },
@@ -33,9 +38,9 @@ function toggleGroup(name) {
   groupOpen.value[name] = !groupOpen.value[name]
 }
 
-// 当前路由在组内:父项保持主色,即使子项被手动收起也能定位所在分组
+// 当前路由在组内(含 nested 容器的子页):父项保持主色,即使子项被手动收起也能定位所在分组
 function isGroupActive(group) {
-  return group.children.some((c) => c.name === route.name)
+  return groupContains(group, route.name)
 }
 </script>
 

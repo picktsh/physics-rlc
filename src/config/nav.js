@@ -51,7 +51,7 @@ export const navRoutes = [
     icon: ChartLineSmooth,
     desc: '串联谐振实验搭建与特性测量分析',
     component: () => import('@/views/resonance/index.vue'),
-    // 实验下的四个功能模块:侧栏渲染为折叠分组,路由与首页卡片展平直达
+    // 实验下的功能模块:电路搭建(前半页) + 数据分析(后半页,内含三种判别方法 tabs)
     children: [
       {
         name: 'circuit',
@@ -62,30 +62,43 @@ export const navRoutes = [
         component: () => import('@/views/circuit/index.vue'),
       },
       {
-        name: 'analysis',
-        path: '/analysis',
-        label: '电压最大值法',
+        // 数据分析容器:nested 标记其子路由在容器内 RouterView 渲染(URL 仍各自直达);redirect 让直达 /data-analysis 落到首个方法
+        name: 'data-analysis',
+        path: '/data-analysis',
+        label: '数据分析',
         icon: Analytics,
-        desc: '计算结果、三大特性曲线、实测比对与误差分析',
+        desc: '电压最大值法、相位差判别法、LC 电压幅值法三种谐振判别',
         component: () => import('@/views/analysis/index.vue'),
-      },
-      {
-        name: 'measure',
-        path: '/measure',
-        label: '相位差判别法',
-        icon: Activity,
-        desc: '李萨如图示波器判别谐振相位',
-        component: () => import('@/views/measure/index.vue'),
-        keepAlive: true,
-      },
-      {
-        name: 'lc-voltage',
-        path: '/lc-voltage',
-        label: 'LC 电压幅值法',
-        icon: Filter,
-        desc: '通过 UL/UC 幅值比与相位协同判定谐振',
-        component: () => import('@/views/lc-voltage/index.vue'),
-        keepAlive: true,
+        nested: true,
+        redirect: '/analysis',
+        children: [
+          {
+            name: 'analysis',
+            path: '/analysis',
+            label: '电压最大值法',
+            icon: Analytics,
+            desc: '计算结果、三大特性曲线、实测比对与误差分析',
+            component: () => import('@/views/analysis/VoltageMaxMethod.vue'),
+          },
+          {
+            name: 'measure',
+            path: '/measure',
+            label: '相位差判别法',
+            icon: Activity,
+            desc: '李萨如图示波器判别谐振相位',
+            component: () => import('@/views/measure/index.vue'),
+            keepAlive: true,
+          },
+          {
+            name: 'lc-voltage',
+            path: '/lc-voltage',
+            label: 'LC 电压幅值法',
+            icon: Filter,
+            desc: '通过 UL/UC 幅值比与相位协同判定谐振',
+            component: () => import('@/views/lc-voltage/index.vue'),
+            keepAlive: true,
+          },
+        ],
       },
     ],
   },
@@ -115,5 +128,7 @@ export const navRoutes = [
   },
 ]
 
-// KeepAlive 缓存名单:measure 由视图包装层(MeasurePage)承载,lc-voltage 直接缓存组件本体
-export const keepAliveNames = ['MeasurePage', 'LCVoltageMethod']
+// KeepAlive 两级:布局层缓存「数据分析」容器(切走再回不丢内部方法页保活);容器层缓存后台扫频的方法页本体
+// measure 由包装层(MeasurePage)承载,lc-voltage 直接缓存组件本体
+export const keepAliveNames = ['DataAnalysisPage']
+export const methodKeepAliveNames = ['MeasurePage', 'LCVoltageMethod']

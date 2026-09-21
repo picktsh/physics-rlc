@@ -6,16 +6,29 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
 // 部署于 GitHub Pages(base './',无服务端 rewrite),故用 hash 模式,刷新/直达不 404
 // 导航元数据单一来源于 config/nav:路由、侧栏、首页卡片共用一份,新增页面只改 nav.js
-// 递归展平导航树:分组子项与顶层页面平铺为同级路由(URL 不嵌套);无组件的分组节点自身不产生路由
-const flattenNav = (list) =>
-  list.flatMap((r) => [...(r.component ? [r] : []), ...(r.children ? flattenNav(r.children) : [])])
+// 导航树 → vue-router 路由:
+// - nested 容器节点(如「数据分析」):保留 children 为其子路由,在容器内 RouterView 渲染,子路由用绝对 path 各自直达
+// - 纯分组/入口节点(非 nested,如 resonance):把子项提到同级,入口页与子页平级(URL 不嵌套)
+const toRoute = (r) => {
+  const route = {
+    path: r.path,
+    name: r.name,
+    component: r.component,
+    meta: { title: r.label, desc: r.desc, keepAlive: !!r.keepAlive },
+  }
+  if (r.redirect) route.redirect = r.redirect
+  if (r.nested && r.children?.length) route.children = r.children.map(toRoute)
+  return route
+}
 
-const children = flattenNav(navRoutes).map((r) => ({
-  path: r.path,
-  name: r.name,
-  component: r.component,
-  meta: { title: r.label, desc: r.desc, keepAlive: !!r.keepAlive },
-}))
+const flattenNav = (list) =>
+  list.flatMap((r) => {
+    if (r.nested) return [toRoute(r)]
+    const self = r.component ? [toRoute(r)] : []
+    return [...self, ...(r.children ? flattenNav(r.children) : [])]
+  })
+
+const children = flattenNav(navRoutes)
 
 const router = createRouter({
   history: createWebHashHistory(),
