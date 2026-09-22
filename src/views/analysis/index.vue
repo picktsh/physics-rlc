@@ -5,7 +5,8 @@
 // 组件名须与 nav 的 keepAliveNames 一致:布局层缓存本容器,切走再回来不丢内部各方法页的保活状态。
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NTabs, NTab, NIcon } from 'naive-ui'
+import { NTabs, NTab, NIcon, NButton } from 'naive-ui'
+import { Construction } from '@vicons/carbon'
 import { navRoutes, methodKeepAliveNames } from '@/config/nav'
 
 defineOptions({ name: 'DataAnalysisPage' })
@@ -30,14 +31,21 @@ function onTabChange(name) {
 
 <template>
   <div>
-    <NTabs :value="activeTab" type="card" @update:value="onTabChange">
-      <NTab v-for="tab in tabs" :key="tab.name" :name="tab.name">
-        <span class="inline-flex items-center gap-1.5">
-          <NIcon v-if="tab.icon" :component="tab.icon" :size="18" />
-          {{ tab.label }}
-        </span>
-      </NTab>
-    </NTabs>
+    <!-- tabs 行右侧常驻回跳入口:本页数据源在电路搭建页,常驻按钮不依赖瞬时提示 -->
+    <div class="flex items-center justify-between gap-3">
+      <NTabs :value="activeTab" type="card" class="min-w-0 flex-1" @update:value="onTabChange">
+        <NTab v-for="tab in tabs" :key="tab.name" :name="tab.name">
+          <span class="inline-flex items-center gap-1.5">
+            <NIcon v-if="tab.icon" :component="tab.icon" :size="18" />
+            {{ tab.label }}
+          </span>
+        </NTab>
+      </NTabs>
+      <NButton secondary type="primary" @click="router.push('/circuit')">
+        <template #icon><NIcon :component="Construction" /></template>
+        去搭建电路
+      </NButton>
+    </div>
 
     <div class="pt-4">
       <RouterView v-slot="{ Component }">

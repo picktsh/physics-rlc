@@ -140,6 +140,11 @@
             <template #icon><NIcon :component="Rocket" /></template>
             仿真
           </NButton>
+          <!-- 常驻跳转:仿真结果都在「数据分析」页,不依赖会消失的轻提示 -->
+          <NButton secondary type="info" @click="$emit('analyze')">
+            <template #icon><NIcon :component="Analytics" /></template>
+            数据分析
+          </NButton>
           <NButton secondary type="error" @click="$emit('reset')">
             <template #icon><NIcon :component="Reset" /></template>
             清空
@@ -270,7 +275,7 @@
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { NIcon, NButton, NScrollbar, NDropdown, NForm, NFormItem, NInputNumber, NSlider, NSwitch } from 'naive-ui'
-import { Link, TrashCan, Rocket, Reset, Maximize, Minimize, Catalog } from '@vicons/carbon'
+import { Link, TrashCan, Rocket, Reset, Maximize, Minimize, Catalog, Analytics } from '@vicons/carbon'
 import { CIRCUIT_PRESET_OPTIONS, findPreset } from '@/utils/circuitPresets'
 import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
 import { useFullscreenSection } from '@/composables/useFullscreenSection'
@@ -319,7 +324,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:components', 'update:wires', 'update:junctions', 'update:mode', 'simulate', 'reset'])
+const emit = defineEmits(['update:components', 'update:wires', 'update:junctions', 'update:mode', 'simulate', 'reset', 'analyze'])
 
 const canvasRef = ref(null)
 const circuitMode = ref(props.mode)

@@ -1,5 +1,6 @@
 <script setup>
 // 电路搭建页:2D/3D 拖拽建电路 + 仿真。仿真成功后自动落一条历史记录(迁自旧 home/index.vue)。
+import { useRouter } from 'vue-router'
 import CircuitBoard from './components/CircuitBoard.vue'
 import { useMessage } from 'naive-ui'
 import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
@@ -8,6 +9,7 @@ import { useHistoryStore } from '@/stores/historyDB'
 const calcStore = useRLCCalculatorStore()
 const historyStore = useHistoryStore()
 const message = useMessage()
+const router = useRouter()
 
 function handleSimulate() {
   const result = calcStore.simulate()
@@ -19,6 +21,8 @@ function handleSimulate() {
     params: { ...calcStore.params },
     results: { ...calcStore.results },
   })
+  // 本页无仿真结果可视化;轻提示只做即时反馈,跳转入口是工具栏常驻的「数据分析」按钮
+  message.success('仿真完成！点工具栏「数据分析」查看曲线与判定')
 }
 </script>
 
@@ -40,6 +44,7 @@ function handleSimulate() {
       v-model:junctions="calcStore.junctions"
       v-model:mode="calcStore.circuitMode"
       @simulate="handleSimulate"
+      @analyze="router.push('/data-analysis')"
       @reset="calcStore.resetCircuit()"
     />
   </section>
