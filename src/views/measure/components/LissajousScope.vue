@@ -185,11 +185,17 @@ import { NButton, NForm, NFormItem, NIcon, NInputNumber, useMessage } from 'naiv
 import { Stop, Reset, Download, TrashCan } from '@vicons/carbon'
 import { impedance, current, resonantFreq } from '@/utils/physics'
 import { canvasTheme } from '@/utils/canvasTheme'
+import { SIMULATE_HINT } from '@/stores/rlcCalculator'
 
 const props = defineProps({
   params: {
     type: Object,
     required: true,
+  },
+  // 电路搭建页仿真成功标记:未仿真不得扫描(扫描参数须来自电路搭建数据)
+  simulated: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -650,8 +656,13 @@ function toggleSweep() {
 
 // 自动扫描
 async function autoSweep() {
+  // 扫描数据必须来自「电路搭建」的仿真参数:未仿真一律拦截(与各方法页统一口径)
+  if (!props.simulated) {
+    message.warning(SIMULATE_HINT + '，再进行自动扫描')
+    return
+  }
   if (props.params.L <= 0 || props.params.C <= 0 || props.params.R <= 0) {
-    message.warning('请先拖拽元件搭建RLC电路并点击「开始仿真」')
+    message.error('电路参数异常（R、L、C 需大于 0），请重新搭建并仿真')
     return
   }
   const f0 = resonantFreq(props.params.L, props.params.C)

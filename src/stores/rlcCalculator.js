@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { calculateRLC, generateAmpCurve, generatePhaseCurve, generateImpedanceCurve } from '../utils/physics'
+
+// 扫描/实验操作前置提醒:「数据分析」三个方法页共用同一文案,单一数据源防措辞漂移
+export const SIMULATE_HINT = '请先到「电路搭建」搭建 RLC 电路并点击「开始仿真」'
 
 /**
  * RLC 计算器 Store - 管理电路参数、计算结果和曲线数据
@@ -40,6 +43,28 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
 
   // 标记是否已通过电路搭建执行仿真（初始默认不显示曲线）
   const simulated = ref(false)
+
+  // 最近一次仿真时的电路签名:用于判定「当前电路是否仍是仿真时的电路」
+  let _simSignature = ''
+
+  // 电路签名 = 元件(type:value 序列) + 导线拓扑(端点索引);不含坐标:
+  // 仅拖动元件位置(坐标随动)不改变签名,改值/增删元件/增删连线则变化
+  function buildCircuitSignature() {
+    const comps = components.value.map((c) => `${c.type}:${c.value}`).join('|')
+    const tops = wires.value
+      .map((w) => `${w.comp1 ?? -1},${w.junc1 ?? -1}>${w.comp2 ?? -1},${w.junc2 ?? -1}`)
+      .join('|')
+    return comps + '#' + tops
+  }
+
+  // 电路改动即作废旧仿真:扫描类操作要求数据与当前电路严格一致,须重新点「开始仿真」
+  watch(
+    [components, wires],
+    () => {
+      if (simulated.value && buildCircuitSignature() !== _simSignature) simulated.value = false
+    },
+    { deep: true },
+  )
 
   // 元件公差设置
   const toleranceEnabled = ref(false)
@@ -284,6 +309,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     }
     updateParams(ep)
     simulated.value = true
+    _simSignature = buildCircuitSignature()
     return { success: true }
   }
 
@@ -294,6 +320,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     circuitMode.value = 'wire'
     measuredData.value = []
     simulated.value = false
+    _simSignature = ''
     resetParams()
   }
 

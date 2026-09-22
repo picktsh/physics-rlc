@@ -9,7 +9,7 @@ import ChartPanel from './components/ChartPanel.vue'
 import ErrorAnalysis from './components/ErrorAnalysis.vue'
 import MeasuredDataInput from './components/MeasuredDataInput.vue'
 import SimulationHistory from './components/SimulationHistory.vue'
-import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
+import { useRLCCalculatorStore, SIMULATE_HINT } from '@/stores/rlcCalculator'
 import { useHistoryStore } from '@/stores/historyDB'
 
 const calcStore = useRLCCalculatorStore()
@@ -53,7 +53,12 @@ function handlePlotMeasured() {
     return
   }
   if (!calcStore.simulated) {
-    calcStore.simulate()
+    // 未仿真自动补跑;失败(电路未搭建/未闭合)则提醒并中止,避免用默认参数画“假理论曲线”
+    const r = calcStore.simulate()
+    if (!r.success) {
+      message.warning(r.message || SIMULATE_HINT)
+      return
+    }
   }
   // 频率单位校验:表格单位为 kHz。Hz 数值直填会超量级,导致蓝色理论曲线贴底
   const maxFreqK = Math.max(...data.map((d) => Number(d.freq) || 0))

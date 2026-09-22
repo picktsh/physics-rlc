@@ -438,7 +438,7 @@ const dialog = useDialog()
 import { storeToRefs } from 'pinia'
 import { Search, Stop, ChartBar, VolumeUp, Reset, TrashCan, Close, Download } from '@vicons/carbon'
 import { canvasTheme } from '@/utils/canvasTheme'
-import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
+import { useRLCCalculatorStore, SIMULATE_HINT } from '@/stores/rlcCalculator'
 
 // 组件名须与 config/nav 的 keepAliveNames 一致,保证切页时后台扫频进度不丢
 defineOptions({ name: 'LCVoltageMethod' })
@@ -960,40 +960,50 @@ function drawAmpChart() {
     if (p.I > data[mi].I) mi = i
   })
   const maxI = data[mi].I
-  const Ih = maxI / Math.SQRT2
   const dm = maxI * 1.18
 
-  let li = -1,
-    ri = -1
-  for (let i = mi - 1; i >= 0; i--) {
-    if (data[i].I <= Ih) {
-      li = i
-      break
+  // ---- 带宽(实测口径):仅本轮扫描结束后展现,数据源为过滤后的有效采集点 ----
+  // 未扫描不显示任何带宽元素,面板 Δf 同步显示 —
+  const showBw = !isScanning.value && !isNoiseScanning.value && validData.value.length >= 2
+  let bw = 0
+  let fL = 0
+  let fR = 0
+  let bwIh = 0
+  if (showBw) {
+    const vd = validData.value
+    let vm = 0
+    vd.forEach((p, i) => {
+      if (p.I > vd[vm].I) vm = i
+    })
+    // 半功率基准取实测峰值/√2:与实测曲线交点、Δf 标尺端点保持同一基准
+    bwIh = vd[vm].I / Math.SQRT2
+    let li = -1,
+      ri = -1
+    for (let i = vm - 1; i >= 0; i--) {
+      if (vd[i].I <= bwIh) {
+        li = i
+        break
+      }
+    }
+    for (let i = vm + 1; i < vd.length; i++) {
+      if (vd[i].I <= bwIh) {
+        ri = i
+        break
+      }
+    }
+    if (li >= 0 && ri >= 0) {
+      fL = vd[li].f + ((bwIh - vd[li].I) / (vd[li + 1].I - vd[li].I)) * (vd[li + 1].f - vd[li].f)
+      fR = vd[ri - 1].f + ((bwIh - vd[ri - 1].I) / (vd[ri].I - vd[ri - 1].I)) * (vd[ri].f - vd[ri - 1].f)
+      if (fR > fL) bw = fR - fL
     }
   }
-  for (let i = mi + 1; i < data.length; i++) {
-    if (data[i].I <= Ih) {
-      ri = i
-      break
-    }
-  }
-
-  const fL =
-    li >= 0
-      ? data[li].f + ((Ih - data[li].I) / (data[li + 1].I - data[li].I)) * (data[li + 1].f - data[li].f)
-      : data[0].f
-  const fR =
-    ri >= 0
-      ? data[ri - 1].f + ((Ih - data[ri - 1].I) / (data[ri].I - data[ri - 1].I)) * (data[ri].f - data[ri - 1].f)
-      : data[data.length - 1].f
-  const bw = fR > fL ? fR - fL : 0
   const fMn = data[0].f,
     fMx = data[data.length - 1].f
   const lm = Math.log10(fMn),
     lr = Math.log10(fMx) - lm
   const mx = (f) => mL + ((Math.log10(f) - lm) / lr) * pw
   const my = (v) => 18 + ph - (v / dm) * ph
-  const yh = my(Ih)
+  const yh = showBw ? my(bwIh) : null
 
   // grid
   ctx.strokeStyle = ct.grid
@@ -1051,50 +1061,60 @@ function drawAmpChart() {
     ctx.stroke()
   }
 
-  // half power line
-  ctx.setLineDash([4, 4])
-  ctx.strokeStyle = '#d9962b'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.moveTo(mL, yh)
-  ctx.lineTo(mL + pw, yh)
-  ctx.stroke()
-  ctx.setLineDash([])
-  // Imax/√2 标注:公式改由 KaTeX 覆盖层渲染(见模板),此处仅同步位置与数值;
-  // offsetLeft/Top 把画布坐标换算到图容器坐标,分式底边贴虚线上方 4px
-  halfPowerMark.value = {
-    x: canvas.offsetLeft + mL + 3,
-    y: canvas.offsetTop + yh - 4,
-    value: (Ih * 1e3).toFixed(4),
-  }
-
-  // bandwidth markers
-  if (bw > 0) {
-    ctx.fillStyle = '#2563eb'
+  // ---- 带宽元素:半功率虚线 + Imax/√2 标注 + Δf 标尺(仅扫描结束后展现,见上方 showBw) ----
+  if (showBw) {
+    // half power line:通频带区间(fL~fR)留给紫色通频带虚线,此处断开投影,避免双虚线同段叠加混色
+    ctx.setLineDash([4, 4])
+    ctx.strokeStyle = '#d9962b'
+    ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.arc(mx(fL), yh, 3.5, 0, 2 * Math.PI)
-    ctx.fill()
-    ctx.beginPath()
-    ctx.arc(mx(fR), yh, 3.5, 0, 2 * Math.PI)
-    ctx.fill()
-    ctx.strokeStyle = '#2563eb'
-    ctx.lineWidth = 0.8
-    ctx.setLineDash([3, 3])
-    ctx.beginPath()
-    ctx.moveTo(mx(fL), yh - 12)
-    ctx.lineTo(mx(fR), yh - 12)
+    if (bw > 0) {
+      ctx.moveTo(mL, yh)
+      ctx.lineTo(mx(fL), yh)
+      ctx.moveTo(mx(fR), yh)
+      ctx.lineTo(mL + pw, yh)
+    } else {
+      ctx.moveTo(mL, yh)
+      ctx.lineTo(mL + pw, yh)
+    }
     ctx.stroke()
     ctx.setLineDash([])
-    ctx.fillStyle = '#2563eb'
-    ctx.font = '10px system-ui'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'bottom'
-    ctx.fillText('Δf=' + t4(bw) + 'Hz', (mx(fL) + mx(fR)) / 2, yh - 14)
+    // Imax/√2 标注:公式改由 KaTeX 覆盖层渲染(见模板),此处仅同步位置与数值;
+    // offsetLeft/Top 把画布坐标换算到图容器坐标,分式底边贴虚线上方 4px
+    halfPowerMark.value = {
+      x: canvas.offsetLeft + mL + 3,
+      y: canvas.offsetTop + yh - 4,
+      value: (bwIh * 1e3).toFixed(4),
+    }
+
+    // bandwidth markers:紫色通频带标尺;虚线直接贴画在半功率线上(占据橙色线断开段),
+    // 形成"通频带在 Imax/√2 线上量取"的直观效果
+    if (bw > 0) {
+      ctx.strokeStyle = '#8b5cf6'
+      ctx.lineWidth = 1
+      ctx.setLineDash([3, 3])
+      ctx.beginPath()
+      ctx.moveTo(mx(fL), yh)
+      ctx.lineTo(mx(fR), yh)
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = '#8b5cf6'
+      ctx.beginPath()
+      ctx.arc(mx(fL), yh, 3.5, 0, 2 * Math.PI)
+      ctx.fill()
+      ctx.beginPath()
+      ctx.arc(mx(fR), yh, 3.5, 0, 2 * Math.PI)
+      ctx.fill()
+      ctx.font = '10px system-ui'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'bottom'
+      ctx.fillText('Δf=' + t4(bw) + 'Hz', (mx(fL) + mx(fR)) / 2, yh - 8)
+    }
   }
 
   const q = calcCircuit(f0.value)
   if (mF0Ref.value) mF0Ref.value.textContent = t4(f0.value) + ' Hz'
-  if (mDfRef.value) mDfRef.value.textContent = t4(bw) + ' Hz'
+  if (mDfRef.value) mDfRef.value.textContent = showBw && bw > 0 ? t4(bw) + ' Hz' : '—'
   if (mQRef.value) mQRef.value.textContent = t4(q.Q)
   if (mQLabelRef.value)
     mQLabelRef.value.textContent = q.Q < 5 ? '低Q，选频差' : q.Q <= 15 ? '中高Q，选频良好' : '高Q，选频优秀'
@@ -1268,6 +1288,7 @@ function clearData() {
       validData.value = []
       rejectedData.value = []
       filterData()
+      drawAmpChart() // 清空后同步隐藏带宽标记与采集点(showBw 依赖有效采集数据)
     },
   })
 }
@@ -1333,9 +1354,19 @@ function buildScanFreqs(f0Hz) {
 function autoScan() {
   if (isScanning.value) {
     isScanning.value = false
+    drawAmpChart() // 停止即按本轮已达数据展现实测带宽
+    return
+  }
+  // 扫描数据必须来自「电路搭建」的仿真参数:未仿真一律拦截(与各方法页统一口径)
+  if (!calcStore.simulated) {
+    message.warning(SIMULATE_HINT + '，再进行自动扫频')
     return
   }
   isScanning.value = true
+  // 重复点击视为重新扫描:先清空,与噪声扫频行为一致,避免两遍数据叠加导致连线回折
+  collected.value = []
+  validData.value = []
+  rejectedData.value = []
   const f0_val = f0.value
   const freqs = buildScanFreqs(f0_val)
   let step = 0
@@ -1344,10 +1375,12 @@ function autoScan() {
     if (!isScanning.value || step >= freqs.length) {
       isScanning.value = false
       if (step >= freqs.length) calcAll()
+      drawAmpChart() // 扫描结束才展现实测带宽(停止路径重复调用为幂等)
       return
     }
     const freq = freqs[step]
-    f.value = freq
+    // 频率统一规整为 4 位小数:与 f 输入框的 precision=4 及表格 t4 口径一致,避免超精度显示触发输入框删除线
+    f.value = Number(freq.toFixed(4))
     calcAll()
     sweepData.value = generateSweepData(250)
     collectPoint()
@@ -1371,8 +1404,12 @@ function autoScan() {
 
 // ---- 搜索谐振频率 ----
 function searchResonance() {
+  if (!calcStore.simulated) {
+    message.warning(SIMULATE_HINT + '，再搜索谐振频率')
+    return
+  }
   const freq = f0.value
-  f.value = freq
+  f.value = Number(freq.toFixed(4))
   message.success(
     '✅ 搜寻完成！谐振频率 f₀ = ' +
       t4(freq) +
@@ -1411,6 +1448,7 @@ function collectPointWithNoise() {
 function autoScanWithNoise() {
   if (isNoiseScanning.value) {
     isNoiseScanning.value = false
+    drawAmpChart() // 停止即按本轮已达数据展现实测带宽
     return
   }
   isNoiseScanning.value = true
@@ -1427,10 +1465,12 @@ function autoScanWithNoise() {
     if (!isNoiseScanning.value || step >= freqs.length) {
       isNoiseScanning.value = false
       if (step >= freqs.length) calcAll()
+      drawAmpChart() // 扫描结束才展现实测带宽(停止路径重复调用为幂等)
       return
     }
     const freq = freqs[step]
-    f.value = freq
+    // 同 autoScan:频率规整 4 位小数,避免输入框超精度显示触发删除线
+    f.value = Number(freq.toFixed(4))
     calcAll()
     sweepData.value = generateSweepData(250)
     collectPointWithNoise()
@@ -1451,6 +1491,7 @@ function autoScanWithNoise() {
       setTimeout(stepFunc, delay)
     } else {
       isNoiseScanning.value = false
+      drawAmpChart() // 扫满一轮才展现实测带宽
     }
   }
   stepFunc()
@@ -1460,6 +1501,7 @@ function autoScanWithNoise() {
 function toggleNoiseScan() {
   if (isNoiseScanning.value) {
     isNoiseScanning.value = false
+    drawAmpChart() // 停止即按本轮已达数据展现实测带宽
     return
   }
   if (noiseEnabled.value) {
@@ -1469,6 +1511,11 @@ function toggleNoiseScan() {
     validData.value = []
     rejectedData.value = []
     filterData()
+    drawAmpChart() // 清空采集数据后同步隐藏带宽标记与采集点
+    return
+  }
+  if (!calcStore.simulated) {
+    message.warning(SIMULATE_HINT + '，再进行噪声扫描')
     return
   }
   autoScanWithNoise()
