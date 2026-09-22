@@ -6,8 +6,9 @@ import { createDiscreteApi } from 'naive-ui'
 // store 非组件上下文,用离散 API 弹温和轻提示替代 alert
 const { message } = createDiscreteApi(['message'])
 
-const SIMULATION_HISTORY_KEY = 'rlc_simulation_history'
-const MEASURED_HISTORY_KEY = 'rlc_measured_history'
+// v2:2026-09 全站单位口径切换(L→H、频率→kHz),旧键记录单位不兼容,换键自然废弃
+const SIMULATION_HISTORY_KEY = 'rlc_simulation_history_v2'
+const MEASURED_HISTORY_KEY = 'rlc_measured_history_v2'
 const MAX_HISTORY = 50
 
 /**

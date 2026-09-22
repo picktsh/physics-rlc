@@ -4,13 +4,13 @@
       <div class="flex flex-col gap-2">
         <label class="text-xs text-[color:var(--app-text-muted)]">实测谐振频率</label>
         <NInputNumber v-model:value="measuredFr" placeholder="输入实测值" class="w-full">
-          <template #suffix>Hz</template>
+          <template #suffix>{{ QUANTITY.f.unit }}</template>
         </NInputNumber>
       </div>
       <div class="flex flex-col gap-2">
         <label class="text-xs text-[color:var(--app-text-muted)]">实测通频带</label>
         <NInputNumber v-model:value="measuredBW" placeholder="输入实测值" class="w-full">
-          <template #suffix>Hz</template>
+          <template #suffix>{{ QUANTITY.bw.unit }}</template>
         </NInputNumber>
       </div>
       <div class="flex flex-col gap-2 justify-end">
@@ -22,21 +22,21 @@
       <div class="bg-[var(--app-warning-bg)] border border-[color:var(--app-warning-border)] rounded-lg p-4">
         <div class="text-xs text-[color:var(--app-warning)] mb-2">谐振频率误差对比</div>
         <div class="font-semibold text-[color:var(--app-text)]">
-          理论: <span class="text-[color:var(--app-brand)]">{{ theoryFr }}</span> Hz | 实测:
-          <span class="text-[color:var(--app-success)]">{{ measuredFr }}</span> Hz
+          理论: <span class="text-[color:var(--app-brand)]">{{ theoryFr }}</span> {{ QUANTITY.f.unit }} | 实测:
+          <span class="text-[color:var(--app-success)]">{{ measuredFr }}</span> {{ QUANTITY.f.unit }}
         </div>
         <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
-          相对误差: <span class="text-[color:var(--app-error)] font-bold">{{ freqRelError }}%</span>
+          相对误差: <span class="text-[color:var(--app-error)] font-bold">{{ freqRelError }}{{ QUANTITY.err.unit }}</span>
         </div>
       </div>
       <div class="bg-[var(--app-warning-bg)] border border-[color:var(--app-warning-border)] rounded-lg p-4">
         <div class="text-xs text-[color:var(--app-warning)] mb-2">通频带误差对比</div>
         <div class="font-semibold text-[color:var(--app-text)]">
-          理论: <span class="text-[color:var(--app-brand)]">{{ theoryBW }}</span> Hz | 实测:
-          <span class="text-[color:var(--app-success)]">{{ measuredBW }}</span> Hz
+          理论: <span class="text-[color:var(--app-brand)]">{{ theoryBW }}</span> {{ QUANTITY.bw.unit }} | 实测:
+          <span class="text-[color:var(--app-success)]">{{ measuredBW }}</span> {{ QUANTITY.bw.unit }}
         </div>
         <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
-          相对误差: <span class="text-[color:var(--app-error)] font-bold">{{ bwRelError }}%</span>
+          相对误差: <span class="text-[color:var(--app-error)] font-bold">{{ bwRelError }}{{ QUANTITY.err.unit }}</span>
         </div>
       </div>
     </div>
@@ -46,6 +46,7 @@
 <script setup>
 import { ref } from 'vue'
 import { NButton, NInputNumber, useMessage } from 'naive-ui'
+import { QUANTITY, decimalsFor } from '@/utils/quantity'
 
 const props = defineProps({
   results: {
@@ -75,10 +76,10 @@ function calculateError() {
     message.warning('请先搭建电路并点击「开始仿真」获取理论值')
     return
   }
-  theoryFr.value = fr.toFixed(4)
-  theoryBW.value = bw.toFixed(4)
-  freqRelError.value = ((Math.abs(measuredFr.value - fr) / fr) * 100).toFixed(4)
-  bwRelError.value = ((Math.abs(measuredBW.value - bw) / bw) * 100).toFixed(4)
+  theoryFr.value = fr.toFixed(decimalsFor('f'))
+  theoryBW.value = bw.toFixed(decimalsFor('bw'))
+  freqRelError.value = ((Math.abs(measuredFr.value - fr) / fr) * 100).toFixed(decimalsFor('err'))
+  bwRelError.value = ((Math.abs(measuredBW.value - bw) / bw) * 100).toFixed(decimalsFor('err'))
   showResult.value = true
 }
 </script>

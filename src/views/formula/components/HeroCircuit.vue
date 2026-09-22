@@ -74,7 +74,7 @@ function initDemo() {
   const p = useRLCCalculatorStore().params
   const Rv = Number(p.R), Lv = Number(p.L), Cv = Number(p.C), Vv = Number(p.V)
   OhmR = isFinite(Rv) && Rv > 0 ? Rv : 100
-  HenL = isFinite(Lv) && Lv > 0 ? Lv * 1e-3 : 0.1
+  HenL = isFinite(Lv) && Lv > 0 ? Lv : 0.1 // params.L 已是 H(全站零换算口径)
   FarC = isFinite(Cv) && Cv > 0 ? Cv * 1e-6 : 5e-8
   Volt = isFinite(Vv) && Vv > 0 ? Vv : 0.9
   const w0 = 1 / Math.sqrt(HenL * FarC)

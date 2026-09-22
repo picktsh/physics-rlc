@@ -9,7 +9,7 @@
         :autosize="{ minRows: 5, maxRows: 10 }"
       />
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
-        格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=100mH、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252
+        格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=0.1H、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252
         kHz）
       </div>
       <div class="mt-2 flex gap-2">
@@ -18,31 +18,8 @@
       </div>
     </div>
 
-    <!-- 数据表格 -->
-    <table class="w-full text-xs border-collapse mb-3">
-      <thead>
-        <tr class="bg-[var(--app-surface-sunken)]">
-          <th class="border border-[color:var(--app-border)] px-2 py-1.5">序号</th>
-          <th class="border border-[color:var(--app-border)] px-2 py-1.5">频率 (kHz)</th>
-          <th class="border border-[color:var(--app-border)] px-2 py-1.5">电流 (mA)</th>
-          <th class="border border-[color:var(--app-border)] px-2 py-1.5">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(d, idx) in localData" :key="idx">
-          <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-          <td class="border border-[color:var(--app-border)] px-2 py-1.5">
-            <NInputNumber v-model:value="localData[idx].freq" :show-button="false" :precision="4" :min="0" />
-          </td>
-          <td class="border border-[color:var(--app-border)] px-2 py-1.5">
-            <NInputNumber v-model:value="localData[idx].current" :show-button="false" :precision="4" :min="0" />
-          </td>
-          <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
-            <NButton text type="error" @click="deleteRow(idx)">删除</NButton>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- 数据表格(NDataTable 编辑态:与全站只读表同一组件 UI;数值列右对齐,精度/步长走 quantity 总表) -->
+    <NDataTable class="mb-3" size="small" :columns="editColumns" :data="localData" :scroll-x="460" />
 
     <div class="flex gap-2 flex-wrap">
       <NButton secondary type="primary" @click="addRow">+ 添加数据行</NButton>
@@ -61,11 +38,11 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">谐振频率 f₀</div>
-          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.fr }} kHz</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.fr }} {{ QUANTITY.f.unit }}</div>
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">最大电流 Iₘₓ</div>
-          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.imax }} mA</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.imax }} {{ QUANTITY.i.unit }}</div>
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">品质因数 Q</div>
@@ -73,15 +50,15 @@
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">带宽 BW</div>
-          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.BW }} kHz</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.BW }} {{ QUANTITY.bw.unit }}</div>
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">下截止频率 f₁</div>
-          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.f1 }} kHz</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.f1 }} {{ QUANTITY.f.unit }}</div>
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-success-border)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">上截止频率 f₂</div>
-          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.f2 }} kHz</div>
+          <div class="text-xl font-bold text-[color:var(--app-success)]">{{ qResult.f2 }} {{ QUANTITY.f.unit }}</div>
         </div>
       </div>
       <div
@@ -176,12 +153,12 @@
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">绝对误差 ΔQ</div>
           <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">
-            {{ Math.abs(errorAnalysis.diff).toFixed(2) }}
+            {{ Math.abs(errorAnalysis.diff).toFixed(decimalsFor('q')) }}
           </div>
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">相对误差 δ</div>
-          <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">{{ errorAnalysis.relativeError }}%</div>
+          <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">{{ errorAnalysis.relativeError }}{{ QUANTITY.err.unit }}</div>
         </div>
       </div>
       <div
@@ -233,30 +210,17 @@
           清空记录
         </NButton>
       </div>
-      <div class="max-h-48 overflow-y-auto">
-        <table v-if="history.length > 0" class="w-full text-xs border-collapse">
-          <thead>
-            <tr class="bg-[var(--app-surface-sunken)]">
-              <th class="border border-[color:var(--app-border)] px-2 py-1.5">时间</th>
-              <th class="border border-[color:var(--app-border)] px-2 py-1.5">数据点数</th>
-              <th class="border border-[color:var(--app-border)] px-2 py-1.5">频率范围</th>
-              <th class="border border-[color:var(--app-border)] px-2 py-1.5">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, idx) in history" :key="r.id">
-              <td class="border border-[color:var(--app-border)] px-2 py-1.5 whitespace-nowrap text-xs">
-                {{ r.time }}
-              </td>
-              <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ r.count }}</td>
-              <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ r.freqRange }}</td>
-              <td class="border border-[color:var(--app-border)] px-2 py-1.5 whitespace-nowrap text-center">
-                <NButton secondary type="primary" class="mr-1" @click="$emit('load-history', idx)">加载</NButton>
-                <NButton secondary type="error" @click="$emit('delete-history', idx)">删除</NButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- NDataTable:粘顶表头 + scroll-x 横向滚动适配移动端;数值列右对齐 -->
+      <div>
+        <NDataTable
+          v-if="history.length > 0"
+          size="small"
+          :columns="historyColumns"
+          :data="history"
+          :row-key="(r) => r.id"
+          :max-height="192"
+          :scroll-x="560"
+        />
         <div v-else class="text-center py-4 text-[color:var(--app-text-faint)]">暂无实测数据历史记录</div>
       </div>
     </div>
@@ -264,10 +228,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { NButton, NForm, NFormItem, NIcon, NInput, NInputNumber, NUpload, useMessage } from 'naive-ui'
+import { ref, h, watch } from 'vue'
+import { NButton, NDataTable, NForm, NFormItem, NIcon, NInput, NInputNumber, NUpload, useMessage } from 'naive-ui'
 import { Save, TrashCan, FolderOpen } from '@vicons/carbon'
-import { decimalsFor } from '@/utils/quantity'
+import { QUANTITY, decimalsFor } from '@/utils/quantity'
 
 // Q 值计算结果
 const qResult = ref({
@@ -312,6 +276,79 @@ const emit = defineEmits([
   'load-history',
   'delete-history',
 ])
+
+// 实测数据录入表(编辑态):行对象即 localData 元素,直改 row.freq/current 经 deep watch 回写父层;
+// w-full 为单元格铺宽的功能性类(非装饰样式),与全局表单铺宽规则同理
+const editColumns = [
+  { title: '序号', key: 'idx', align: 'center', width: 64, render: (_, i) => i + 1 },
+  {
+    title: `频率 (${QUANTITY.f.unit})`,
+    key: 'freq',
+    align: 'right',
+    minWidth: 130,
+    render: (row) =>
+      h(NInputNumber, {
+        value: row.freq,
+        'onUpdate:value': (v) => (row.freq = v),
+        size: 'small',
+        showButton: false,
+        min: 0,
+        precision: QUANTITY.f.decimals,
+        step: QUANTITY.f.step,
+        class: 'w-full',
+      }),
+  },
+  {
+    title: `电流 (${QUANTITY.i.unit})`,
+    key: 'current',
+    align: 'right',
+    minWidth: 130,
+    render: (row) =>
+      h(NInputNumber, {
+        value: row.current,
+        'onUpdate:value': (v) => (row.current = v),
+        size: 'small',
+        showButton: false,
+        min: 0,
+        precision: QUANTITY.i.decimals,
+        step: QUANTITY.i.step,
+        class: 'w-full',
+      }),
+  },
+  {
+    title: '操作',
+    key: 'actions',
+    align: 'center',
+    width: 72,
+    render: (_, i) =>
+      h(NButton, { text: true, type: 'error', onClick: () => deleteRow(i) }, { default: () => '删除' }),
+  },
+]
+
+// 实测历史记录表(freqRange 为落库时已按 kHz 4 位格式化的字符串)
+const historyColumns = [
+  { title: '时间', key: 'time', align: 'left', width: 160 },
+  { title: '数据点数', key: 'count', align: 'right', width: 90 },
+  { title: `频率范围 (${QUANTITY.f.unit})`, key: 'freqRange', align: 'right' },
+  {
+    title: '操作',
+    key: 'actions',
+    align: 'center',
+    width: 170,
+    render: (r, idx) => [
+      h(
+        NButton,
+        { secondary: true, type: 'primary', class: 'mr-1', onClick: () => emit('load-history', idx) },
+        { default: () => '加载' },
+      ),
+      h(
+        NButton,
+        { secondary: true, type: 'error', onClick: () => emit('delete-history', idx) },
+        { default: () => '删除' },
+      ),
+    ],
+  },
+]
 
 const pasteText = ref('')
 const message = useMessage()
@@ -425,15 +462,15 @@ function calculateQValue() {
       const yPeak = y1 - (y2 - y0) ** 2 / (8 * denom)
 
       // 更新结果
-      qResult.value.fr = parseFloat(xPeak.toFixed(4))
-      qResult.value.imax = parseFloat(yPeak.toFixed(4))
+      qResult.value.fr = parseFloat(xPeak.toFixed(decimalsFor('f')))
+      qResult.value.imax = parseFloat(yPeak.toFixed(decimalsFor('i')))
     } else {
-      qResult.value.fr = parseFloat(fr.toFixed(4))
-      qResult.value.imax = parseFloat(imax.toFixed(4))
+      qResult.value.fr = parseFloat(fr.toFixed(decimalsFor('f')))
+      qResult.value.imax = parseFloat(imax.toFixed(decimalsFor('i')))
     }
   } else {
-    qResult.value.fr = parseFloat(fr.toFixed(4))
-    qResult.value.imax = parseFloat(imax.toFixed(4))
+    qResult.value.fr = parseFloat(fr.toFixed(decimalsFor('f')))
+    qResult.value.imax = parseFloat(imax.toFixed(decimalsFor('i')))
   }
 
   // 3. 查找半功率点（上下截止频率）
@@ -471,24 +508,24 @@ function calculateQValue() {
   const BW = f2 - f1
   const Q = BW > 0 ? fr / BW : 0
 
-  qResult.value.f1 = parseFloat(f1.toFixed(4))
-  qResult.value.f2 = parseFloat(f2.toFixed(4))
-  qResult.value.BW = parseFloat(BW.toFixed(4))
-  qResult.value.Q = parseFloat(Q.toFixed(decimalsFor('Q')))
+  qResult.value.f1 = parseFloat(f1.toFixed(decimalsFor('f')))
+  qResult.value.f2 = parseFloat(f2.toFixed(decimalsFor('f')))
+  qResult.value.BW = parseFloat(BW.toFixed(decimalsFor('bw')))
+  qResult.value.Q = parseFloat(Q.toFixed(decimalsFor('q')))
   // 结果直接由下方结果面板展开呈现,不弹窗打断
   qResult.value.show = true
 
   // 5. 误差分析：如果父组件传入了 R、L、C 标称值，则计算理论 Q 值
-  // params 中的 L 单位是 mH，C 单位是 μF，需要转换为标准单位
+  // params 口径与展示一致:R Ω、L H、C μF(见 utils/quantity.js)
   if (props.theoreticalParams && props.theoreticalParams.R && props.theoreticalParams.L && props.theoreticalParams.C) {
     const { R, L, C } = props.theoreticalParams
-    // L: mH -> H (除以 1000), C: μF -> F (除以 1e6)
-    const L_H = L / 1000
+    // C: μF → F (除以 1e6);L 已是 H
+    const L_H = L
     const C_F = C / 1e6
     // 理论 Q 值公式：Q = (1/R) * sqrt(L/C)
     const theoreticalQ = (1 / R) * Math.sqrt(L_H / C_F)
 
-    errorAnalysis.value.theoreticalQ = parseFloat(theoreticalQ.toFixed(decimalsFor('Q')))
+    errorAnalysis.value.theoreticalQ = parseFloat(theoreticalQ.toFixed(decimalsFor('q')))
   }
 
   // 使用手动输入的 Q 值或自动计算的 Q 值
@@ -499,8 +536,8 @@ function calculateQValue() {
     const diff = Q - usedTheoreticalQ
     const relativeError = Math.abs(diff / usedTheoreticalQ) * 100
 
-    errorAnalysis.value.diff = parseFloat(diff.toFixed(2))
-    errorAnalysis.value.relativeError = parseFloat(relativeError.toFixed(1))
+    errorAnalysis.value.diff = parseFloat(diff.toFixed(decimalsFor('q')))
+    errorAnalysis.value.relativeError = parseFloat(relativeError.toFixed(decimalsFor('err')))
   }
 }
 </script>

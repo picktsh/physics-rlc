@@ -19,42 +19,44 @@
           <div class="flex items-center gap-2 flex-wrap">
             <div class="w-14 sm:w-20">
               <NSlider
-                :min="1"
-                :max="10000"
-                :step="1"
+                :min="0.001"
+                :max="10"
+                :step="0.001"
                 :value="localFStart"
                 @update:value="(v) => syncFromSlider('start', v)"
               />
             </div>
             <div class="w-16 sm:w-20">
               <NInputNumber
-                :min="1"
+                :min="0.001"
                 :show-button="false"
+                :precision="QUANTITY.f.decimals"
+                :step="QUANTITY.f.step"
                 :value="localFStart"
-                @update:value="(v) => (localFStart = v)"
-                @blur="applyFreqRange"
+                @update:value="onFreqInput('start', $event)"
               />
             </div>
             <span>~</span>
             <div class="w-16 sm:w-20">
               <NInputNumber
-                :min="1"
+                :min="0.001"
                 :show-button="false"
+                :precision="QUANTITY.f.decimals"
+                :step="QUANTITY.f.step"
                 :value="localFEnd"
-                @update:value="(v) => (localFEnd = v)"
-                @blur="applyFreqRange"
+                @update:value="onFreqInput('end', $event)"
               />
             </div>
             <div class="w-14 sm:w-20">
               <NSlider
-                :min="1"
-                :max="10000"
-                :step="1"
+                :min="0.001"
+                :max="10"
+                :step="0.001"
                 :value="localFEnd"
                 @update:value="(v) => syncFromSlider('end', v)"
               />
             </div>
-            <span>Hz</span>
+            <span>{{ QUANTITY.f.unit }}</span>
           </div>
         </NFormItem>
       </NForm>
@@ -74,9 +76,9 @@
       "
       class="mb-1.5 text-xs text-[color:var(--app-warning)]"
     >
-      ⚠ 实测电流峰值 {{ ampPeaks.meas.toFixed(2) }} mA,高于仿真峰值
+      ⚠ 实测电流峰值 {{ ampPeaks.meas.toFixed(2) }} {{ QUANTITY.i.unit }},高于仿真峰值
       {{ ampPeaks.theory.toFixed(2) }}
-      mA:蓝色仿真曲线被压缩变矮,请核对电流单位(mA)与仿真参数(R/L/C/V,元件修改后需重新仿真)
+      {{ QUANTITY.i.unit }}:蓝色仿真曲线被压缩变矮,请核对电流单位(mA)与仿真参数(R/L/C/V,元件修改后需重新仿真)
     </div>
     <!-- 图表Canvas(bg-transparent:保留容器 blueprint-grid 图纸底,画布不遮挡网格) -->
     <div class="chart-container blueprint-grid rounded-lg p-3 border border-[color:var(--app-border)] relative">
@@ -93,7 +95,7 @@
         class="absolute -translate-y-full pointer-events-none text-xs text-[color:var(--app-error)] leading-none"
         :style="{ left: halfPowerMark.x + 'px', top: halfPowerMark.y + 'px' }"
       >
-        <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}mA</span>
+        <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}{{ QUANTITY.i.unit }}</span>
       </div>
       <div
         v-if="tooltip.show"
@@ -131,6 +133,10 @@ import 'katex/dist/katex.min.css'
 import { NButton, NForm, NFormItem, NInputNumber, NSlider } from 'naive-ui'
 import { impedance, calculateRLC } from '@/utils/physics'
 import { canvasTheme } from '@/utils/canvasTheme'
+import { QUANTITY, decimalsFor } from '@/utils/quantity'
+
+// 角频率:本页入参 f 均为 kHz(SI 换算唯一发生地,与 physics.js 口径一致)
+const ω = (fKHz) => 2 * Math.PI * fKHz * 1e3
 
 /** 渲染 LaTeX 为 KaTeX HTML(与公式原理/收音机页同一封装) */
 function K(tex, display = false) {
@@ -159,8 +165,8 @@ const chartHeight = ref(
 )
 const SAMPLE_COUNT = 500
 
-const localFStart = ref(props.params.fStart || 100)
-const localFEnd = ref(props.params.fEnd || 2000)
+const localFStart = ref(props.params.fStart || 1.4)
+const localFEnd = ref(props.params.fEnd || 3.2)
 
 // 幅频图绘制时窗口内的理论峰值与实测峰值(供量级错配提示条使用)
 const ampPeaks = ref({ theory: 0, meas: 0 })
@@ -176,10 +182,10 @@ const tabs = [
   { label: '阻抗模特性 Z-f', value: 'impedance' },
 ]
 
-// 获取有效的绘图参数（缺少元件时用默认值）
+// 获取有效的绘图参数(存储单位=展示单位:R Ω/L H/C μF;缺少元件时用默认值)
 function getPlotParams() {
   let R = props.params.R || 0
-  let L = (props.params.L || 0) * 1e-3
+  let L = props.params.L || 0
   let C = (props.params.C || 0) * 1e-6
   const V = props.params.V || 5
   let usingDefaults = false
@@ -188,7 +194,7 @@ function getPlotParams() {
     usingDefaults = true
   }
   if (L <= 0) {
-    L = 10 * 1e-3
+    L = 0.01
     usingDefaults = true
   }
   if (C <= 0) {
@@ -247,8 +253,8 @@ function drawChart() {
   let fStart = localFStart.value
   let fEnd = localFEnd.value
   if (!(fEnd > fStart)) {
-    fStart = 1400
-    fEnd = 3200
+    fStart = 1.4
+    fEnd = 3.2
   }
   const N = SAMPLE_COUNT
 
@@ -271,7 +277,7 @@ function drawChart() {
     ctx.fillStyle = 'rgba(169,121,46,0.85)'
     ctx.font = '11px system-ui'
     ctx.textAlign = 'left'
-    ctx.fillText('⚠ 部分元件使用默认值（R=100Ω, L=10mH, C=1μF）', pad.left + 5, pad.top - 8)
+    ctx.fillText('⚠ 部分元件使用默认值（R=100Ω, L=0.01H, C=1μF）', pad.left + 5, pad.top - 8)
   }
 
   if (currentChart.value === 'amp') {
@@ -356,7 +362,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   let maxI = 0
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
-    const w = 2 * Math.PI * f
+    const w = ω(f)
     const Z = Math.sqrt(R * R + (w * L - 1 / (w * C)) ** 2)
     const I = (V / Z) * 1000
     if (I > maxI) maxI = I
@@ -377,7 +383,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
-    const w = 2 * Math.PI * f
+    const w = ω(f)
     const Z = Math.sqrt(R * R + (w * L - 1 / (w * C)) ** 2)
     const I = (V / Z) * 1000
     const x = pad.left + ((f - fStart) / (fEnd - fStart)) * width
@@ -408,16 +414,17 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.arc(resX, resY, 6, 0, 2 * Math.PI)
   ctx.fill()
   ctx.fillStyle = chartAccent
-  ctx.font = 'bold 11px system-ui'
-  ctx.fillText('Imax=' + theory.Imax.toFixed(4) + 'mA', resX - 35, resY - 10)
+  ctx.font = 'bold 12px system-ui'
+  ctx.textAlign = 'left'
+  ctx.fillText('Imax=' + theory.Imax.toFixed(decimalsFor('i')) + QUANTITY.i.unit, resX - 35, resY - 10)
 
   // Imax/√2 标注:公式改由 KaTeX 覆盖层渲染(见模板),此处仅同步位置与数值;
-  // offsetLeft/Top 把画布坐标换算到图容器坐标,分式底边贴虚线上方 4px
+  // offsetLeft/Top 把画布坐标换算到图容器坐标,分式底边再上提至虚线上方 12px,与平齐后的 f₁ 标签拉开间距
   const canvasEl = chartCanvasRef.value
   halfPowerMark.value = {
     x: (canvasEl?.offsetLeft || 0) + pad.left + 5,
-    y: (canvasEl?.offsetTop || 0) + halfPowerY - 4,
-    value: theory.halfPower.toFixed(4),
+    y: (canvasEl?.offsetTop || 0) + halfPowerY - 12,
+    value: theory.halfPower.toFixed(decimalsFor('i')),
   }
 
   // f1/f2截止频率
@@ -431,10 +438,32 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.arc(f2x, halfPowerY, 6, 0, 2 * Math.PI)
   ctx.fill()
 
+  // ---- 通频带标注避让 ----
+  // 带外侧三件套统一靠右竖排(通频带/BW 在线上方、f₂ 值在线下方):右上区域无峰形曲线,
+  // 也避开左侧延伸过来的 Imax/√2 分式覆盖层;f₁ 在带左外与它们天然隔带不相撞。
+  // 窄带/窄屏(移动端)仅整组左移贴绘图右界,不再有任何文字互叠。
+  // save/restore 隔离 textAlign,避免残留状态影响下一帧其它标注。
+  ctx.save()
   ctx.fillStyle = '#e0523f'
-  ctx.font = 'bold 10px system-ui'
-  ctx.fillText('f₁=' + theory.f1.toFixed(4) + 'Hz', f1x - 35, halfPowerY + 22)
-  ctx.fillText('f₂=' + theory.f2.toFixed(4) + 'Hz', f2x - 35, halfPowerY + 22)
+  ctx.font = 'bold 12px system-ui'
+  const f1Label = 'f₁=' + theory.f1.toFixed(decimalsFor('f')) + QUANTITY.f.unit
+  const f2Label = 'f₂=' + theory.f2.toFixed(decimalsFor('f')) + QUANTITY.f.unit
+  const bwLabel = 'BW=' + theory.BW.toFixed(decimalsFor('bw')) + QUANTITY.bw.unit
+  const bandText = '通频带'
+  // f₁/f₂ 与标记点平齐(基线微偏下使文字垂直居中对齐圆点):带外侧水平延伸,不压带线也不被曲线穿越
+  ctx.textAlign = 'right'
+  ctx.fillText(f1Label, Math.max(f1x - 8, pad.left + ctx.measureText(f1Label).width + 2), halfPowerY + 4)
+  ctx.textAlign = 'left'
+  const rightColW = Math.max(
+    ctx.measureText(f2Label).width,
+    ctx.measureText(bwLabel).width,
+    ctx.measureText(bandText).width,
+  )
+  const rightX = Math.min(f2x + 8, W - pad.right - rightColW)
+  ctx.fillText(bandText, rightX, halfPowerY - 22)
+  ctx.fillText(bwLabel, rightX, halfPowerY - 7)
+  ctx.fillText(f2Label, rightX, halfPowerY + 4)
+  ctx.restore()
 
   // BW通频带线
   ctx.strokeStyle = '#e0523f'
@@ -443,10 +472,6 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.moveTo(f1x, halfPowerY)
   ctx.lineTo(f2x, halfPowerY)
   ctx.stroke()
-
-  ctx.fillStyle = '#e0523f'
-  ctx.font = 'bold 12px system-ui'
-  ctx.fillText('BW=' + theory.BW.toFixed(4) + 'Hz', (f1x + f2x) / 2 - 35, halfPowerY - 18)
 
   // 虚线到x轴
   ctx.strokeStyle = '#e0523f'
@@ -462,12 +487,6 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
   ctx.stroke()
   ctx.setLineDash([])
 
-  // 通频带标签
-  ctx.fillStyle = '#e0523f'
-  ctx.font = '9px system-ui'
-  const bwLabelY = Math.min(halfPowerY, pad.top + height * 0.3)
-  ctx.fillText('通频带', (f1x + f2x) / 2 - 20, bwLabelY - 5)
-
   // 实测数据（Cardinal Spline平滑曲线;裁剪到绘图区,防止窗口外的点把连线拉出画布）
   if (props.measuredData.length > 0) {
     ctx.save()
@@ -476,7 +495,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
     ctx.clip()
     if (props.measuredData.length >= 2) {
       const mPts = props.measuredData.map((md) => ({
-        x: pad.left + ((md.freq * 1000 - fStart) / (fEnd - fStart)) * width,
+        x: pad.left + ((md.freq - fStart) / (fEnd - fStart)) * width,
         y: pad.top + height * (1 - md.current / maxI),
       }))
       ctx.strokeStyle = '#16a34a'
@@ -497,7 +516,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
       ctx.stroke()
     }
     for (const md of props.measuredData) {
-      const mx = pad.left + ((md.freq * 1000 - fStart) / (fEnd - fStart)) * width
+      const mx = pad.left + ((md.freq - fStart) / (fEnd - fStart)) * width
       const my = pad.top + height * (1 - md.current / maxI)
       ctx.fillStyle = '#16a34a'
       ctx.beginPath()
@@ -507,7 +526,7 @@ function drawAmpChart(ctx, W, H, width, height, pad, R, L, C, V, fStart, fEnd, N
     ctx.restore()
   }
 
-  drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxI, '频率 f (Hz)', '电流 I (mA)')
+  drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxI, '频率 f (' + QUANTITY.f.unit + ')', '电流 I (' + QUANTITY.i.unit + ')')
 }
 
 // 相频特性
@@ -517,7 +536,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
-    const w = 2 * Math.PI * f
+    const w = ω(f)
     const phase = Math.atan2(w * L - 1 / (w * C), R) * (180 / Math.PI)
     const x = pad.left + ((f - fStart) / (fEnd - fStart)) * width
     const y = pad.top + height * (1 - (phase + 90) / 180)
@@ -566,7 +585,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
         ctx.fillStyle = sp.color
         ctx.font = 'bold 10px system-ui'
         ctx.textAlign = 'left'
-        ctx.fillText(sp.label + ' f=' + fCross.toFixed(4) + 'Hz', px + 10, py + 4)
+        ctx.fillText(sp.label + ' f=' + fCross.toFixed(decimalsFor('f')) + QUANTITY.f.unit, px + 10, py + 4)
         break
       }
     }
@@ -589,8 +608,8 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   for (let i = 1; i <= N; i++) {
     const f1 = fStart + ((fEnd - fStart) * (i - 1)) / N
     const f2 = fStart + ((fEnd - fStart) * i) / N
-    const p1 = Math.atan2(2 * Math.PI * f1 * L - 1 / (2 * Math.PI * f1 * C), R) * (180 / Math.PI)
-    const p2 = Math.atan2(2 * Math.PI * f2 * L - 1 / (2 * Math.PI * f2 * C), R) * (180 / Math.PI)
+    const p1 = Math.atan2(ω(f1) * L - 1 / (ω(f1) * C), R) * (180 / Math.PI)
+    const p2 = Math.atan2(ω(f2) * L - 1 / (ω(f2) * C), R) * (180 / Math.PI)
     if ((p1 - 0) * (p2 - 0) <= 0) {
       const t2 = (0 - p1) / (p2 - p1)
       const fZero = f1 + t2 * (f2 - f1)
@@ -606,7 +625,7 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
       ctx.fillStyle = '#16a34a'
       ctx.font = 'bold 11px system-ui'
       ctx.textAlign = 'left'
-      ctx.fillText('φ=0° f=' + fZero.toFixed(4) + 'Hz', zx + 12, zeroY - 8)
+      ctx.fillText('φ=0° f=' + fZero.toFixed(decimalsFor('f')) + QUANTITY.f.unit, zx + 12, zeroY - 8)
       break
     }
   }
@@ -627,11 +646,11 @@ function drawPhaseChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd, N)
   ctx.font = 'bold 13px system-ui'
   ctx.textAlign = 'center'
   ctx.fillStyle = ct.ink
-  ctx.fillText('频率 f (Hz)', W / 2, H - 5)
+  ctx.fillText('频率 f (' + QUANTITY.f.unit + ')', W / 2, H - 5)
   ctx.save()
   ctx.translate(25, H / 2)
   ctx.rotate(-Math.PI / 2)
-  ctx.fillText('相位差 φ (°)', 0, 0)
+  ctx.fillText('相位差 φ (' + QUANTITY.phi.unit + ')', 0, 0)
   ctx.restore()
 }
 
@@ -640,7 +659,7 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   let maxZ = 0
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
-    const w = 2 * Math.PI * f
+    const w = ω(f)
     const Z = Math.sqrt(R * R + (w * L - 1 / (w * C)) ** 2)
     if (Z > maxZ) maxZ = Z
   }
@@ -651,7 +670,7 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   ctx.beginPath()
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
-    const w = 2 * Math.PI * f
+    const w = ω(f)
     const Z = Math.sqrt(R * R + (w * L - 1 / (w * C)) ** 2)
     const x = pad.left + ((f - fStart) / (fEnd - fStart)) * width
     const y = pad.top + height * (1 - Z / maxZ)
@@ -670,9 +689,21 @@ function drawImpedanceChart(ctx, W, H, width, height, pad, R, L, C, fStart, fEnd
   ctx.fillStyle = chartAccent
   ctx.font = 'bold 11px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillText('Zmin=' + R + 'Ω', resX, resY - 12)
+  ctx.fillText('Zmin=' + R + QUANTITY.z.unit, resX, resY - 12)
 
-  drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxZ, '频率 f (Hz)', '|Z(f)| (Ω)')
+  drawAxes(
+    ctx,
+    W,
+    H,
+    width,
+    height,
+    pad,
+    fStart,
+    fEnd,
+    maxZ,
+    '频率 f (' + QUANTITY.f.unit + ')',
+    '|Z(f)| (' + QUANTITY.z.unit + ')',
+  )
 }
 
 // 智能格式化轴标签，避免数字过长覆盖图表
@@ -710,7 +741,7 @@ function drawAxes(ctx, W, H, width, height, pad, fStart, fEnd, maxVal, xLabel, y
 function calcTheory(R, L, C, V) {
   if (L <= 0 || C <= 0 || R <= 0) return { fr: 0, Q: 0, BW: 0, Imax: 0, halfPower: 0, f1: 0, f2: 0 }
   const omega0 = 1 / Math.sqrt(L * C)
-  const fr = omega0 / (2 * Math.PI)
+  const fr = omega0 / (2 * Math.PI) / 1e3 // kHz
   const Q = (omega0 * L) / R
   const BW = fr / Q
   const Imax = (V / R) * 1000
@@ -728,12 +759,13 @@ function switchChart(type) {
 }
 
 function syncFromSlider(which, val) {
-  val = Math.round(val)
+  // kHz 口径下滑块按 0.001(=1Hz)吸附,与旧 Hz 整数步长精度等价
+  val = Math.round(val * 1000) / 1000
   if (which === 'start') {
-    if (val >= localFEnd.value) localFStart.value = localFEnd.value - 1
+    if (val >= localFEnd.value) localFStart.value = localFEnd.value - 0.001
     else localFStart.value = val
   } else {
-    if (val <= localFStart.value) localFEnd.value = localFStart.value + 1
+    if (val <= localFStart.value) localFEnd.value = localFStart.value + 0.001
     else localFEnd.value = val
   }
   applyFreqRange()
@@ -744,6 +776,13 @@ function applyFreqRange() {
   emit('update-fstart', localFStart.value)
   emit('update-fend', localFEnd.value)
   drawChart()
+}
+
+// 输入框逐键同步重绘:applyFreqRange 已拦截中间态(空/0/起止倒挂),合法值即时更新下方线图
+function onFreqInput(which, v) {
+  if (which === 'start') localFStart.value = v
+  else localFEnd.value = v
+  applyFreqRange()
 }
 
 // 图表点击 - 在最近的曲线点/实测点旁固定显示 tooltip(不随鼠标移动)
@@ -772,7 +811,7 @@ function handleChartClick(event) {
       maxZ = 0
     for (let j = 0; j <= N; j++) {
       const tf = fStart + ((fEnd - fStart) * j) / N
-      const tw = 2 * Math.PI * tf
+      const tw = ω(tf)
       const tZ = Math.sqrt(R * R + (tw * L - 1 / (tw * C)) ** 2)
       const tI = (V / tZ) * 1000
       if (tI > maxI) maxI = tI
@@ -782,16 +821,16 @@ function handleChartClick(event) {
     maxZ *= 1.1
 
     for (const md of props.measuredData) {
-      const mdFreqHz = md.freq * 1000
-      const mdX = pad.left + ((mdFreqHz - fStart) / (fEnd - fStart)) * width
+      const mdFreqK = md.freq
+      const mdX = pad.left + ((mdFreqK - fStart) / (fEnd - fStart)) * width
       let mdY
       if (currentChart.value === 'amp') {
         mdY = pad.top + height * (1 - md.current / maxI)
       } else if (currentChart.value === 'phase') {
-        const mdPhase = Math.atan2(2 * Math.PI * mdFreqHz * L - 1 / (2 * Math.PI * mdFreqHz * C), R) * (180 / Math.PI)
+        const mdPhase = Math.atan2(ω(mdFreqK) * L - 1 / (ω(mdFreqK) * C), R) * (180 / Math.PI)
         mdY = pad.top + height * (1 - (mdPhase + 90) / 180)
       } else {
-        const mdZ = Math.sqrt(R * R + (2 * Math.PI * mdFreqHz * L - 1 / (2 * Math.PI * mdFreqHz * C)) ** 2)
+        const mdZ = Math.sqrt(R * R + (ω(mdFreqK) * L - 1 / (ω(mdFreqK) * C)) ** 2)
         mdY = pad.top + height * (1 - mdZ / maxZ)
       }
       if (Math.sqrt((clickX - mdX) ** 2 + (clickY - mdY) ** 2) < 12) {
@@ -799,7 +838,7 @@ function handleChartClick(event) {
           show: true,
           x: mdX + 10,
           y: mdY - 10,
-          content: `📗 实测数据<br>频率: ${md.freq.toFixed(4)} kHz<br>电流: ${md.current.toFixed(4)} mA`,
+          content: `📗 实测数据<br>频率: ${md.freq.toFixed(decimalsFor('f'))} ${QUANTITY.f.unit}<br>电流: ${md.current.toFixed(decimalsFor('i'))} ${QUANTITY.i.unit}`,
         }
         return
       }
@@ -816,7 +855,7 @@ function handleChartClick(event) {
     closestY = 0
   for (let i = 0; i <= N; i++) {
     const f = fStart + ((fEnd - fStart) * i) / N
-    const w = 2 * Math.PI * f
+    const w = ω(f)
     const Z = Math.sqrt(R * R + (w * L - 1 / (w * C)) ** 2)
     const I = (V / Z) * 1000
     const phase = Math.atan2(w * L - 1 / (w * C), R) * (180 / Math.PI)
@@ -826,7 +865,7 @@ function handleChartClick(event) {
       let maxI2 = 0
       for (let j = 0; j <= N; j++) {
         const tf = fStart + ((fEnd - fStart) * j) / N
-        const tw = 2 * Math.PI * tf
+        const tw = ω(tf)
         const tZ = Math.sqrt(R * R + (tw * L - 1 / (tw * C)) ** 2)
         const tI = (V / tZ) * 1000
         if (tI > maxI2) maxI2 = tI
@@ -839,7 +878,7 @@ function handleChartClick(event) {
       let maxZ2 = 0
       for (let j = 0; j <= N; j++) {
         const tf = fStart + ((fEnd - fStart) * j) / N
-        const tw = 2 * Math.PI * tf
+        const tw = ω(tf)
         const tZ = Math.sqrt(R * R + (tw * L - 1 / (tw * C)) ** 2)
         if (tZ > maxZ2) maxZ2 = tZ
       }
@@ -860,11 +899,11 @@ function handleChartClick(event) {
 
   let content = ''
   if (currentChart.value === 'amp') {
-    content = `频率: ${closestF.toFixed(4)} Hz<br>电流: ${closestI.toFixed(4)} mA<br>阻抗: ${closestZ.toFixed(4)} Ω`
+    content = `频率: ${closestF.toFixed(decimalsFor('f'))} ${QUANTITY.f.unit}<br>电流: ${closestI.toFixed(decimalsFor('i'))} ${QUANTITY.i.unit}<br>阻抗: ${closestZ.toFixed(decimalsFor('z'))} ${QUANTITY.z.unit}`
   } else if (currentChart.value === 'phase') {
-    content = `频率: ${closestF.toFixed(4)} Hz<br>相位差: ${closestPhase.toFixed(4)}°<br>感抗: ${(2 * Math.PI * closestF * L).toFixed(4)} Ω<br>容抗: ${(1 / (2 * Math.PI * closestF * C)).toFixed(4)} Ω`
+    content = `频率: ${closestF.toFixed(decimalsFor('f'))} ${QUANTITY.f.unit}<br>相位差: ${closestPhase.toFixed(decimalsFor('phi'))}${QUANTITY.phi.unit}<br>感抗: ${(ω(closestF) * L).toFixed(decimalsFor('z'))} ${QUANTITY.z.unit}<br>容抗: ${(1 / (ω(closestF) * C)).toFixed(decimalsFor('z'))} ${QUANTITY.z.unit}`
   } else {
-    content = `频率: ${closestF.toFixed(4)} Hz<br>阻抗: ${closestZ.toFixed(4)} Ω<br>电流: ${closestI.toFixed(4)} mA`
+    content = `频率: ${closestF.toFixed(decimalsFor('f'))} ${QUANTITY.f.unit}<br>阻抗: ${closestZ.toFixed(decimalsFor('z'))} ${QUANTITY.z.unit}<br>电流: ${closestI.toFixed(decimalsFor('i'))} ${QUANTITY.i.unit}`
   }
   // 固定显示在选中点旁(不随鼠标移动):坐标取最近曲线点而非点击像素
   tooltip.value = { show: true, x: closestX + 10, y: closestY - 10, content }
@@ -891,8 +930,8 @@ watch(
 )
 
 onMounted(() => {
-  localFStart.value = props.params.fStart || 100
-  localFEnd.value = props.params.fEnd || 2000
+  localFStart.value = props.params.fStart || 1.4
+  localFEnd.value = props.params.fEnd || 3.2
   nextTick(() => drawChart())
   window.addEventListener('resize', () => {
     chartHeight.value = window.innerWidth < 640 ? 280 : window.innerWidth <= 768 ? 350 : 450

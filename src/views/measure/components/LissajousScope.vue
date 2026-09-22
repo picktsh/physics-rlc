@@ -31,12 +31,24 @@
             <NFormItem label="横坐标">
               <div class="flex items-center gap-2 flex-wrap">
                 <div class="w-24">
-                  <NInputNumber v-model:value="freqMin" :show-button="false" placeholder="最小" />
+                  <NInputNumber
+                    v-model:value="freqMin"
+                    :show-button="false"
+                    :precision="QUANTITY.f.decimals"
+                    :step="QUANTITY.f.step"
+                    placeholder="最小"
+                  />
                 </div>
                 <span>~</span>
                 <div class="w-24">
-                  <NInputNumber v-model:value="freqMax" :show-button="false" placeholder="最大">
-                    <template #suffix>Hz</template>
+                  <NInputNumber
+                    v-model:value="freqMax"
+                    :show-button="false"
+                    :precision="QUANTITY.f.decimals"
+                    :step="QUANTITY.f.step"
+                    placeholder="最大"
+                  >
+                    <template #suffix>{{ QUANTITY.f.unit }}</template>
                   </NInputNumber>
                 </div>
                 <NButton secondary type="primary" @click="applyFreqRange">应用</NButton>
@@ -83,44 +95,14 @@
           <span class="font-semibold text-[color:var(--app-text)]">实验数据记录</span>
           <span class="text-xs text-[color:var(--app-text-muted)]">{{ acquiredData.length }} 个数据点</span>
         </div>
-        <div class="max-h-80 overflow-y-auto overflow-x-auto p-3">
-          <table class="w-full text-xs border-collapse">
-            <thead>
-              <tr class="bg-[var(--app-surface-sunken)]">
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">#</th>
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">f (Hz)</th>
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">I (mA)</th>
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">Urpp (V)</th>
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">|Z| (Ω)</th>
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">φ (°)</th>
-                <th class="border border-[color:var(--app-border)] px-2 py-1.5">标记</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(d, idx) in acquiredData"
-                :key="idx"
-                :class="{ 'bg-[var(--app-error-bg)]': idx === resonanceIdx }"
-              >
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ idx + 1 }}</td>
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ d.freq.toFixed(4) }}</td>
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
-                  {{ d.current.toFixed(4) }}
-                </td>
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ d.urpp.toFixed(4) }}</td>
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
-                  {{ d.impedance.toFixed(4) }}
-                </td>
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
-                  {{ d.phase.toFixed(4) }}
-                </td>
-                <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">
-                  <span v-if="idx === resonanceIdx" class="text-[color:var(--app-error)] font-bold">★ 谐振</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <NDataTable
+          size="small"
+          :columns="dataColumns"
+          :data="acquiredData"
+          :row-class-name="(row, i) => (i === resonanceIdx ? 'bg-[var(--app-error-bg)]' : '')"
+          :max-height="320"
+          :scroll-x="640"
+        />
       </section>
 
       <!-- 实时数据面板 -->
@@ -137,7 +119,7 @@
             >
               <div class="text-xs text-[color:var(--app-text-muted)] mb-1">电阻电压 峰峰值 (Vpp)</div>
               <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">
-                {{ measures.Urpp.toFixed(4) }}
+                {{ fmt('u', measures.Urpp) }}
               </div>
             </div>
             <div
@@ -145,32 +127,34 @@
             >
               <div class="text-xs text-[color:var(--app-text-muted)] mb-1">电阻电压 有效值 (Vrms)</div>
               <div class="text-lg font-bold font-mono text-[color:var(--app-success)]">
-                {{ measures.Ur.toFixed(4) }}
+                {{ fmt('u', measures.Ur) }}
               </div>
             </div>
             <div
               class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
             >
-              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">回路电流 I (mA)</div>
-              <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ measures.I.toFixed(4) }}</div>
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">回路电流 I ({{ QUANTITY.i.unit }})</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ fmt('i', measures.I) }}</div>
             </div>
             <div
               class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
             >
-              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">阻抗 |Z| (Ω)</div>
-              <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ measures.Z.toFixed(4) }}</div>
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">阻抗 |Z| ({{ QUANTITY.z.unit }})</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ fmt('z', measures.Z) }}</div>
             </div>
             <div
               class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
             >
-              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">相位 φ (°)</div>
-              <div class="text-lg font-bold font-mono text-[color:var(--app-error)]">{{ measures.phi.toFixed(4) }}</div>
+              <div class="text-xs text-[color:var(--app-text-muted)] mb-1">相位 φ ({{ QUANTITY.phi.unit }})</div>
+              <div class="text-lg font-bold font-mono text-[color:var(--app-error)]">
+                {{ fmt('phi', measures.phi) }}
+              </div>
             </div>
           </div>
           <div class="border-t border-dashed border-[color:var(--app-border)] pt-3 mt-1">
             <div class="flex gap-4 py-1">
               <span class="text-[color:var(--app-text-muted)]">理论谐振频率 f₀</span>
-              <span class="font-semibold text-[color:var(--app-text)]">{{ measures.f0.toFixed(4) }} Hz</span>
+              <span class="font-semibold text-[color:var(--app-text)]">{{ fmt('f', measures.f0) }} {{ QUANTITY.f.unit }}</span>
             </div>
           </div>
         </div>
@@ -180,12 +164,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
-import { NButton, NForm, NFormItem, NIcon, NInputNumber, useMessage } from 'naive-ui'
+import { ref, computed, h, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
+import { NButton, NDataTable, NForm, NFormItem, NIcon, NInputNumber, useMessage } from 'naive-ui'
 import { Stop, Reset, Download, TrashCan } from '@vicons/carbon'
 import { impedance, current, resonantFreq } from '@/utils/physics'
 import { canvasTheme } from '@/utils/canvasTheme'
 import { SIMULATE_HINT } from '@/stores/rlcCalculator'
+import { QUANTITY, fmt } from '@/utils/quantity'
 
 const props = defineProps({
   params: {
@@ -226,9 +211,9 @@ const SKIP_FRAMES = 2
 let lastAmpDraw = 0
 let animId = null
 
-// 计算测量值
+// 计算测量值(频率口径 kHz,与 params 零换算)
 const measures = computed(() => {
-  const freq = props.params.fStart || 1000
+  const freq = props.params.fStart || 1
   const z = impedance(props.params.R, props.params.L, props.params.C, freq)
   const I = current(props.params.V, z.Z)
   const Ur = (I / 1000) * props.params.R
@@ -240,8 +225,8 @@ const measures = computed(() => {
 const cursorInfo = computed(() => {
   const Xamp = props.params.V
   const Yamp = measures.value.Ur * Math.sqrt(2)
-  const voltX = ((scopeCursor.value.x - 0.5) * 2 * Xamp * 1.2).toFixed(4)
-  const voltY = (-(scopeCursor.value.y - 0.5) * 2 * Yamp * 1.2).toFixed(4)
+  const voltX = ((scopeCursor.value.x - 0.5) * 2 * Xamp * 1.2).toFixed(QUANTITY.u.decimals)
+  const voltY = (-(scopeCursor.value.y - 0.5) * 2 * Yamp * 1.2).toFixed(QUANTITY.u.decimals)
   return `X=${voltX}V  Y=${voltY}V`
 })
 
@@ -268,6 +253,24 @@ const resonanceIdx = computed(() => {
   }
   return bestIdx
 })
+
+// 实验数据记录表(NDataTable:粘顶表头 + scroll-x 横向滚动适配移动端;数值列右对齐,精度走 quantity 总表)
+const dataColumns = [
+  { title: '#', key: 'idx', align: 'center', width: 56, render: (_, i) => i + 1 },
+  { title: `f (${QUANTITY.f.unit})`, key: 'freq', align: 'right', render: (r) => fmt('f', r.freq) },
+  { title: `I (${QUANTITY.i.unit})`, key: 'current', align: 'right', render: (r) => fmt('i', r.current) },
+  { title: `Urpp (${QUANTITY.u.unit})`, key: 'urpp', align: 'right', render: (r) => fmt('u', r.urpp) },
+  { title: `|Z| (${QUANTITY.z.unit})`, key: 'impedance', align: 'right', render: (r) => fmt('z', r.impedance) },
+  { title: `φ (${QUANTITY.phi.unit})`, key: 'phase', align: 'right', render: (r) => fmt('phi', r.phase) },
+  {
+    title: '标记',
+    key: 'mark',
+    align: 'center',
+    width: 96,
+    render: (_, i) =>
+      i === resonanceIdx.value ? h('span', { class: 'font-bold text-[color:var(--app-error)]' }, '★ 谐振') : '',
+  },
+]
 
 // 智能格式化轴标签，避免数字过长覆盖图表
 function formatAxisNum(v) {
@@ -364,8 +367,7 @@ function drawScope() {
   ctx.lineTo(pad + gW, cy)
   ctx.stroke()
 
-  // 李萨如图形
-  const w = 2 * Math.PI * (props.params.fStart || 1000)
+  // 李萨如图形(相位椭圆与频率绝对值无关,仅取初始相位参考)
   const z = measures.value
   const Xamp = props.params.V
   const Yamp = measures.value.Ur * Math.sqrt(2)
@@ -465,13 +467,13 @@ function drawAmpChart() {
   ctx.fillRect(0, 0, W, H)
 
   const f0 = measures.value.f0
-  const curFreq = props.params.fStart || 1000
+  const curFreq = props.params.fStart || 1
   let fMin, fMax
   if (fixedRange.value) {
     fMin = fixedRange.value.fMin
     fMax = fixedRange.value.fMax
   } else {
-    fMin = Math.max(50, f0 * 0.2)
+    fMin = Math.max(0.05, f0 * 0.2)
     fMax = f0 * 3
     if (curFreq > fMax) fMax = curFreq * 1.5
     if (curFreq < fMin) fMin = curFreq * 0.5
@@ -573,16 +575,16 @@ function drawAmpChart() {
   ctx.fillStyle = '#e0523f'
   ctx.font = 'bold 11px Courier New'
   ctx.textAlign = 'left'
-  ctx.fillText(`${measures.value.I.toFixed(4)} mA`, curX + 8, curY - 4)
+  ctx.fillText(`${fmt('i', measures.value.I)} ${QUANTITY.i.unit}`, curX + 8, curY - 4)
   ctx.fillStyle = ct.label
   ctx.font = '10px Courier New'
-  ctx.fillText(`${curFreq} Hz`, curX + 8, curY + 10)
+  ctx.fillText(`${fmt('f', curFreq)} ${QUANTITY.f.unit}`, curX + 8, curY + 10)
 
   // 轴标签
   ctx.fillStyle = ct.label
   ctx.font = '12px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillText('频率 f (Hz)', pad.l + gW / 2, H - 8)
+  ctx.fillText('频率 f (' + QUANTITY.f.unit + ')', pad.l + gW / 2, H - 8)
   for (let i = 0; i <= 5; i++) {
     const f = fMin + (fRange * i) / 5
     ctx.fillText(formatAxisNum(f), pad.l + (gW * i) / 5, H - pad.b + 18)
@@ -596,7 +598,7 @@ function drawAmpChart() {
   ctx.translate(14, pad.t + gH / 2)
   ctx.rotate(-Math.PI / 2)
   ctx.textAlign = 'center'
-  ctx.fillText('电流 I (mA)', 0, 0)
+  ctx.fillText('电流 I (' + QUANTITY.i.unit + ')', 0, 0)
   ctx.restore()
 
   // 谐振点绘制在最上层
@@ -618,7 +620,7 @@ function drawAmpChart() {
     ctx.fillStyle = '#eaa23a'
     ctx.font = 'bold 11px system-ui'
     ctx.textAlign = 'center'
-    ctx.fillText('★ 谐振 (' + d.freq.toFixed(4) + ' Hz, ' + d.current.toFixed(4) + ' mA)', x, y - 12)
+    ctx.fillText('★ 谐振 (' + fmt('f', d.freq) + ' ' + QUANTITY.f.unit + ', ' + fmt('i', d.current) + ' ' + QUANTITY.i.unit + ')', x, y - 12)
   }
 
   canvas._plotInfo = { fMin, fRange, iMax, pad, gW, gH }
@@ -654,6 +656,9 @@ function toggleSweep() {
   }
 }
 
+// kHz 口径下按 0.001(=1Hz)吸附,与旧 Hz 整数采样精度等价
+const r3 = (x) => Math.round(x * 1000) / 1000
+
 // 自动扫描
 async function autoSweep() {
   // 扫描数据必须来自「电路搭建」的仿真参数:未仿真一律拦截(与各方法页统一口径)
@@ -670,15 +675,15 @@ async function autoSweep() {
     message.error('电路参数异常，请检查 R、L、C 元件参数')
     return
   }
-  // 以谐振频率 f0 为中心动态生成扫频范围，保证必定经过谐振点
-  const sweepHalfRange = Math.max(f0 * 0.5, 100)
-  const fStart = Math.max(100, Math.round(f0 - sweepHalfRange))
-  const fEnd = Math.round(f0 + sweepHalfRange)
+  // 以谐振频率 f0(kHz) 为中心动态生成扫频范围，保证必定经过谐振点
+  const sweepHalfRange = Math.max(f0 * 0.5, 0.1)
+  const fStart = Math.max(0.1, r3(f0 - sweepHalfRange))
+  const fEnd = r3(f0 + sweepHalfRange)
   const freqs = []
   const N = 50
   for (let i = 0; i <= N; i++) {
     const f = fStart + (fEnd - fStart) * (i / N)
-    freqs.push(Math.round(f))
+    freqs.push(r3(f))
   }
   const unique = [freqs[0]]
   for (let i = 1; i < freqs.length; i++) {
@@ -687,7 +692,7 @@ async function autoSweep() {
   acquiredData.value = []
   isSweeping.value = true
   stopRequested.value = false
-  fixedRange.value = { fMin: Math.max(50, fStart * 0.9), fMax: fEnd * 1.1 }
+  fixedRange.value = { fMin: Math.max(0.05, fStart * 0.9), fMax: fEnd * 1.1 }
   for (let idx = 0; idx < unique.length; idx++) {
     // 检查是否请求停止
     if (stopRequested.value) break
@@ -724,15 +729,15 @@ function exportCSV() {
   if (acquiredData.value.length === 0) return message.warning('请先采集数据')
   const f0 = resonantFreq(props.params.L, props.params.C)
   const resIdx = resonanceIdx.value
-  let csv = '序号,频率(Hz),电流(mA),Urpp(V),阻抗(Ω),相位(°),标记\r\n'
+  let csv = `序号,频率(${QUANTITY.f.unit}),电流(${QUANTITY.i.unit}),Urpp(${QUANTITY.u.unit}),阻抗(${QUANTITY.z.unit}),相位(${QUANTITY.phi.unit}),标记\r\n`
   acquiredData.value.forEach((d, i) => {
     const tag = i === resIdx ? '谐振' : ''
-    csv += `${i + 1},${d.freq.toFixed(4)},${d.current.toFixed(4)},${d.urpp.toFixed(4)},${d.impedance.toFixed(4)},${d.phase.toFixed(4)},${tag}\r\n`
+    csv += `${i + 1},${fmt('f', d.freq)},${fmt('i', d.current)},${fmt('u', d.urpp)},${fmt('z', d.impedance)},${fmt('phi', d.phase)},${tag}\r\n`
   })
   const peak = acquiredData.value.reduce((a, b) => (a.current > b.current ? a : b))
-  csv += `\r\n谐振峰值电流:,${peak.current.toFixed(4)} mA\r\n`
-  csv += `对应频率:,${peak.freq.toFixed(4)} Hz\r\n`
-  csv += `理论谐振频率:,${f0.toFixed(4)} Hz\r\n`
+  csv += `\r\n谐振峰值电流:,${fmt('i', peak.current)} ${QUANTITY.i.unit}\r\n`
+  csv += `对应频率:,${fmt('f', peak.freq)} ${QUANTITY.f.unit}\r\n`
+  csv += `理论谐振频率:,${fmt('f', f0)} ${QUANTITY.f.unit}\r\n`
   navigator.clipboard.writeText(csv).then(() => {
     message.success(`✅ CSV已复制到剪贴板！共 ${acquiredData.value.length} 个数据点`)
   })
@@ -836,8 +841,8 @@ onMounted(() => {
     const mx = clientX - rect.left
     const ratio = (mx - pi.pad.l) / pi.gW
     if (ratio < 0 || ratio > 1) return
-    const newF = Math.round(pi.fMin + pi.fRange * ratio)
-    const clampedF = Math.max(100, Math.min(10000, newF))
+    const newF = r3(pi.fMin + pi.fRange * ratio)
+    const clampedF = Math.max(0.1, Math.min(10, newF))
     emit('update-freq', clampedF)
     // 当freqMin/freqMax输入为空时清除fixedRange
     if (!freqMin.value || !freqMax.value) {

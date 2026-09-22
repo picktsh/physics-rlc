@@ -109,10 +109,13 @@
           >
             <div class="font-semibold">{{ simulation.success ? '✅' : '⚠️' }} {{ simulation.message }}</div>
             <div v-if="simulation.success" class="mt-1">
-              等效参数:R = {{ fmt(simulation.params.R) }} Ω · L = {{ fmt(simulation.params.L / 1000, 3) }} H · C =
-              {{ fmt(simulation.params.C, 3) }} μF · V = {{ fmt(simulation.params.V) }} V
+              等效参数:R = {{ fmt(simulation.params.R, QUANTITY.R.decimals) }} {{ QUANTITY.R.unit }} · L =
+              {{ fmt(simulation.params.L, QUANTITY.L.decimals) }} {{ QUANTITY.L.unit }} · C =
+              {{ fmt(simulation.params.C, QUANTITY.C.decimals) }} {{ QUANTITY.C.unit }} ·
+              V = {{ fmt(simulation.params.V, QUANTITY.V.decimals) }} {{ QUANTITY.V.unit }}
               <span class="block mt-0.5">
-                谐振频率 f₀ ≈ {{ fmt(simulation.fr, 1) }} Hz · 阻尼比 ζ ≈ {{ fmt(simulation.zeta, 3) }} →
+                谐振频率 f₀ ≈ {{ fmt(simulation.fr, QUANTITY.f.decimals) }} {{ QUANTITY.f.unit }} · 阻尼比 ζ ≈
+                {{ fmt(simulation.zeta, QUANTITY.zeta.decimals) }} →
                 {{ dampingTypeLabel[simulation.dampingType] }}
               </span>
             </div>
@@ -139,9 +142,9 @@
                 >
                   <NFormItem :label="`${getComponentLabel(comp.type)} #${idx + 1}`">
                     <NInputNumber
-                      :value="toDisplayValue(comp.type, comp.value)"
+                      :value="comp.value"
                       :show-button="false"
-                      :precision="VALUE_CONFIG[comp.type]?.precision"
+                      :precision="VALUE_CONFIG[comp.type]?.decimals"
                       :step="VALUE_CONFIG[comp.type]?.step ?? 1"
                       @update:value="(v) => onCompValueChange(idx, v)"
                     >
@@ -162,13 +165,13 @@
                     </NFormItem>
                     <NFormItem label="频率">
                       <NInputNumber
-                        :value="comp.signalFrequency || 100"
+                        :value="comp.signalFrequency || 0.1"
                         :show-button="false"
-                        :precision="4"
-                        :step="1"
+                        :precision="QUANTITY.f.decimals"
+                        :step="QUANTITY.f.step"
                         @update:value="(v) => onSignalChange(idx, 'frequency', v)"
                       >
-                        <template #suffix>Hz</template>
+                        <template #suffix>{{ QUANTITY.f.unit }}</template>
                       </NInputNumber>
                     </NFormItem>
                     <NFormItem label="周期">
@@ -177,7 +180,7 @@
                         :show-button="false"
                         @update:value="(v) => onSignalChange(idx, 'period', v)"
                       >
-                        <template #suffix>ms</template>
+                        <template #suffix>{{ QUANTITY.period.unit }}</template>
                       </NInputNumber>
                     </NFormItem>
                     <NFormItem v-if="comp.signalWaveform === 'square'" label="占空比">
@@ -186,7 +189,7 @@
                         :show-button="false"
                         @update:value="(v) => onSignalChange(idx, 'dutyCycle', v)"
                       >
-                        <template #suffix>%</template>
+                        <template #suffix>{{ QUANTITY.duty.unit }}</template>
                       </NInputNumber>
                     </NFormItem>
                     <NFormItem v-if="comp.signalWaveform === 'square'" label="脉宽">
@@ -195,7 +198,7 @@
                         :show-button="false"
                         @update:value="(v) => onSignalChange(idx, 'pulseWidth', v)"
                       >
-                        <template #suffix>ms</template>
+                        <template #suffix>{{ QUANTITY.period.unit }}</template>
                       </NInputNumber>
                     </NFormItem>
                   </template>
@@ -230,14 +233,14 @@
                 @update:value="onToleranceChange"
               />
               <span class="text-xs font-semibold text-[color:var(--app-brand)] min-w-[40px] text-right"
-                >±{{ tolerancePercent.toFixed(1) }}%</span
+                >±{{ tolerancePercent.toFixed(1) }}{{ QUANTITY.tol.unit }}</span
               >
             </div>
             <div
               v-if="toleranceEnabled"
               class="text-xs text-[color:var(--app-warning)] bg-[var(--app-warning-bg)] rounded px-2 py-1 mt-1"
             >
-              💡 开启后每次仿真实物参数将在标称值的 ±{{ tolerancePercent.toFixed(1) }}% 范围内随机波动
+              💡 开启后每次仿真实物参数将在标称值的 ±{{ tolerancePercent.toFixed(1) }}{{ QUANTITY.tol.unit }} 范围内随机波动
             </div>
           </div>
         </div>
@@ -292,7 +295,7 @@
               </NFormItem>
               <NFormItem label="X轴时长" class="flex-1 min-w-[120px]">
                 <NInputNumber v-model:value="axisXScale" :show-button="false" :step="0.001" :min="0.001">
-                  <template #suffix>s</template>
+                  <template #suffix>{{ QUANTITY.t.unit }}</template>
                 </NInputNumber>
               </NFormItem>
               <NFormItem class="flex-none">
@@ -308,11 +311,11 @@
           v-if="dampingParams"
           class="mt-2 text-xs text-[color:var(--app-text-muted)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-2 leading-5"
         >
-          <div>阻尼系数 α = R/(2L) = {{ fmt(dampingParams.alpha) }} rad/s</div>
-          <div>固有角频率 ω₀ = 1/√(LC) = {{ fmt(dampingParams.omega0) }} rad/s</div>
-          <div>阻尼比 ζ = α/ω₀ = {{ fmt(dampingParams.zeta, 3) }} → {{ dampingTypeLabel[simulation.dampingType] }}</div>
+          <div>阻尼系数 α = R/(2L) = {{ fmt(dampingParams.alpha) }} {{ QUANTITY.rate.unit }}</div>
+          <div>固有角频率 ω₀ = 1/√(LC) = {{ fmt(dampingParams.omega0) }} {{ QUANTITY.rate.unit }}</div>
+          <div>阻尼比 ζ = α/ω₀ = {{ fmt(dampingParams.zeta, QUANTITY.zeta.decimals) }} → {{ dampingTypeLabel[simulation.dampingType] }}</div>
           <div v-if="simulation.dampingType === 'under'">
-            阻尼振荡角频率 ωd = √(ω₀²−α²) = {{ fmt(dampingParams.omegaD) }} rad/s
+            阻尼振荡角频率 ωd = √(ω₀²−α²) = {{ fmt(dampingParams.omegaD) }} {{ QUANTITY.rate.unit }}
           </div>
         </div>
       </div>
@@ -331,17 +334,17 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <NFormItem label="Stop Time">
             <NInputNumber v-model:value="simStopTime" :show-button="false" :min="0.001">
-              <template #suffix>s</template>
+              <template #suffix>{{ QUANTITY.t.unit }}</template>
             </NInputNumber>
           </NFormItem>
           <NFormItem label="开始保存数据的延迟 (Tdelay)">
             <NInputNumber v-model:value="simTdelay" :show-button="false" :min="0">
-              <template #suffix>s</template>
+              <template #suffix>{{ QUANTITY.t.unit }}</template>
             </NInputNumber>
           </NFormItem>
           <NFormItem label="最大步长">
             <NInputNumber :value="simStopTime / 1000" :show-button="false" disabled>
-              <template #suffix>s</template>
+              <template #suffix>{{ QUANTITY.t.unit }}</template>
             </NInputNumber>
           </NFormItem>
           <NFormItem>
@@ -396,7 +399,7 @@
               </NFormItem>
               <NFormItem label="X轴时长" class="flex-1 min-w-[120px]">
                 <NInputNumber v-model:value="capXScale" :show-button="false" :step="0.001" :min="0.001">
-                  <template #suffix>s</template>
+                  <template #suffix>{{ QUANTITY.t.unit }}</template>
                 </NInputNumber>
               </NFormItem>
               <NFormItem class="flex-none">
@@ -435,7 +438,7 @@
             >
               <div class="text-xs text-[color:var(--app-text-muted)] mb-1">阻尼系数</div>
               <div class="font-mono text-[color:var(--app-text)]">α = R / (2L)</div>
-              <div class="text-[color:var(--app-brand)] font-semibold mt-1">= {{ fmt(dampingParams.alpha) }} rad/s</div>
+              <div class="text-[color:var(--app-brand)] font-semibold mt-1">= {{ fmt(dampingParams.alpha) }} {{ QUANTITY.rate.unit }}</div>
             </div>
             <div
               class="bg-[color-mix(in_srgb,var(--app-surface),transparent_20%)] rounded-lg p-3 border border-[color:var(--app-surface-brand-strong)]"
@@ -443,7 +446,7 @@
               <div class="text-xs text-[color:var(--app-text-muted)] mb-1">固有角频率</div>
               <div class="font-mono text-[color:var(--app-text)]">ω₀ = 1 / √(LC)</div>
               <div class="text-[color:var(--app-brand)] font-semibold mt-1">
-                = {{ fmt(dampingParams.omega0) }} rad/s
+                = {{ fmt(dampingParams.omega0) }} {{ QUANTITY.rate.unit }}
               </div>
             </div>
             <div
@@ -451,11 +454,11 @@
             >
               <div class="text-xs text-[color:var(--app-text-muted)] mb-1">临界阻尼条件</div>
               <div class="font-mono text-[color:var(--app-text)]">R<sub>c</sub> = 2√(L/C)</div>
-              <div class="text-[color:var(--app-brand)] font-semibold mt-1">= {{ fmt(dampingParams.Rc) }} Ω</div>
+              <div class="text-[color:var(--app-brand)] font-semibold mt-1">= {{ fmt(dampingParams.Rc) }} {{ QUANTITY.R.unit }}</div>
             </div>
           </div>
           <div class="mt-3 text-xs text-[color:var(--app-text-muted)] text-center">
-            阻尼判据: ζ = α/ω₀ = {{ fmt(dampingParams.zeta, 3) }} — ζ &lt; 1 欠阻尼(衰减振荡) | ζ = 1 临界阻尼 | ζ &gt;
+            阻尼判据: ζ = α/ω₀ = {{ fmt(dampingParams.zeta, QUANTITY.zeta.decimals) }} — ζ &lt; 1 欠阻尼(衰减振荡) | ζ = 1 临界阻尼 | ζ &gt;
             1 过阻尼
           </div>
         </div>
@@ -465,11 +468,11 @@
             <div class="font-semibold text-[color:var(--app-text)] mb-2">🔄 振荡周期</div>
             <div class="font-mono text-[color:var(--app-text-muted)]">T = 2π / ω<sub>d</sub></div>
             <div class="text-lg font-bold text-[color:var(--app-brand)] mt-1">
-              {{ fmt(dampingParams.T, 4) }}
-              <span class="text-xs font-normal text-[color:var(--app-text-muted)]">s</span>
+              {{ fmt(dampingParams.T, QUANTITY.t.decimals) }}
+              <span class="text-xs font-normal text-[color:var(--app-text-muted)]">{{ QUANTITY.t.unit }}</span>
             </div>
             <div v-if="simulation.dampingType === 'under'" class="text-xs text-[color:var(--app-text-faint)] mt-1">
-              ω<sub>d</sub> = {{ fmt(dampingParams.omegaD) }} rad/s
+              ω<sub>d</sub> = {{ fmt(dampingParams.omegaD) }} {{ QUANTITY.rate.unit }}
             </div>
             <div v-else class="text-xs text-[color:var(--app-warning)] mt-1">非欠阻尼状态,无振荡周期</div>
           </div>
@@ -480,9 +483,9 @@
             >
               <div class="text-xs text-[color:var(--app-text-muted)]">u<sub>C</sub>(t)</div>
               <div class="font-bold text-[color:var(--app-success)]">
-                {{ fmt(instVoltage, 4) }} <span class="text-xs font-normal">V</span>
+                {{ fmt(instVoltage, QUANTITY.u.decimals) }} <span class="text-xs font-normal">{{ QUANTITY.u.unit }}</span>
               </div>
-              <div class="text-xs text-[color:var(--app-text-faint)] mt-0.5">t = {{ fmt(instTime * 1000, 2) }} ms</div>
+              <div class="text-xs text-[color:var(--app-text-faint)] mt-0.5">t = {{ fmt(instTime * 1000, 2) }} {{ QUANTITY.period.unit }}</div>
             </div>
             <NSlider v-model:value="instSliderValue" :min="0" :max="1000" class="w-24 sm:w-20" />
           </div>
@@ -491,10 +494,10 @@
             <div class="font-mono text-[color:var(--app-text-muted)]">α = R / (2L)</div>
             <div class="text-lg font-bold text-[color:var(--app-warning)] mt-1">
               {{ fmt(dampingParams.alpha) }}
-              <span class="text-xs font-normal text-[color:var(--app-text-muted)]">rad/s</span>
+              <span class="text-xs font-normal text-[color:var(--app-text-muted)]">{{ QUANTITY.rate.unit }}</span>
             </div>
             <div class="text-xs text-[color:var(--app-text-faint)] mt-1">
-              时间常数 τ = 1/α = {{ fmt(dampingParams.tau, 4) }} s
+              时间常数 τ = 1/α = {{ fmt(dampingParams.tau, QUANTITY.t.decimals) }} {{ QUANTITY.t.unit }}
             </div>
           </div>
         </div>
@@ -524,7 +527,7 @@ import { useFullscreenSection } from '@/composables/useFullscreenSection'
 import { useMediaQuery } from '@vueuse/core'
 import Circuit3DCanvas from '@/components/Circuit3DCanvas.vue'
 import { renderComponentThumbs } from '@/utils/circuit3d'
-import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG, displayValue as toDisplayValue, storedValue } from '@/utils/quantity'
+import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG, QUANTITY } from '@/utils/quantity'
 
 // 08 tab 电路搭建:直接使用 03 tab 同款 3D 实体模型(共享 Circuit3DCanvas + circuit3d 建模模块),
 // 无 2D 画布;数据为独立一份(本页 store),与 03 tab 的电路互不影响
@@ -616,15 +619,14 @@ function resetCapAxisRange() {
 const dampingParams = computed(() => {
   if (!simulation.value || !simulation.value.success) return null
   const { R, L, C, V } = simulation.value.params
-  const Lh = L * 1e-3,
-    Cf = C * 1e-6
-  const omega0 = Lh > 0 && Cf > 0 ? 1 / Math.sqrt(Lh * Cf) : 0
-  const alpha = Lh > 0 ? R / (2 * Lh) : 0
+  const Cf = C * 1e-6
+  const omega0 = L > 0 && Cf > 0 ? 1 / Math.sqrt(L * Cf) : 0
+  const alpha = L > 0 ? R / (2 * L) : 0
   const zeta = omega0 > 0 ? alpha / omega0 : Infinity
   const omegaD = omega0 > alpha ? Math.sqrt(omega0 * omega0 - alpha * alpha) : 0
   const T = omegaD > 0 ? (2 * Math.PI) / omegaD : Infinity
   const tau = alpha > 0 ? 1 / alpha : Infinity
-  const Rc = Lh > 0 && Cf > 0 ? 2 * Math.sqrt(Lh / Cf) : 0
+  const Rc = L > 0 && Cf > 0 ? 2 * Math.sqrt(L / Cf) : 0
   const sigComp = store.components.find((c) => c.type === 'V')
   const signalWaveform = sigComp?.signalWaveform || 'sine'
   const signalPulseWidth = sigComp?.signalPulseWidth || 5
@@ -649,7 +651,7 @@ const dampingParams = computed(() => {
 const dampingStateLabel = computed(() => {
   if (!dampingParams.value) return ''
   const d = dampingTypeLabel[simulation.value.dampingType] || ''
-  return `当前状态: ${d} (ζ = ${fmt(dampingParams.value.zeta, 3)})`
+  return `当前状态: ${d} (ζ = ${fmt(dampingParams.value.zeta, QUANTITY.zeta.decimals)})`
 })
 const dampingStateColor = computed(() => {
   const t = simulation.value?.dampingType
@@ -875,9 +877,9 @@ function onReset() {
   wireClicked.value = false
 }
 
-// ===== 参数输入(显示单位值换算回内部存储值后写 store,量程钳制交由 store.updateComponentValue) =====
+// ===== 参数输入(存储单位=展示单位零换算,直接写 store;量程钳制交由 store.updateComponentValue) =====
 function onCompValueChange(idx, num) {
-  store.updateComponentValue(idx, storedValue(store.components[idx]?.type, num))
+  store.updateComponentValue(idx, num)
 }
 
 // ===== 信号源波形参数编辑(频率/周期/占空比/脉宽经 store 双向同步) =====
@@ -1052,11 +1054,11 @@ function drawDampingCurve() {
   ctx.fillStyle = '#bbbbdd'
   ctx.font = '11px monospace'
   ctx.textAlign = 'center'
-  ctx.fillText('Time (s)', W / 2, H - 4)
+  ctx.fillText('Time (' + QUANTITY.t.unit + ')', W / 2, H - 4)
   ctx.save()
   ctx.translate(12, H / 2)
   ctx.rotate(-Math.PI / 2)
-  ctx.fillText('Voltage (V)', 0, 0)
+  ctx.fillText('Voltage (' + QUANTITY.u.unit + ')', 0, 0)
   ctx.restore()
 
   // 信号名标签(LTspice 风格:左上角彩色标签)
@@ -1098,7 +1100,7 @@ function drawDampingCurve() {
     ctx.arc(cx, cy, 4, 0, 2 * Math.PI)
     ctx.fill()
     // 读数框
-    const txt = `(${formatTimeLabel(ct)}, ${cv.toFixed(4)}V)`
+    const txt = `(${formatTimeLabel(ct)}, ${cv.toFixed(QUANTITY.u.decimals)}${QUANTITY.u.unit})`
     const tx = cx + 10 > W - pad.right - 120 ? cx - 120 : cx + 10
     const ty = cy - 10 < pad.top + 16 ? cy + 20 : cy - 10
     ctx.fillStyle = 'rgba(0,0,0,0.7)'
@@ -1211,7 +1213,7 @@ function drawCapacitorWaveform() {
   ctx.lineTo(ix, iy + 6)
   ctx.stroke()
   // 读数
-  const instTxt = `(${formatTimeLabel(tInst)}, ${vInst.toFixed(4)}V)`
+  const instTxt = `(${formatTimeLabel(tInst)}, ${vInst.toFixed(QUANTITY.u.decimals)}${QUANTITY.u.unit})`
   const itx = ix + 10 > W - pad.right - 120 ? ix - 120 : ix + 10
   const ity = iy - 10 < pad.top + 16 ? iy + 20 : iy - 10
   ctx.fillStyle = 'rgba(0,0,0,0.7)'
@@ -1239,11 +1241,11 @@ function drawCapacitorWaveform() {
   ctx.fillStyle = '#bbbbdd'
   ctx.font = '11px monospace'
   ctx.textAlign = 'center'
-  ctx.fillText('Time (s)', W / 2, H - 4)
+  ctx.fillText('Time (' + QUANTITY.t.unit + ')', W / 2, H - 4)
   ctx.save()
   ctx.translate(12, H / 2)
   ctx.rotate(-Math.PI / 2)
-  ctx.fillText('Uc (V)', 0, 0)
+  ctx.fillText('Uc (' + QUANTITY.u.unit + ')', 0, 0)
   ctx.restore()
 
   // 信号名标签
@@ -1278,7 +1280,7 @@ function drawCapacitorWaveform() {
     ctx.arc(cx, cy, 4, 0, 2 * Math.PI)
     ctx.fill()
     // 读数框
-    const txt = `(${formatTimeLabel(ct)}, ${cv.toFixed(4)}V)`
+    const txt = `(${formatTimeLabel(ct)}, ${cv.toFixed(QUANTITY.u.decimals)}${QUANTITY.u.unit})`
     const tx = cx + 10 > W - pad.right - 120 ? cx - 120 : cx + 10
     const ty = cy - 10 < pad.top + 16 ? cy + 20 : cy - 10
     ctx.fillStyle = 'rgba(0,0,0,0.7)'

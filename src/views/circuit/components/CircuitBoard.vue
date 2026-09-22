@@ -223,11 +223,11 @@
               >
                 <NFormItem :label="`${getComponentLabel(comp.type)} #${idx + 1}`">
                   <NInputNumber
-                    :value="toDisplayValue(comp.type, comp.value)"
+                    :value="comp.value"
                     :show-button="false"
                     :min="VALUE_RANGE[comp.type]?.min"
                     :max="VALUE_RANGE[comp.type]?.max"
-                    :precision="VALUE_CONFIG[comp.type]?.precision"
+                    :precision="VALUE_CONFIG[comp.type]?.decimals"
                     :step="VALUE_CONFIG[comp.type]?.step ?? 1"
                     @update:value="(v) => onCompValueChange(idx, v)"
                   >
@@ -282,12 +282,12 @@ import { useFullscreenSection } from '@/composables/useFullscreenSection'
 import { useMediaQuery } from '@vueuse/core'
 import Circuit3DCanvas from '@/components/Circuit3DCanvas.vue'
 import { canvasTheme } from '@/utils/canvasTheme'
-import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG, displayValue as toDisplayValue, storedValue } from '@/utils/quantity'
+import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG } from '@/utils/quantity'
 
 const calcStore = useRLCCalculatorStore()
 
 // 元件默认值与可调量程(滑线变阻器/可调电容仿真语义同 R/C,带下限防呆避免除零/Q 发散)
-const DEFAULT_VALUES = { R: 100, RV: 100, L: 100, C: 0.05, CV: 0.05, V: 0.9 }
+const DEFAULT_VALUES = { R: 100, RV: 100, L: 0.1, C: 0.05, CV: 0.05, V: 0.9 }
 const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
 
 const toleranceEnabled = ref(calcStore.toleranceEnabled)
@@ -372,11 +372,11 @@ function applyPreset(id) {
   nextTick(drawCircuit)
 }
 
-// 元件参数编辑:显示单位值换算回内部存储值(L: H → mH)后写回(量程钳制交由 NInputNumber 的 min/max)
+// 元件参数编辑:存储单位=展示单位零换算,数值直接写回(量程钳制交由 NInputNumber 的 min/max)
 function onCompValueChange(idx, num) {
   if (num === null || Number.isNaN(num)) return
   const newComponents = [...props.components]
-  newComponents[idx] = { ...newComponents[idx], value: storedValue(props.components[idx].type, num) }
+  newComponents[idx] = { ...newComponents[idx], value: num }
   emit('update:components', newComponents)
 }
 

@@ -105,7 +105,7 @@
             class="absolute -translate-y-full pointer-events-none text-xs text-[color:var(--app-warning)] leading-none"
             :style="{ left: halfPowerMark.x + 'px', top: halfPowerMark.y + 'px' }"
           >
-            <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}mA</span>
+            <span v-html="K('\\dfrac{I_{max}}{\\sqrt{2}}')"></span><span>= {{ halfPowerMark.value }}{{ QUANTITY.i.unit }}</span>
           </div>
         </div>
         <div
@@ -180,18 +180,24 @@
           <label class="ml-auto">
             <NInputNumber v-model:value="threshold" :show-button="false" :step="1" :min="5" :max="20" class="w-32">
               <template #prefix>阈值:</template>
-              <template #suffix>%</template>
+              <template #suffix>{{ QUANTITY.err.unit }}</template>
             </NInputNumber>
           </label>
         </div>
         <div class="my-2 border-t border-dashed border-[color:var(--app-border)]"></div>
         <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <!-- f：变量符号作 prefix、单位 Hz 作 suffix、固定 4 位小数；滑块 flex-1 填满消除空旷 -->
-          <NInputNumber v-model:value="f" :show-button="false" :step="1" :precision="4" class="w-32 sm:w-36">
+          <!-- f：变量符号作 prefix、单位 kHz 作 suffix(口径见 utils/quantity.js)；滑块 flex-1 填满消除空旷 -->
+          <NInputNumber
+            v-model:value="f"
+            :show-button="false"
+            :step="QUANTITY.f.step"
+            :precision="QUANTITY.f.decimals"
+            class="w-32 sm:w-36"
+          >
             <template #prefix>f:</template>
-            <template #suffix>Hz</template>
+            <template #suffix>{{ QUANTITY.f.unit }}</template>
           </NInputNumber>
-          <NSlider v-model:value="f" :min="freqMin" :max="freqMax" :step="1" class="min-w-[140px] flex-1" />
+          <NSlider v-model:value="f" :min="freqMin" :max="freqMax" :step="0.001" class="min-w-[140px] flex-1" />
           <NButton secondary type="primary" class="w-full sm:w-auto" @click="searchResonance">
             <template #icon><NIcon :component="Search" /></template>
             搜索谐振
@@ -210,54 +216,14 @@
           <span class="text-xs font-semibold text-[color:var(--app-text)]">实验数据记录</span>
           <span class="text-xs text-[color:var(--app-text-muted)] hide-on-mobile">UL、UC 幅值对比支撑谐振判定</span>
         </div>
-        <div class="max-h-72 overflow-y-auto overflow-x-auto table-responsive">
-          <table class="text-xs border-collapse">
-            <thead>
-              <tr class="bg-[var(--app-surface-sunken)] sticky top-0">
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">#</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">f (Hz)</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">I (mA)</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">U<sub>L</sub> (V)</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5">U<sub>C</sub> (V)</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5 hide-on-mobile">|Z| (Ω)</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5 hide-on-mobile">φ (°)</th>
-                <th class="border border-[color:var(--app-border)] px-1.5 py-1.5 hide-on-mobile">Q</th>
-              </tr>
-            </thead>
-            <tbody id="lcTableBody">
-              <tr v-if="collected.length === 0">
-                <td colspan="8" class="text-center text-[color:var(--app-text-faint)] py-4 text-xs">
-                  暂无数据，请采集
-                </td>
-              </tr>
-              <tr
-                v-for="(d, idx) in collected"
-                :key="idx"
-                :class="{
-                  'bg-[var(--app-surface-brand-strong)] font-semibold text-[color:var(--app-brand-strong)]':
-                    Math.abs(d.f - f0) < 1e-4,
-                }"
-              >
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ idx + 1 }}</td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">
-                  {{ t4(d.f) }}{{ Math.abs(d.f - f0) < 1e-4 ? ' ⭐' : '' }}
-                </td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ t4(d.I * 1e3) }}</td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ t4(d.UL) }}</td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center">{{ t4(d.UC) }}</td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center hide-on-mobile">
-                  {{ t4(d.Z) }}
-                </td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center hide-on-mobile">
-                  {{ t4((d.phi * 180) / Math.PI) }}
-                </td>
-                <td class="border border-[color:var(--app-border)] px-1.5 py-1.5 text-center hide-on-mobile">
-                  {{ d.Q !== undefined ? t4(d.Q) : '-' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <NDataTable
+          size="small"
+          :columns="tableColumns"
+          :data="collected"
+          :row-class-name="resRowClass"
+          :max-height="288"
+          :scroll-x="680"
+        />
       </div>
 
       <!-- 实时面板 -->
@@ -271,7 +237,7 @@
         <div class="p-4 space-y-2">
           <template v-if="selectedPoint">
             <div class="text-xs text-[color:var(--app-brand)] font-semibold mb-2 flex items-center gap-2">
-              📌 已选中采集点 f = {{ t4(selectedPoint.f) }} Hz
+              📌 已选中采集点 f = {{ fmt('f', selectedPoint.f) }} {{ QUANTITY.f.unit }}
               <NButton
                 text
                 class="ml-auto text-[color:var(--app-text-faint)] hover:text-[color:var(--app-error)]"
@@ -287,32 +253,32 @@
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">回路电流 I</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.I * 1e3) }} mA</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.I * 1e3) }} {{ QUANTITY.i.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">总阻抗 |Z|</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.Z) }} Ω</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.Z) }} {{ QUANTITY.z.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">相位差 φ</span
               ><span class="font-semibold text-[color:var(--app-text)]"
-                >{{ t4((selectedPoint.phi * 180) / Math.PI) }}°</span
+                >{{ fmt('phi', (selectedPoint.phi * 180) / Math.PI) }}{{ QUANTITY.phi.unit }}</span
               >
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">Ur 有效值</span
               ><span class="font-semibold text-[color:var(--app-text)]"
-                >{{ t4((selectedPoint.I * R) / 1000 / Math.SQRT2) }} V</span
+                >{{ fmt('u', (selectedPoint.I * R) / 1000 / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span
               >
             </div>
             <div class="border-t border-dashed border-[color:var(--app-border)] my-1"></div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">UL 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.UL / Math.SQRT2) }} V</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', selectedPoint.UL / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">UC 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.UC / Math.SQRT2) }} V</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', selectedPoint.UC / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5">
               <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
@@ -322,28 +288,28 @@
           <template v-else>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">回路电流 I</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(I_peak * 1e3) }} mA</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(I_peak * 1e3) }} {{ QUANTITY.i.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">总阻抗 |Z|</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(Z) }} Ω</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(Z) }} {{ QUANTITY.z.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">相位差 φ</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4((phi * 180) / Math.PI) }}°</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('phi', (phi * 180) / Math.PI) }}{{ QUANTITY.phi.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">Ur 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(Ur_peak / Math.SQRT2) }} V</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', Ur_peak / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
             </div>
             <div class="border-t border-dashed border-[color:var(--app-border)] my-1"></div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">UL 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(UL_peak / Math.SQRT2) }} V</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', UL_peak / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
               <span class="text-[color:var(--app-text-muted)]">UC 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(UC_peak / Math.SQRT2) }} V</span>
+              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', UC_peak / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
             </div>
             <div class="flex gap-4 py-1.5">
               <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
@@ -374,46 +340,24 @@
           >
           <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
             >平均误差
-            <strong class="text-[color:var(--app-brand)]">{{ collected.length ? t4(avgErr) + '%' : '—' }}</strong></span
+            <strong class="text-[color:var(--app-brand)]">{{ collected.length ? fmt('err', avgErr) + '%' : '—' }}</strong
+            ></span
           >
           <span class="bg-[var(--app-surface-muted)] px-3 py-1.5 rounded"
             >最大误差
-            <strong class="text-[color:var(--app-error)]">{{ maxErr > 0 ? t4(maxErr) + '%' : '—' }}</strong></span
+            <strong class="text-[color:var(--app-error)]">{{ maxErr > 0 ? fmt('err', maxErr) + '%' : '—' }}</strong
+            ></span
           >
         </div>
-        <div class="max-h-28 overflow-y-auto mb-2">
-          <table v-if="rejectedData.length > 0" class="w-full text-xs border-collapse">
-            <thead>
-              <tr class="bg-[var(--app-error-bg)] sticky top-0">
-                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">#</th>
-                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
-                  f (Hz)
-                </th>
-                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
-                  I实测 (mA)
-                </th>
-                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
-                  I理论 (mA)
-                </th>
-                <th class="border border-[color:var(--app-error-border)] px-2 py-1 text-[color:var(--app-error)]">
-                  误差%
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(p, i) in rejectedData" :key="i">
-                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">{{ i + 1 }}</td>
-                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">{{ t4(p.f) }}</td>
-                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">{{ t4(p.I * 1e3) }}</td>
-                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">
-                  {{ t4(p.theoryI * 1e3) }}
-                </td>
-                <td class="border border-[color:var(--app-error-border)] px-2 py-1 text-center">
-                  {{ p.err.toFixed(2) }}%
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="mb-2">
+          <NDataTable
+            v-if="rejectedData.length > 0"
+            size="small"
+            :columns="rejectedColumns"
+            :data="rejectedData"
+            :max-height="112"
+            :scroll-x="520"
+          />
           <div v-else class="text-center text-[color:var(--app-text-faint)] py-4 text-xs">
             无剔除数据，所有采集点均在阈值内
           </div>
@@ -432,13 +376,14 @@
 import { ref, reactive, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick } from 'vue'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
-import { NButton, NIcon, NInputNumber, NSlider, useDialog, useMessage } from 'naive-ui'
+import { NButton, NDataTable, NIcon, NInputNumber, NSlider, useDialog, useMessage } from 'naive-ui'
 const message = useMessage()
 const dialog = useDialog()
 import { storeToRefs } from 'pinia'
 import { Search, Stop, ChartBar, VolumeUp, Reset, TrashCan, Close, Download } from '@vicons/carbon'
 import { canvasTheme } from '@/utils/canvasTheme'
 import { useRLCCalculatorStore, SIMULATE_HINT } from '@/stores/rlcCalculator'
+import { QUANTITY, fmt, decimalsFor } from '@/utils/quantity'
 
 // 组件名须与 config/nav 的 keepAliveNames 一致,保证切页时后台扫频进度不丢
 defineOptions({ name: 'LCVoltageMethod' })
@@ -448,16 +393,16 @@ defineOptions({ name: 'LCVoltageMethod' })
 const calcStore = useRLCCalculatorStore()
 const { params } = storeToRefs(calcStore)
 const R = computed(() => params.value.R)
-const L_mH = computed(() => params.value.L)
+const L_H_par = computed(() => params.value.L) // params.L 已是 H(零换算)
 const C_uF = computed(() => params.value.C)
 const Us = computed(() => params.value.V)
-const f = ref(2250.7)
+const f = ref(2.2507) // 工作频率 kHz(默认对准 f₀≈2.2508kHz)
 const threshold = ref(10)
 const isScanning = ref(false)
 const isNoiseScanning = ref(false)
 const noiseEnabled = ref(false)
-const freqMin = ref(100)
-const freqMax = ref(10000)
+const freqMin = ref(0.1)
+const freqMax = ref(10)
 
 // ---- 计算状态 ----
 const L_H = ref(0)
@@ -505,6 +450,35 @@ const halfPowerMark = ref(null)
 const t4 = (x) => x.toFixed(4)
 const clamp = (v, l, h) => Math.min(h, Math.max(l, v))
 
+// 实验数据记录表(NDataTable:粘顶表头 + scroll-x 横向滚动适配移动端;数值列右对齐,精度走 quantity 总表)
+const tableColumns = [
+  { title: '#', key: 'idx', align: 'center', width: 52, render: (_, i) => i + 1 },
+  {
+    title: `f (${QUANTITY.f.unit})`,
+    key: 'f',
+    align: 'right',
+    render: (d) => fmt('f', d.f) + (Math.abs(d.f - f0.value) < 1e-4 ? ' ⭐' : ''),
+  },
+  { title: `I (${QUANTITY.i.unit})`, key: 'I', align: 'right', render: (d) => fmt('i', d.I * 1e3) },
+  { title: `UL (${QUANTITY.u.unit})`, key: 'UL', align: 'right', render: (d) => fmt('u', d.UL) },
+  { title: `UC (${QUANTITY.u.unit})`, key: 'UC', align: 'right', render: (d) => fmt('u', d.UC) },
+  { title: `|Z| (${QUANTITY.z.unit})`, key: 'Z', align: 'right', render: (d) => fmt('z', d.Z) },
+  { title: `φ (${QUANTITY.phi.unit})`, key: 'phi', align: 'right', render: (d) => fmt('phi', (d.phi * 180) / Math.PI) },
+  { title: 'Q', key: 'Q', align: 'right', render: (d) => (d.Q !== undefined ? fmt('q', d.Q) : '-') },
+]
+// 谐振行高亮(与图内黄点/⭐同一判定):行级 class 由 UnoCSS 全局生成,不受 scoped 限制
+const resRowClass = (d) =>
+  Math.abs(d.f - f0.value) < 1e-4 ? 'bg-[var(--app-surface-brand-strong)] font-semibold text-[color:var(--app-brand-strong)]' : ''
+
+// 被剔除异常点明细表
+const rejectedColumns = [
+  { title: '#', key: 'idx', align: 'center', width: 52, render: (_, i) => i + 1 },
+  { title: `f (${QUANTITY.f.unit})`, key: 'f', align: 'right', render: (p) => fmt('f', p.f) },
+  { title: `I实测 (${QUANTITY.i.unit})`, key: 'I', align: 'right', render: (p) => fmt('i', p.I * 1e3) },
+  { title: `I理论 (${QUANTITY.i.unit})`, key: 'theoryI', align: 'right', render: (p) => fmt('i', p.theoryI * 1e3) },
+  { title: `误差 ${QUANTITY.err.unit}`, key: 'err', align: 'right', render: (p) => fmt('err', p.err) + QUANTITY.err.unit },
+]
+
 /** 渲染 LaTeX 为 KaTeX HTML(与分析页/公式原理/收音机页同一封装) */
 function K(tex, display = false) {
   return katex.renderToString(tex, {
@@ -538,13 +512,13 @@ function drawStar(ctx, x, y, r, color) {
   ctx.restore()
 }
 
-// ---- 电路计算 ----
+// ---- 电路计算(入参/出参频率均 kHz;L_H/C_F 为内部 SI 中间量) ----
 function calcResonantFreq() {
-  return 1 / (2 * Math.PI * Math.sqrt(L_H.value * C_F.value))
+  return 1 / (2 * Math.PI * Math.sqrt(L_H.value * C_F.value)) / 1e3
 }
 
-function calcCircuit(freq) {
-  const ω = 2 * Math.PI * freq
+function calcCircuit(freq_kHz) {
+  const ω = 2 * Math.PI * freq_kHz * 1e3
   const XL = ω * L_H.value
   const XC = 1 / (ω * C_F.value)
   const d = XL - XC
@@ -558,12 +532,12 @@ function calcCircuit(freq) {
     UC_peak: Ip * XC,
     phi: Math.atan2(d, R.value),
     Q: Math.sqrt(L_H.value / C_F.value) / R.value,
-    freq,
+    freq: freq_kHz,
   }
 }
 
 function calcAll() {
-  L_H.value = L_mH.value / 1e3
+  L_H.value = L_H_par.value
   C_F.value = C_uF.value * 1e-6
   f0.value = calcResonantFreq()
   const result = calcCircuit(f.value)
@@ -624,8 +598,8 @@ function drawWaveform(ctx, w, h, amp, phaseOffset, color) {
   ctx.font = '10px sans-serif'
   ctx.textAlign = 'right'
   ctx.textBaseline = 'middle'
-  ctx.fillText(t4(amp) + 'V', mL - 4, py)
-  ctx.fillText('-' + t4(amp) + 'V', mL - 4, ny)
+  ctx.fillText(fmt('u', amp) + QUANTITY.u.unit, mL - 4, py)
+  ctx.fillText('-' + fmt('u', amp) + QUANTITY.u.unit, mL - 4, ny)
   ctx.fillText('0', mL - 4, mid)
 }
 
@@ -877,15 +851,15 @@ function updatePhaseStatus() {
   const a = Math.abs(pd)
   let t, c, b
   if (a < 3) {
-    t = '相位差 φ = ' + t4(pd) + '° ✅ 谐振状态（φ≈0°，UL≈UC）'
+    t = '相位差 φ = ' + fmt('phi', pd) + QUANTITY.phi.unit + ' ✅ 谐振状态（φ≈0°，UL≈UC）'
     c = '#23a876'
     b = '#e8f1ea'
   } else if (pd > 0) {
-    t = '相位差 φ = ' + t4(pd) + '° ⚡ 感性失谐 — UL>UC, φ>0'
+    t = '相位差 φ = ' + fmt('phi', pd) + QUANTITY.phi.unit + ' ⚡ 感性失谐 — UL>UC, φ>0'
     c = '#d9962b'
     b = '#f8f2e3'
   } else {
-    t = '相位差 φ = ' + t4(pd) + '° 🔵 容性失谐 — UC>UL, φ<0'
+    t = '相位差 φ = ' + fmt('phi', pd) + QUANTITY.phi.unit + ' 🔵 容性失谐 — UC>UL, φ<0'
     c = '#2563eb'
     b = '#e8f0fe'
   }
@@ -904,16 +878,22 @@ function updateResGain() {
       Math.abs(phi.value) < 1e-9
         ? ''
         : '<span style="font-weight:400;font-size:11px;margin-left:8px;">【仅谐振点满足 UL=UC=Q·Us，失谐时放大倍数小于理论Q】</span>'
-    resGainRef.value.innerHTML = '🔺 电压放大倍数 ≈ Q = ' + t4(q) + '（Us 的 ' + q.toFixed(1) + ' 倍）' + extra
+    resGainRef.value.innerHTML =
+      '🔺 电压放大倍数 ≈ Q = ' +
+      fmt('q', q) +
+      '（Us 的 ' +
+      q.toFixed(decimalsFor('q')) +
+      ' 倍）' +
+      extra
   }
 }
 
 // ---- 幅频数据生成 ----
 function generateSweepData(n) {
-  // 横轴窗口 f0±800;f0≤800Hz 时(如电路搭建页调大 C/L 后)下限会 ≤0,log10 结果为 NaN 致整图空白,
-  // 故下限不低于 f0/4(f0≥1066.7Hz 时 f0-800≥f0/4,与旧窗口完全一致)。
-  const lo = Math.max(f0.value - 800, f0.value / 4)
-  const hi = f0.value + 800
+  // 横轴窗口 f0±0.8kHz;f0≤0.8kHz 时(如电路搭建页调大 C/L 后)下限会 ≤0,log10 结果为 NaN 致整图空白,
+  // 故下限不低于 f0/4(f0≥1.0667kHz 时 f0-0.8≥f0/4,与旧窗口完全一致)。
+  const lo = Math.max(f0.value - 0.8, f0.value / 4)
+  const hi = f0.value + 0.8
   const d = []
   for (let i = 0; i < n; i++) {
     const r = i / (n - 1)
@@ -1034,13 +1014,13 @@ function drawAmpChart() {
   ctx.font = '10px system-ui'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  ctx.fillText('f (Hz)', mL + pw / 2, 18 + ph + 6)
+  ctx.fillText('f (' + QUANTITY.f.unit + ')', mL + pw / 2, 18 + ph + 6)
   ctx.textAlign = 'right'
   ctx.textBaseline = 'bottom'
   ctx.save()
   ctx.translate(14, 18 + ph / 2)
   ctx.rotate(-Math.PI / 2)
-  ctx.fillText('I (mA)', 0, 0)
+  ctx.fillText('I (' + QUANTITY.i.unit + ')', 0, 0)
   ctx.restore()
 
   // 理论参考曲线:灰色虚线(未采集时为画布上唯一的曲线轮廓,采集后作蓝色实测线的对照)
@@ -1108,14 +1088,14 @@ function drawAmpChart() {
       ctx.font = '10px system-ui'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'bottom'
-      ctx.fillText('Δf=' + t4(bw) + 'Hz', (mx(fL) + mx(fR)) / 2, yh - 8)
+      ctx.fillText('Δf=' + fmt('bw', bw) + QUANTITY.bw.unit, (mx(fL) + mx(fR)) / 2, yh - 8)
     }
   }
 
   const q = calcCircuit(f0.value)
-  if (mF0Ref.value) mF0Ref.value.textContent = t4(f0.value) + ' Hz'
-  if (mDfRef.value) mDfRef.value.textContent = showBw && bw > 0 ? t4(bw) + ' Hz' : '—'
-  if (mQRef.value) mQRef.value.textContent = t4(q.Q)
+  if (mF0Ref.value) mF0Ref.value.textContent = fmt('f', f0.value) + ' ' + QUANTITY.f.unit
+  if (mDfRef.value) mDfRef.value.textContent = showBw && bw > 0 ? fmt('bw', bw) + ' ' + QUANTITY.bw.unit : '—'
+  if (mQRef.value) mQRef.value.textContent = fmt('q', q.Q)
   if (mQLabelRef.value)
     mQLabelRef.value.textContent = q.Q < 5 ? '低Q，选频差' : q.Q <= 15 ? '中高Q，选频良好' : '高Q，选频优秀'
 
@@ -1156,7 +1136,7 @@ function drawAmpChart() {
   }
 
   // 黄色谐振点绘制在最上层
-  const hasResonanceData = collected.value.some((p) => Math.abs(p.f - f0.value) < 1)
+  const hasResonanceData = collected.value.some((p) => Math.abs(p.f - f0.value) < 0.001)
   if (hasResonanceData) {
     const peakData = data[mi]
     const peakX = mx(data[mi].f)
@@ -1176,7 +1156,11 @@ function drawAmpChart() {
     ctx.font = 'bold 10px system-ui'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
-    ctx.fillText('★ 谐振 (' + t4(peakData.f) + ' Hz, ' + t4(peakData.I * 1e3) + ' mA)', peakX, peakY - 24)
+    ctx.fillText(
+      '★ 谐振 (' + fmt('f', peakData.f) + ' ' + QUANTITY.f.unit + ', ' + fmt('i', peakData.I * 1e3) + ' ' + QUANTITY.i.unit + ')',
+      peakX,
+      peakY - 24,
+    )
   }
 }
 
@@ -1188,7 +1172,7 @@ function filterData() {
   let te = 0,
     me = 0
   collected.value.forEach((p) => {
-    const ω = 2 * Math.PI * p.f
+    const ω = 2 * Math.PI * p.f * 1e3
     const It = Us.value / Math.sqrt(R.value * R.value + (ω * L_H.value - 1 / (ω * C_F.value)) ** 2)
     const err = (Math.abs(p.I - It) / It) * 100
     if (err <= th) {
@@ -1206,7 +1190,7 @@ function filterData() {
     analysisText.value = '✅ 所有采集数据误差均在阈值(' + th + '%)以内，数据质量良好。'
     return
   }
-  const avg = (te / collected.value.length).toFixed(2)
+  const avg = (te / collected.value.length).toFixed(decimalsFor('err'))
   let src
   if (me > 50) {
     src = '疑似电路暂态干扰或参数突变，建议检查连接或重新采集；'
@@ -1219,7 +1203,7 @@ function filterData() {
     '📊 共剔除 ' +
     rejectedData.value.length +
     ' 个异常点，最大误差 ' +
-    me.toFixed(2) +
+    me.toFixed(decimalsFor('err')) +
     '%，平均误差 ' +
     avg +
     '%。' +
@@ -1241,28 +1225,28 @@ function exportCSV() {
   }
   const bom = '\uFEFF'
   const now = new Date().toLocaleDateString()
-  const vh = '序号,频率(Hz),电流(mA),UL(V),UC(V),阻抗(Ω),相位(°),Q值,误差%'
+  const vh = `序号,频率(${QUANTITY.f.unit}),电流(${QUANTITY.i.unit}),UL(${QUANTITY.u.unit}),UC(${QUANTITY.u.unit}),阻抗(${QUANTITY.z.unit}),相位(${QUANTITY.phi.unit}),Q值,误差${QUANTITY.err.unit}`
   const vr = validData.value
     .map((p, i) =>
       [
         i + 1,
-        t4(p.f),
-        t4(p.I * 1e3),
-        t4(p.UL),
-        t4(p.UC),
-        t4(p.Z),
-        t4((p.phi * 180) / Math.PI),
-        t4(p.Q),
-        p.err.toFixed(2) + '%',
+        fmt('f', p.f),
+        fmt('i', p.I * 1e3),
+        fmt('u', p.UL),
+        fmt('u', p.UC),
+        fmt('z', p.Z),
+        fmt('phi', (p.phi * 180) / Math.PI),
+        fmt('q', p.Q),
+        fmt('err', p.err) + QUANTITY.err.unit,
       ].join(','),
     )
     .join('\n')
   let extra = ''
   if (rejectedData.value.length) {
-    const rh = '\n\n=== 被剔除错误点明细 ===\n序号,频率(Hz),实测电流(mA),理论电流(mA),误差%,UL(V),UC(V)'
+    const rh = `\n\n=== 被剔除错误点明细 ===\n序号,频率(${QUANTITY.f.unit}),实测电流(${QUANTITY.i.unit}),理论电流(${QUANTITY.i.unit}),误差${QUANTITY.err.unit},UL(${QUANTITY.u.unit}),UC(${QUANTITY.u.unit})`
     const rr = rejectedData.value
       .map((p, i) =>
-        [i + 1, t4(p.f), t4(p.I * 1e3), t4(p.theoryI * 1e3), p.err.toFixed(2) + '%', t4(p.UL), t4(p.UC)].join(','),
+        [i + 1, fmt('f', p.f), fmt('i', p.I * 1e3), fmt('i', p.theoryI * 1e3), fmt('err', p.err) + QUANTITY.err.unit, fmt('u', p.UL), fmt('u', p.UC)].join(','),
       )
       .join('\n')
     extra = rh + '\n' + rr
@@ -1339,15 +1323,15 @@ function handleAmpClick(event) {
 }
 
 // ---- 自动扫频 ----
-// 扫频窗口随 f₀ 联动:原 1950~2550Hz 是默认参数(f₀≈2250.8Hz)下的固定窗,
+// 扫频窗口随 f₀ 联动:原 1.95~2.55kHz 是默认参数(f₀≈2.2508kHz)下的固定窗,
 // 换算为倍率窗 f₀×[0.8664, 1.1329],谐振点仍单独插入保证被采样。
-function buildScanFreqs(f0Hz) {
-  const lo = f0Hz * 0.8664
-  const hi = f0Hz * 1.1329
+function buildScanFreqs(f0KHz) {
+  const lo = f0KHz * 0.8664
+  const hi = f0KHz * 1.1329
   const freqs = Array.from({ length: 51 }, (_, i) => lo * Math.pow(hi / lo, i / 50))
-  let insIdx = freqs.findIndex((x) => x >= f0Hz)
+  let insIdx = freqs.findIndex((x) => x >= f0KHz)
   if (insIdx < 0) insIdx = freqs.length
-  freqs.splice(insIdx, 0, f0Hz)
+  freqs.splice(insIdx, 0, f0KHz)
   return freqs
 }
 
@@ -1412,14 +1396,20 @@ function searchResonance() {
   f.value = Number(freq.toFixed(4))
   message.success(
     '✅ 搜寻完成！谐振频率 f₀ = ' +
-      t4(freq) +
-      ' Hz\nUL = ' +
-      t4(UL_peak.value) +
-      ' V, UC = ' +
-      t4(UC_peak.value) +
-      ' V\nφ = ' +
-      t4((phi.value * 180) / Math.PI) +
-      '°',
+      fmt('f', freq) +
+      ' ' +
+      QUANTITY.f.unit +
+      '\nUL = ' +
+      fmt('u', UL_peak.value) +
+      ' ' +
+      QUANTITY.u.unit +
+      ', UC = ' +
+      fmt('u', UC_peak.value) +
+      ' ' +
+      QUANTITY.u.unit +
+      '\nφ = ' +
+      fmt('phi', (phi.value * 180) / Math.PI) +
+      QUANTITY.phi.unit,
   )
 }
 
@@ -1429,7 +1419,7 @@ function collectPointWithNoise() {
   // ±0.5% 随机测量噪声
   const noise = 1 + (Math.random() - 0.5) * 0.01
   const I_noisy = r.I_peak * noise
-  const ω = 2 * Math.PI * f.value
+  const ω = 2 * Math.PI * f.value * 1e3
   const XL = ω * L_H.value
   const XC = 1 / (ω * C_F.value)
   collected.value.push({
@@ -1584,7 +1574,7 @@ const selUlucClass = computed(() => {
 })
 
 // ---- 参数变化监听 ----
-watch([R, L_mH, C_uF, Us, f], () => {
+watch([R, L_H_par, C_uF, Us, f], () => {
   selectedPoint.value = null
   calcAll()
   sweepData.value = generateSweepData(250)

@@ -9,14 +9,14 @@ export const SIMULATE_HINT = '请先到「电路搭建」搭建 RLC 电路并点
  * RLC 计算器 Store - 管理电路参数、计算结果和曲线数据
  */
 export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
-  // 电路参数
+  // 电路参数(存储单位=展示单位,口径见 utils/quantity.js:R Ω/L H/C μF/V V/频率 kHz)
   const params = reactive({
     R: 100,
-    L: 100,
+    L: 0.1,
     C: 0.05,
     V: 0.9,
-    fStart: 1400,
-    fEnd: 3200,
+    fStart: 1.4,
+    fEnd: 3.2,
   })
 
   // 计算结果
@@ -113,11 +113,11 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
 
   function resetParams() {
     params.R = 100
-    params.L = 100
+    params.L = 0.1
     params.C = 0.05
     params.V = 0.9
-    params.fStart = 1400
-    params.fEnd = 3200
+    params.fStart = 1.4
+    params.fEnd = 3.2
     calculate()
   }
 

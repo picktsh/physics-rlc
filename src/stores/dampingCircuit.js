@@ -14,14 +14,14 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
   const wires = ref([])
   const junctions = ref([]) // 3D 直接搭建不产生中间节点,保留字段以复用校验与渲染逻辑
 
-  // 元件默认值与可调量程(与 03 tab 一致;滑线变阻器/可调电容仿真语义同 R/C)
-  const DEFAULT_VALUES = { R: 100, RV: 100, L: 100, C: 0.05, CV: 0.05, V: 0.9 }
+  // 元件默认值与可调量程(与 03 tab 一致;存储单位=展示单位:R Ω/L H/C μF;滑线变阻器/可调电容仿真语义同 R/C)
+  const DEFAULT_VALUES = { R: 100, RV: 100, L: 0.1, C: 0.05, CV: 0.05, V: 0.9 }
   const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
 
-  // 信号源默认参数(波形/频率/占空比/周期ms/脉宽ms)与量程
-  const DEFAULT_SIGNAL = { frequency: 100, waveform: 'sine', dutyCycle: 50, period: 10, pulseWidth: 5 }
+  // 信号源默认参数(波形/频率kHz/占空比/周期ms/脉宽ms)与量程;频率与周期互为倒数(T_ms = 1/f_kHz)
+  const DEFAULT_SIGNAL = { frequency: 0.1, waveform: 'sine', dutyCycle: 50, period: 10, pulseWidth: 5 }
   const SIGNAL_RANGE = {
-    frequency: { min: 1, max: 10000 },
+    frequency: { min: 0.001, max: 10 },
     dutyCycle: { min: 10, max: 90 },
     period: { min: 0.1, max: 1000 },
     pulseWidth: { min: 0.01, max: 999 },
@@ -201,7 +201,7 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
     const updates = {}
     if (prop === 'frequency') {
       updates.signalFrequency = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.frequency, SIGNAL_RANGE.frequency.min), SIGNAL_RANGE.frequency.max)
-      updates.signalPeriod = +(1000 / updates.signalFrequency).toFixed(4)
+      updates.signalPeriod = +(1 / updates.signalFrequency).toFixed(4)
     } else if (prop === 'dutyCycle') {
       updates.signalDutyCycle = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.dutyCycle, SIGNAL_RANGE.dutyCycle.min), SIGNAL_RANGE.dutyCycle.max)
       const period = comp.signalPeriod || DEFAULT_SIGNAL.period
@@ -210,7 +210,7 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
       updates.signalWaveform = value
     } else if (prop === 'period') {
       updates.signalPeriod = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.period, SIGNAL_RANGE.period.min), SIGNAL_RANGE.period.max)
-      updates.signalFrequency = +Math.min(Math.max(1000 / updates.signalPeriod, SIGNAL_RANGE.frequency.min), SIGNAL_RANGE.frequency.max).toFixed(4)
+      updates.signalFrequency = +Math.min(Math.max(1 / updates.signalPeriod, SIGNAL_RANGE.frequency.min), SIGNAL_RANGE.frequency.max).toFixed(4)
     } else if (prop === 'pulseWidth') {
       const period = comp.signalPeriod || DEFAULT_SIGNAL.period
       updates.signalPulseWidth = Math.min(Math.max(parseFloat(value) || DEFAULT_SIGNAL.pulseWidth, SIGNAL_RANGE.pulseWidth.min), Math.min(period * 0.9, SIGNAL_RANGE.pulseWidth.max))
@@ -395,7 +395,7 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
 
   /**
    * 仿真:校验回路 → 提取参数 → 计算谐振/阻尼振荡特征量
-   * 阻尼振荡特征量(L: mH → SI; C: μF → SI):
+   * 阻尼振荡特征量(L 已是 H;C: μF → SI):fr/BW 为 kHz
    *   α = R/2L(衰减系数,rad/s)、ω0 = 1/√(LC)(固有角频率)、ζ = α/ω0(阻尼比)
    *   ζ<1 欠阻尼(衰减振荡) / ζ=1 临界阻尼 / ζ>1 过阻尼
    */
@@ -415,10 +415,9 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
     }
     const { R, L, C, V } = ep
     const base = calculateRLC(R, L, C, V)
-    const Lh = L * 1e-3
     const Cf = C * 1e-6
-    const omega0 = Lh > 0 && Cf > 0 ? 1 / Math.sqrt(Lh * Cf) : 0
-    const alpha = Lh > 0 ? R / (2 * Lh) : 0
+    const omega0 = L > 0 && Cf > 0 ? 1 / Math.sqrt(L * Cf) : 0
+    const alpha = L > 0 ? R / (2 * L) : 0
     const zeta = omega0 > 0 ? alpha / omega0 : Infinity
     const dampingType = zeta > 1 ? 'over' : zeta === 1 ? 'critical' : 'under'
     const message = '仿真完成:已从实际连线拓扑提取等效参数'

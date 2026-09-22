@@ -39,7 +39,7 @@
             ></div>
           </div>
           <p class="text-[color:var(--app-text-muted)] leading-6 mt-auto pt-3">
-            本页 L = 100 mH 固定,旋钮实际调的是可变电容
+            本页 L = {{ TUNER_L_H }} {{ QUANTITY.L.unit }} 固定,旋钮实际调的是可变电容
             <span class="formula-k" v-html="K('C = \\dfrac{1}{(2\\pi f_0)^2 L}')"></span
             >,每个台对应一个电容位置。
           </p>
@@ -130,13 +130,13 @@
           <span class="inline-flex items-center">
             <i class="inline-block w-2 h-2 rounded-full mr-1.5" :style="{ background: s.color }"></i>
             {{ s.name }}
-            <b class="font-variant-numeric tabular-nums">{{ s.freq }}</b>
-            &nbsp;Hz
+            <b class="font-variant-numeric tabular-nums">{{ fmt('f', s.freq) }}</b>
+            &nbsp;{{ QUANTITY.f.unit }}
           </span>
         </NButton>
         <NCheckbox v-model:checked="interfOn" class="ml-auto">
           <span class="inline-flex items-center gap-2 text-[color:var(--app-text-muted)]">
-            <i class="inline-block w-2 h-2 rounded-full bg-[var(--app-error)]"></i>邻频干扰台 860 Hz
+            <i class="inline-block w-2 h-2 rounded-full bg-[var(--app-error)]"></i>邻频干扰台 {{ fmt('f', INTERFERER.freq) }} {{ QUANTITY.f.unit }}
           </span>
         </NCheckbox>
       </div>
@@ -145,9 +145,9 @@
         <div class="flex flex-col gap-3">
           <div class="flex items-center gap-3 text-[color:var(--app-text-muted)]">
             <span class="w-[86px] shrink-0">调谐旋钮 f₀</span>
-            <NSlider v-model:value="f0Tune" :min="TUNE_F_MIN" :max="TUNE_F_MAX" :step="1" class="flex-1" />
+            <NSlider v-model:value="f0Tune" :min="TUNE_F_MIN" :max="TUNE_F_MAX" :step="0.001" class="flex-1" />
             <span class="w-[108px] shrink-0 text-right font-variant-numeric tabular-nums text-[color:var(--app-brand)] font-semibold"
-              >{{ f0Tune }} Hz</span
+              >{{ fmt('f', f0Tune) }} {{ QUANTITY.f.unit }}</span
             >
           </div>
           <div
@@ -155,9 +155,9 @@
           >
             <span
               >可变电容 C =
-              <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.C_uF.toFixed(4) }}</b> μF</span
+              <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.C_uF.toFixed(QUANTITY.C.decimals) }}</b> {{ QUANTITY.C.unit }}</span
             >
-            <span>L = 100 mH(固定)</span>
+            <span>L = {{ TUNER_L_H }} {{ QUANTITY.L.unit }}(固定)</span>
           </div>
           <div class="flex items-center gap-3 text-[color:var(--app-text-muted)]">
             <span class="w-[86px] shrink-0">阻尼电阻 R</span>
@@ -170,10 +170,10 @@
             class="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-[var(--app-surface-sunken)] rounded-lg text-[color:var(--app-text-faint)]"
           >
             <span
-              >品质因数 Q = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.Q.toFixed(decimalsFor('Q')) }}</b></span
+              >品质因数 Q = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.Q.toFixed(decimalsFor('q')) }}</b></span
             >
             <span
-              >带宽 Δf = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ st.BW.toFixed(1) }}</b> Hz</span
+              >带宽 Δf = <b class="text-[color:var(--app-text)] font-variant-numeric tabular-nums">{{ fmt('bw', st.BW) }}</b> {{ QUANTITY.bw.unit }}</span
             >
             <span class="text-[color:var(--app-text-faint)]">R 越小 Q 越高,选择性越好;但 Q 过高带宽过窄,偏离一点就收不到</span>
           </div>
@@ -182,7 +182,7 @@
         <div class="rounded-lg border border-[color:var(--app-border)] overflow-hidden self-start w-full">
           <div class="flex items-center justify-between px-4 py-2 bg-[var(--app-surface-sunken)] border-b border-[color:var(--app-border)]">
             <span class="font-semibold text-[color:var(--app-text)]">信号表</span>
-            <span class="text-[color:var(--app-text-faint)]">正在收听:{{ st.target.name }} {{ st.target.freq }} Hz</span>
+            <span class="text-[color:var(--app-text-faint)]">正在收听:{{ st.target.name }} {{ fmt('f', st.target.freq) }} {{ QUANTITY.f.unit }}</span>
           </div>
           <div class="px-4 py-3 flex flex-col gap-3">
             <div>
@@ -240,7 +240,7 @@
             <span class="flex items-center gap-2"
               ><i class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--app-error)]"></i>f₀ 调谐点</span
             >
-            <span v-if="bandEdges" class="text-[color:var(--app-text-faint)] ml-auto">-3 dB 带宽 {{ (bandEdges.hi - bandEdges.lo).toFixed(1) }} Hz</span>
+            <span v-if="bandEdges" class="text-[color:var(--app-text-faint)] ml-auto">-3 dB 带宽 {{ fmt('bw', bandEdges.hi - bandEdges.lo) }} {{ QUANTITY.bw.unit }}</span>
           </div>
           <div ref="curveWrapRef" class="w-full">
             <canvas ref="curveCanvasRef" class="w-full block" style="height: 300px"></canvas>
@@ -309,11 +309,11 @@ import { NButton, NCheckbox, NSlider } from 'naive-ui'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import { canvasTheme } from '@/utils/canvasTheme'
-import { decimalsFor } from '@/utils/quantity'
+import { QUANTITY, decimalsFor, fmt } from '@/utils/quantity'
 import {
   STATIONS,
   INTERFERER,
-  TUNER_L_MH,
+  TUNER_L_H,
   TUNE_F_MIN,
   TUNE_F_MAX,
   R_MIN,
@@ -334,7 +334,7 @@ function K(tex, display = false) {
 }
 
 /* ---------------- 状态 ---------------- */
-const f0Tune = ref(1000) // 调谐频率 Hz(默认对准音乐台)
+const f0Tune = ref(1) // 调谐频率 kHz(默认对准音乐台)
 const R = ref(20) // 阻尼电阻 Ω
 const interfOn = ref(false) // 邻频干扰台开关
 
@@ -349,7 +349,7 @@ function tuneTo(freq) {
 /* ---------------- 信号表读数 ---------------- */
 const levelText = computed(() => {
   const h = st.value.target.h
-  return h >= 0.99 ? '0.0 dB 满格' : (20 * Math.log10(h)).toFixed(1) + ' dB'
+  return h >= 0.99 ? `0.0 ${QUANTITY.db.unit} 满格` : (20 * Math.log10(h)).toFixed(QUANTITY.db.decimals) + ' ' + QUANTITY.db.unit
 })
 const levelPct = computed(() => {
   const h = st.value.target.h
@@ -370,9 +370,9 @@ const levelFillBg = computed(() => {
 })
 const levelHint = computed(() => {
   const d = Math.abs(st.value.target.freq - f0Tune.value)
-  if (d < 2) return '已对准,信号最强 —— 收音机"台"就调在这里'
-  if (d < 30) return '微微失谐:继续转动旋钮对准 ' + st.value.target.freq + ' Hz 可满格'
-  return '明显失谐:转动调谐旋钮(或点上方电台)对准 ' + st.value.target.freq + ' Hz'
+  if (d < 0.002) return '已对准,信号最强 —— 收音机"台"就调在这里'
+  if (d < 0.03) return '微微失谐:继续转动旋钮对准 ' + fmt('f', st.value.target.freq) + ' ' + QUANTITY.f.unit + ' 可满格'
+  return '明显失谐:转动调谐旋钮(或点上方电台)对准 ' + fmt('f', st.value.target.freq) + ' ' + QUANTITY.f.unit
 })
 // 邻台抑制深度(dB)= 20·lg(目标台/最大邻台),口径同 tuner.js 的 select;值越大越干净,<10 dB 判串台
 const suppressDb = computed(() => Math.max(0, st.value.select))
@@ -474,7 +474,7 @@ function drawCurve() {
     padB,
     xTicks,
     yTicks,
-    (v) => v + '',
+    (v) => v.toFixed(QUANTITY.f.decimals - 2),
     (v) => v.toFixed(2),
     'h(f)',
   )
@@ -616,7 +616,7 @@ function drawSpec(mode) {
     if (ty > padT) ctx.fillText(label, cx, ty)
     ctx.fillStyle = ct.label
     ctx.textBaseline = 'top'
-    ctx.fillText(s.freq + ' Hz', cx, h - padB + 3)
+    ctx.fillText(fmt('f', s.freq) + ' ' + QUANTITY.f.unit, cx, h - padB + 3)
     ctx.restore()
   })
 }

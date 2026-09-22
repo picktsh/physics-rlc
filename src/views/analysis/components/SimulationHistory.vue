@@ -26,57 +26,17 @@
       </NButton>
     </div>
 
-    <!-- 历史表格 -->
-    <div class="max-h-72 overflow-y-auto overflow-x-auto table-responsive">
-      <table v-if="history.length > 0" class="w-full text-xs border-collapse">
-        <thead>
-          <tr class="bg-[var(--app-surface-sunken)]">
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5">时间</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5">R(Ω)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5 hide-on-mobile">L(mH)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5 hide-on-mobile">C(μF)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5 hide-on-mobile">V(V)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5">f₀(Hz)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5 hide-on-mobile">Q</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5 hide-on-mobile">BW(Hz)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5 hide-on-mobile">Imax(mA)</th>
-            <th class="border border-[color:var(--app-border)] px-2 py-1.5">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(r, idx) in history" :key="r.id" class="hover:bg-[var(--app-surface-brand)]">
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 whitespace-nowrap text-xs">{{ r.time }}</td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center">{{ r.params.R }}</td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.params.L }}
-            </td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.params.C }}
-            </td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.params.V }}
-            </td>
-            <td
-              class="border border-[color:var(--app-border)] px-2 py-1.5 text-center text-[color:var(--app-brand)] font-semibold"
-            >
-              {{ r.results.fr.toFixed(4) }}
-            </td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.results.Q.toFixed(decimalsFor('Q')) }}
-            </td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.results.BW.toFixed(4) }}
-            </td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 text-center hide-on-mobile">
-              {{ r.results.Imax.toFixed(4) }}
-            </td>
-            <td class="border border-[color:var(--app-border)] px-2 py-1.5 whitespace-nowrap text-center">
-              <NButton secondary type="primary" class="mr-1" @click="$emit('load', idx)">加载</NButton>
-              <NButton secondary type="error" @click="$emit('delete', idx)">删除</NButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- 历史表格(NDataTable:粘顶表头 + scroll-x 横向滚动适配移动端;数值列右对齐,精度走 quantity 总表) -->
+    <div class="table-responsive">
+      <NDataTable
+        v-if="history.length > 0"
+        size="small"
+        :columns="historyColumns"
+        :data="history"
+        :row-key="(r) => r.id"
+        :max-height="288"
+        :scroll-x="760"
+      />
       <div v-else class="text-center py-4 text-[color:var(--app-text-faint)]">
         暂无仿真记录，点击「开始仿真」后数据将自动保存
       </div>
@@ -85,9 +45,10 @@
 </template>
 
 <script setup>
-import { NButton, NIcon, NUpload } from 'naive-ui'
+import { h } from 'vue'
+import { NButton, NDataTable, NIcon, NUpload } from 'naive-ui'
 import { Save, FolderOpen, TrashCan } from '@vicons/carbon'
-import { decimalsFor } from '@/utils/quantity'
+import { QUANTITY, fmt } from '@/utils/quantity'
 
 defineProps({
   history: {
@@ -97,6 +58,37 @@ defineProps({
 })
 
 const emit = defineEmits(['export', 'import', 'clear', 'load', 'delete'])
+
+const historyColumns = [
+  { title: '时间', key: 'time', align: 'left', width: 150 },
+  { title: `R(${QUANTITY.R.unit})`, key: 'R', align: 'right', render: (r) => fmt('R', r.params.R) },
+  { title: `L(${QUANTITY.L.unit})`, key: 'L', align: 'right', render: (r) => fmt('L', r.params.L) },
+  { title: `C(${QUANTITY.C.unit})`, key: 'C', align: 'right', render: (r) => fmt('C', r.params.C) },
+  { title: `V(${QUANTITY.V.unit})`, key: 'V', align: 'right', render: (r) => fmt('V', r.params.V) },
+  {
+    title: `f₀(${QUANTITY.f.unit})`,
+    key: 'fr',
+    align: 'right',
+    render: (r) => h('span', { class: 'text-[color:var(--app-brand)] font-semibold' }, fmt('f', r.results.fr)),
+  },
+  { title: 'Q', key: 'Q', align: 'right', render: (r) => fmt('q', r.results.Q) },
+  { title: `BW(${QUANTITY.bw.unit})`, key: 'BW', align: 'right', render: (r) => fmt('bw', r.results.BW) },
+  { title: `Imax(${QUANTITY.i.unit})`, key: 'Imax', align: 'right', render: (r) => fmt('i', r.results.Imax) },
+  {
+    title: '操作',
+    key: 'actions',
+    align: 'center',
+    width: 170,
+    render: (r, idx) => [
+      h(
+        NButton,
+        { secondary: true, type: 'primary', class: 'mr-1', onClick: () => emit('load', idx) },
+        { default: () => '加载' },
+      ),
+      h(NButton, { secondary: true, type: 'error', onClick: () => emit('delete', idx) }, { default: () => '删除' }),
+    ],
+  },
+]
 
 // NUpload 选到本地 JSON 后透传原生 File 给父组件导入
 function handleImportFile({ file }) {

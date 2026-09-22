@@ -84,7 +84,7 @@
             <div class="text-xs font-semibold text-[color:var(--app-text-faint)] tracking-[0.14em] mb-3">角频率</div>
             <div class="formula-k text-[color:var(--app-text)]" style="font-size: 23px" v-html="K('\\omega = 2\\pi f', true)"></div>
             <p class="text-[color:var(--app-text-muted)] leading-5 mt-3">
-              频率 <span v-html="K('f')"></span> 的角频率表示,单位 rad/s
+              频率 <span v-html="K('f')"></span> 的角频率表示,单位 {{ QUANTITY.rate.unit }}
             </p>
           </div>
         </div>
@@ -831,6 +831,7 @@ import { NButton } from 'naive-ui'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import HeroCircuit from './components/HeroCircuit.vue'
+import { QUANTITY } from '@/utils/quantity'
 
 const activeQTab = ref(0)
 
@@ -856,34 +857,39 @@ const qTabs = [
 ]
 
 const paramTable = [
-  { name: '角频率', symbol: '\\omega', formula: '\\omega = 2\\pi f', meaning: '单位 rad/s,描述交流电变化的快慢' },
-  { name: '感抗', symbol: 'X_L', formula: 'X_L = \\omega L', meaning: '单位 Ω,电感对交流电的阻碍作用,随频率增大' },
+  { name: '角频率', symbol: '\\omega', formula: '\\omega = 2\\pi f', meaning: `单位 ${QUANTITY.rate.unit},描述交流电变化的快慢` },
+  { name: '感抗', symbol: 'X_L', formula: 'X_L = \\omega L', meaning: `单位 ${QUANTITY.z.unit},电感对交流电的阻碍作用,随频率增大` },
   {
     name: '容抗',
     symbol: 'X_C',
     formula: 'X_C = \\dfrac{1}{\\omega C}',
-    meaning: '单位 Ω,电容对交流电的阻碍作用,随频率减小',
+    meaning: `单位 ${QUANTITY.z.unit},电容对交流电的阻碍作用,随频率减小`,
   },
   {
     name: '阻抗模',
     symbol: '|Z|',
     formula: '|Z| = \\sqrt{R^{2} + (X_L - X_C)^{2}}',
-    meaning: '单位 Ω,电路总阻抗的幅值,谐振时最小',
+    meaning: `单位 ${QUANTITY.z.unit},电路总阻抗的幅值,谐振时最小`,
   },
   {
     name: '阻抗角',
     symbol: '\\varphi',
     formula: '\\varphi = \\arctan\\!\\dfrac{X_L - X_C}{R}',
-    meaning: '单位 °,电压超前电流的相位差',
+    meaning: `单位 ${QUANTITY.phi.unit},电压超前电流的相位差`,
   },
   {
     name: '谐振频率',
     symbol: 'f_0',
     formula: 'f_0 = \\dfrac{1}{2\\pi\\sqrt{LC}}',
-    meaning: '单位 Hz,电路发生谐振的频率,与 R 无关',
+    meaning: `单位 ${QUANTITY.f.unit},电路发生谐振的频率,与 R 无关`,
   },
   { name: '品质因数', symbol: 'Q', formula: 'Q = \\dfrac{\\omega_0 L}{R}', meaning: '无量纲,衡量频率选择性与储能效率' },
-  { name: '通频带', symbol: 'BW', formula: 'BW = \\dfrac{f_0}{Q}', meaning: '单位 Hz,半功率点之间的频率宽度' },
+  {
+    name: '通频带',
+    symbol: 'BW',
+    formula: 'BW = \\dfrac{f_0}{Q}',
+    meaning: `单位 ${QUANTITY.bw.unit},半功率点之间的频率宽度`,
+  },
   {
     name: '最大电流',
     symbol: 'I_{max}',

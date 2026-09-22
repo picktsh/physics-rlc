@@ -11,6 +11,7 @@ import MeasuredDataInput from './components/MeasuredDataInput.vue'
 import SimulationHistory from './components/SimulationHistory.vue'
 import { useRLCCalculatorStore, SIMULATE_HINT } from '@/stores/rlcCalculator'
 import { useHistoryStore } from '@/stores/historyDB'
+import { QUANTITY } from '@/utils/quantity'
 
 const calcStore = useRLCCalculatorStore()
 const historyStore = useHistoryStore()
@@ -27,10 +28,10 @@ function fitWindowToMeasured(data) {
   let fMin = Infinity
   let fMax = -Infinity
   for (const d of data) {
-    const fHz = Number(d.freq) * 1000 // 实测数据频率单位为 kHz
-    if (!(fHz > 0)) continue
-    if (fHz < fMin) fMin = fHz
-    if (fHz > fMax) fMax = fHz
+    const fK = Number(d.freq) // 实测数据与 params.fStart/fEnd 同口径,均为 kHz(零换算)
+    if (!(fK > 0)) continue
+    if (fK < fMin) fMin = fK
+    if (fK > fMax) fMax = fK
   }
   if (!isFinite(fMin)) return
   const curStart = calcStore.params.fStart
@@ -38,10 +39,10 @@ function fitWindowToMeasured(data) {
   // 窗口已退化为单点(如李萨如单频联动)时不再视为有效窗口,强制按实测数据扩窗
   if (curEnd > curStart && fMin >= curStart && fMax <= curEnd) return
   const span = fMax - fMin
-  const pad = Math.max(span * 0.12, 50) // 单点等退化场景给保底边距
+  const pad = Math.max(span * 0.12, 0.05) // 单点等退化场景给保底边距(kHz)
   calcStore.updateParams({
-    fStart: Math.max(1, Math.round(fMin - pad)),
-    fEnd: Math.round(fMax + pad),
+    fStart: Math.max(0.001, +(fMin - pad).toFixed(4)),
+    fEnd: +(fMax + pad).toFixed(4),
   })
 }
 
@@ -66,7 +67,9 @@ function handlePlotMeasured() {
     message.warning(
       '提示:实测最大频率约 ' +
         maxFreqK.toFixed(1) +
-        ' kHz,远超本实验量级。\n若你输入的是 2252 这类 Hz 数值,请除以 1000 改为 2.252(频率单位是 kHz)。',
+        ' ' +
+        QUANTITY.f.unit +
+        ',远超本实验量级。\n若你输入的是 2252 这类 Hz 数值,请除以 1000 改为 2.252(频率单位是 kHz)。',
     )
   }
   // 电流量级校验:与当前仿真全域峰值比较,错配会把蓝色仿真曲线压缩成底部直线
@@ -76,9 +79,13 @@ function handlePlotMeasured() {
     message.warning(
       '提示:实测电流峰值 ' +
         measMax.toFixed(2) +
-        ' mA,约为当前仿真峰值 ' +
+        ' ' +
+        QUANTITY.i.unit +
+        ',约为当前仿真峰值 ' +
         simPeak.toFixed(2) +
-        ' mA 的 ' +
+        ' ' +
+        QUANTITY.i.unit +
+        ' 的 ' +
         (measMax / simPeak).toFixed(1) +
         ' 倍。\n请检查:1) 电流是否以 mA 为单位;2) 电路元件(R/L/C/V)修改后是否重新点过「开始仿真」。否则蓝色曲线会被压缩成底部直线。',
     )
@@ -101,6 +108,8 @@ function handleLoadSimHistory(idx) {
     fStart: r.params.fStart,
     fEnd: r.params.fEnd,
   })
+  // 历史记录即一次已完成的仿真:补置 simulated 门控,否则 ChartPanel 永远停在占位图不画曲线
+  calcStore.simulated = true
   message.success(`已加载 ${r.time} 的仿真参数`)
 }
 
