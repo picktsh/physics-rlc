@@ -547,6 +547,10 @@ function applyPreset(id) {
   const idxs = preset.components.map((c) => store.addComponent(c.type, c.x, c.y))
   preset.components.forEach((c, i) => {
     if (c.value != null) store.updateComponentValue(idxs[i], c.value)
+    // 预设携带的信号源波形参数覆盖(如欠阻尼示例默认方波阶跃);周期/频率/脉宽联动仍由 store 规则保证
+    if (c.signal) {
+      for (const [prop, val] of Object.entries(c.signal)) store.updateComponentSignal(idxs[i], prop, val)
+    }
   })
   for (const [a, ea, b, eb] of preset.connections) {
     store.connectEndpoints({ compIndex: idxs[a], epIndex: ea }, { compIndex: idxs[b], epIndex: eb })
@@ -1292,6 +1296,31 @@ function drawCapacitorWaveform() {
   }
 }
 
+// ===== 仿真成功后 Y 轴量程自动拟合 =====
+// 在各自显示窗口内采样画布实际绘制的曲线,取 min/max 外留 8% 余量(最少 0.05×V₀),
+// 换算回×V₀倍数写回坐标范围面板(仍支持手动覆盖);不拟合会被削顶/削底,留白过大又压扁波形
+function autoFitYRanges() {
+  const dp = dampingParams.value
+  if (!dp || !Number.isFinite(dp.V) || dp.V === 0) return
+  const N = 600
+  const fit = (fn, tMax, minRef, maxRef) => {
+    let lo = Infinity
+    let hi = -Infinity
+    for (let i = 0; i <= N; i++) {
+      const v = fn(dp, simTdelay.value + (tMax * i) / N)
+      if (!Number.isFinite(v)) continue
+      if (v < lo) lo = v
+      if (v > hi) hi = v
+    }
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return
+    const padV = Math.max((hi - lo) * 0.08, Math.abs(dp.V) * 0.05)
+    minRef.value = +((lo - padV) / dp.V).toFixed(2)
+    maxRef.value = +((hi + padV) / dp.V).toFixed(2)
+  }
+  fit(calcDampingCurve, axisXScale.value > 0 ? axisXScale.value : getTimeScale(), axisYMinMul, axisYMaxMul)
+  fit(calcCapacitorVoltage, capXScale.value > 0 ? capXScale.value : getTimeScale(), capYMinMul, capYMaxMul)
+}
+
 // ===== Watchers:仿真/导线点击/LTspice参数变化触发重绘 =====
 watch(
   () => [simulation.value, wireClicked.value],
@@ -1306,6 +1335,8 @@ watch(
           simStopTime.value = +(dp.tau * 4).toPrecision(3)
         }
         simTdelay.value = 0
+        // 终止时间/延迟定妥后再拟合 Y 轴(采样窗口依赖 tStart/tMax)
+        autoFitYRanges()
       }
       nextTick(() => {
         drawCapacitorWaveform()

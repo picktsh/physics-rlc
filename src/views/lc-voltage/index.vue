@@ -178,7 +178,7 @@
           </NButton>
           <!-- 阈值：标签走 prefix、单位 % 走 suffix；ml-auto 右对齐到行尾，与下方搜索谐振右边缘齐 -->
           <label class="ml-auto">
-            <NInputNumber v-model:value="threshold" :show-button="false" :step="1" :min="5" :max="20" class="w-32">
+            <NInputNumber v-model:value="threshold" :show-button="false" :step="0.1" :min="0.1" :max="20" class="w-32">
               <template #prefix>阈值:</template>
               <template #suffix>{{ QUANTITY.err.unit }}</template>
             </NInputNumber>

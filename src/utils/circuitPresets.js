@@ -28,10 +28,11 @@ export const CIRCUIT_PRESETS = [
     id: 'under',
     name: '示例 2 · 欠阻尼（衰减振荡）',
     components: [
-      { type: 'V', x: 90, y: 140 },
-      { type: 'R', x: 250, y: 140, value: 50 },
+      // 方波阶跃激励为课堂默认观察方式;signal 字段仅阻尼页消费(电路搭建页无波形概念,自动忽略)
+      { type: 'V', x: 90, y: 140, value: 5, signal: { waveform: 'square' } },
+      { type: 'R', x: 250, y: 140, value: 100 },
       { type: 'L', x: 250, y: 60 },
-      { type: 'C', x: 90, y: 60, value: 0.1 },
+      { type: 'C', x: 90, y: 60, value: 0.05 },
     ],
     connections: [
       [0, 1, 1, 0], // V 右 → R 左（下边）
