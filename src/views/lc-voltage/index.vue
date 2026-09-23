@@ -251,69 +251,77 @@
                 <NIcon :component="Close" /> 取消
               </NButton>
             </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">回路电流 I</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.I * 1e3) }} {{ QUANTITY.i.unit }}</span>
+            <!-- 数值卡片网格(与相位差判别法面板同风格):6 项主数值,桌面 3 列两行,移动 2 列 -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">回路电流 I ({{ QUANTITY.i.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ fmt('i', selectedPoint.I * 1e3) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">总阻抗 |Z| ({{ QUANTITY.z.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ fmt('z', selectedPoint.Z) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">相位差 φ ({{ QUANTITY.phi.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-error)]">
+                  {{ fmt('phi', (selectedPoint.phi * 180) / Math.PI) }}
+                </div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">Ur 有效值 ({{ QUANTITY.u.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-success)]">
+                  {{ fmt('u', (selectedPoint.I * R) / 1000 / Math.SQRT2) }}
+                </div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">UL 有效值 ({{ QUANTITY.u.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ fmt('u', selectedPoint.UL / Math.SQRT2) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">UC 有效值 ({{ QUANTITY.u.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ fmt('u', selectedPoint.UC / Math.SQRT2) }}</div>
+              </div>
             </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">总阻抗 |Z|</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(selectedPoint.Z) }} {{ QUANTITY.z.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">相位差 φ</span
-              ><span class="font-semibold text-[color:var(--app-text)]"
-                >{{ fmt('phi', (selectedPoint.phi * 180) / Math.PI) }}{{ QUANTITY.phi.unit }}</span
-              >
-            </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">Ur 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]"
-                >{{ fmt('u', (selectedPoint.I * R) / 1000 / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span
-              >
-            </div>
-            <div class="border-t border-dashed border-[color:var(--app-border)] my-1"></div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">UL 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', selectedPoint.UL / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">UC 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', selectedPoint.UC / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5">
-              <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
-              <span :class="['font-semibold', selUlucClass]">{{ selUlucText }}</span>
+            <div class="border-t border-dashed border-[color:var(--app-border)] pt-3 mt-1">
+              <div class="flex gap-4 py-1.5">
+                <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
+                <span :class="['font-semibold', selUlucClass]">{{ selUlucText }}</span>
+              </div>
             </div>
           </template>
           <template v-else>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">回路电流 I</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(I_peak * 1e3) }} {{ QUANTITY.i.unit }}</span>
+            <!-- 数值卡片网格(与相位差判别法面板同风格):6 项主数值,桌面 3 列两行,移动 2 列 -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">回路电流 I ({{ QUANTITY.i.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ fmt('i', I_peak * 1e3) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">总阻抗 |Z| ({{ QUANTITY.z.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ fmt('z', Z) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">相位差 φ ({{ QUANTITY.phi.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-error)]">{{ fmt('phi', (phi * 180) / Math.PI) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">Ur 有效值 ({{ QUANTITY.u.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-success)]">{{ fmt('u', Ur_peak / Math.SQRT2) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">UL 有效值 ({{ QUANTITY.u.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-warning)]">{{ fmt('u', UL_peak / Math.SQRT2) }}</div>
+              </div>
+              <div class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center">
+                <div class="text-xs text-[color:var(--app-text-muted)] mb-1">UC 有效值 ({{ QUANTITY.u.unit }})</div>
+                <div class="text-lg font-bold font-mono text-[color:var(--app-brand)]">{{ fmt('u', UC_peak / Math.SQRT2) }}</div>
+              </div>
             </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">总阻抗 |Z|</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ t4(Z) }} {{ QUANTITY.z.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">相位差 φ</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('phi', (phi * 180) / Math.PI) }}{{ QUANTITY.phi.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">Ur 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', Ur_peak / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
-            </div>
-            <div class="border-t border-dashed border-[color:var(--app-border)] my-1"></div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">UL 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', UL_peak / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5 border-b border-dashed border-[color:var(--app-border-light)]">
-              <span class="text-[color:var(--app-text-muted)]">UC 有效值</span
-              ><span class="font-semibold text-[color:var(--app-text)]">{{ fmt('u', UC_peak / Math.SQRT2) }} {{ QUANTITY.u.unit }}</span>
-            </div>
-            <div class="flex gap-4 py-1.5">
-              <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
-              <span :class="['font-semibold', ulucClass]">{{ ulucText }}</span>
+            <div class="border-t border-dashed border-[color:var(--app-border)] pt-3 mt-1">
+              <div class="flex gap-4 py-1.5">
+                <span class="text-[color:var(--app-text-muted)] font-semibold">UL / UC 谐振判定</span>
+                <span :class="['font-semibold', ulucClass]">{{ ulucText }}</span>
+              </div>
             </div>
           </template>
           <!-- Q(幅值法):谐振时 UL=UC=Q·Us,由实测幅值反求;失谐时 UL/Us 只是电压放大倍数,不给 Q -->

@@ -152,16 +152,27 @@
             </div>
           </div>
           <div class="border-t border-dashed border-[color:var(--app-border)] pt-3 mt-1">
-            <div class="flex gap-4 py-1">
+            <div class="flex gap-4 py-1.5">
               <span class="text-[color:var(--app-text-muted)]">理论谐振频率 f₀</span>
               <span class="font-semibold text-[color:var(--app-text)]">{{ fmt('f', measures.f0) }} {{ QUANTITY.f.unit }}</span>
             </div>
-            <!-- Q(±45°法):串联RLC中 φ=±45° 即半功率点,由扫描数据插值 f2/f1 后 Q=f0/(f2-f1) -->
-            <div class="flex gap-4 py-1">
-              <span class="text-[color:var(--app-text-muted)]">Q（±45°法）</span>
+            <!-- Q(±45°法):串联RLC中 φ=±45° 即半功率点,由扫描数据插值 f2/f1 后 Q=f0/(f2-f1);样式与 LC 电压幅值法 Q 行统一 -->
+            <div class="flex gap-4 py-1.5">
+              <span class="text-[color:var(--app-text-muted)] font-semibold">Q（±45°法）</span>
               <span v-if="qMeasured != null" class="font-semibold text-[color:var(--app-success)]">{{ fmt('q', qMeasured) }}</span>
-              <span v-else class="text-[color:var(--app-text-faint)]">—（完成自动扫描后按 ±45° 相位插值）</span>
+              <span v-else class="font-semibold text-[color:var(--app-text-faint)]">—（完成自动扫描后按 ±45° 相位插值）</span>
             </div>
+          </div>
+          <!-- 本次扫描 Q 结果横条(模板与 LC 电压幅值法统一):扫描结束(扫满/手动停止)后由扫描数据 ±45° 插值算出;扫描中/清空后显示 — -->
+          <div
+            class="rounded-lg border px-3 py-2 text-center font-semibold"
+            :class="
+              qMeasured != null
+                ? 'border-[color:var(--app-success-border)] bg-[var(--app-success-bg)] text-[color:var(--app-success)]'
+                : 'border-[color:var(--app-border)] bg-[var(--app-surface-sunken)] text-[color:var(--app-text-faint)]'
+            "
+          >
+            🔹 本次扫描 Q（±45°法）= {{ qMeasured != null ? fmt('q', qMeasured) : '—' }}
           </div>
         </div>
       </section>
@@ -281,6 +292,11 @@ const qMeasured = computed(() => {
   const f1 = cross(-45)
   if (f1 == null || f2 == null || f2 <= f1) return null
   return f0 / (f2 - f1)
+})
+
+// 扫描结果生成提示:仅在本轮「从无到有」时提示一次,停止/清理的重复路径不会重复弹
+watch(qMeasured, (val, prev) => {
+  if (val != null && prev == null) message.success('Q值已生成，可在数据面板查看')
 })
 
 // 实验数据记录表(NDataTable:粘顶表头 + scroll-x 横向滚动适配移动端;数值列右对齐,精度走 quantity 总表)
