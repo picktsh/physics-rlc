@@ -2,6 +2,7 @@
 // 电路搭建页:2D/3D 拖拽建电路 + 仿真。仿真成功后自动落一条历史记录(迁自旧 home/index.vue)。
 import { useRouter } from 'vue-router'
 import CircuitBoard from './components/CircuitBoard.vue'
+import SimulationHistory from '@/views/analysis/components/SimulationHistory.vue'
 import { useMessage } from 'naive-ui'
 import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
 import { useHistoryStore } from '@/stores/historyDB'
@@ -17,12 +18,29 @@ function handleSimulate() {
     message.warning(result.message || '请先拖拽元件搭建RLC电路，至少需要一个信号源V')
     return
   }
-  historyStore.saveSimulationRecord({
+  // 记录同时存一份电路拓扑,供后续加载时重建画布(不仅回填参数)
+  const r = historyStore.saveSimulationRecord({
     params: { ...calcStore.params },
     results: { ...calcStore.results },
+    circuit: {
+      components: JSON.parse(JSON.stringify(calcStore.components)),
+      wires: JSON.parse(JSON.stringify(calcStore.wires)),
+      junctions: JSON.parse(JSON.stringify(calcStore.junctions)),
+    },
   })
+  if (r.deduped) {
+    // 完全相同的配置不重复入库,仅选中已有那条
+    message.info('该配置已存在历史记录,已为你选中')
+    return
+  }
   // 本页无仿真结果可视化;轻提示只做即时反馈,跳转入口是工具栏常驻的「数据分析」按钮
-  message.success('仿真完成！点工具栏「数据分析」查看曲线与判定')
+  message.success('仿真完成！已存入下方历史记录，点工具栏「数据分析」查看曲线与判定')
+}
+
+// 清空画布 = 放弃当前电路:同时取消选中记录,否则刷新时 restoreSelected 会按选中项把电路回填回来
+function handleReset() {
+  calcStore.resetCircuit()
+  historyStore.setSelectedSim(null)
 }
 </script>
 
@@ -45,7 +63,12 @@ function handleSimulate() {
       v-model:mode="calcStore.circuitMode"
       @simulate="handleSimulate"
       @analyze="router.push('/data-analysis')"
-      @reset="calcStore.resetCircuit()"
+      @reset="handleReset"
     />
+  </section>
+
+  <!-- 仿真历史:与数据分析页共用同一组件;点行/加载即回填电路与参数,可在此基础上改值重仿 -->
+  <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">
+    <SimulationHistory />
   </section>
 </template>

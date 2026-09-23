@@ -112,7 +112,7 @@
         >
           <span class="font-semibold text-[color:var(--app-text)]">实时数据面板</span>
         </div>
-        <div class="p-4 space-y-2">
+        <div v-if="simulated" class="p-4 space-y-2">
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div
               class="bg-gradient-to-br from-[var(--app-surface-sunken)] to-[var(--app-surface-muted)] rounded-lg p-3 text-center"
@@ -174,6 +174,10 @@
           >
             🔹 本次扫描 Q（±45°法）= {{ qMeasured != null ? fmt('q', qMeasured) : '—' }}
           </div>
+        </div>
+        <!-- 未仿真占位:实时值直接由 params 计算,未仿真时会显示默认数据,故按 simulated 门控 -->
+        <div v-else class="p-4 text-center text-sm text-[color:var(--app-text-faint)]">
+          未仿真：请先到「电路搭建」点击「开始仿真」后查看实时数据
         </div>
       </section>
     </div>

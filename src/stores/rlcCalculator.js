@@ -324,6 +324,25 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     resetParams()
   }
 
+  // 加载历史记录时整体回填:同步恢复电路拓扑 + params + 曲线 + simulated。
+  // 先写 components/wires/junctions 再同步置 _simSignature,
+  // 使作废旧仿真的 watch 在延迟刷新时读到已一致的签名 → simulated 不被误刷。
+  // 旧记录若无 circuit 字段则仅回填 params(三分析页仍可渲染),不重建画布。
+  function applyRecord(rec) {
+    if (!rec) return
+    if (rec.circuit) {
+      components.value = JSON.parse(JSON.stringify(rec.circuit.components || []))
+      wires.value = JSON.parse(JSON.stringify(rec.circuit.wires || []))
+      junctions.value = JSON.parse(JSON.stringify(rec.circuit.junctions || []))
+    }
+    if (rec.params) {
+      Object.assign(params, rec.params)
+      calculate()
+    }
+    simulated.value = true
+    _simSignature = buildCircuitSignature()
+  }
+
   // 初始化计算
   calculate()
 
@@ -347,6 +366,7 @@ export const useRLCCalculatorStore = defineStore('rlcCalculator', () => {
     resetParams,
     simulate,
     resetCircuit,
+    applyRecord,
     extractCircuitParams,
     validateCircuit,
   }

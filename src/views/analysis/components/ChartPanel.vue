@@ -929,6 +929,12 @@ watch(
   { deep: true },
 )
 
+// simulated 翻转(如删除/清空选中记录回落未仿真)时 params 与曲线数组可能未变,须显式重绘才会走占位分支清空画布
+watch(
+  () => props.simulated,
+  () => drawChart(),
+)
+
 onMounted(() => {
   localFStart.value = props.params.fStart || 1.4
   localFEnd.value = props.params.fEnd || 3.2

@@ -9,8 +9,7 @@
         :autosize="{ minRows: 5, maxRows: 10 }"
       />
       <div class="text-xs text-[color:var(--app-text-muted)] mt-1">
-        格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=0.1H、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252
-        kHz）
+        格式示例：频率(kHz) 电流(mA)，每行一组（示例为默认电路 L=0.1H、C=0.05μF 的理论谐振曲线附近取值，峰在 2.252 kHz）
       </div>
       <div class="mt-2 flex gap-2">
         <NButton secondary @click="pasteFromClipboard">粘贴</NButton>
@@ -158,7 +157,9 @@
         </div>
         <div class="p-3 bg-[var(--app-surface)] rounded border border-[color:var(--app-surface-brand-strong)]">
           <div class="text-[color:var(--app-text-muted)] text-xs mb-1">相对误差 δ</div>
-          <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">{{ errorAnalysis.relativeError }}{{ QUANTITY.err.unit }}</div>
+          <div class="text-lg font-bold text-[color:var(--app-brand-strong)]">
+            {{ errorAnalysis.relativeError }}{{ QUANTITY.err.unit }}
+          </div>
         </div>
       </div>
       <div
@@ -189,9 +190,9 @@
           }}</span>
           条记录</span
         >
-        <NButton secondary class="ml-auto" @click="$emit('export-history')">
+        <NButton secondary type="primary" class="ml-auto" @click="$emit('export-history')">
           <template #icon><NIcon :component="Save" /></template>
-          保存
+          导出
         </NButton>
         <NUpload
           class="w-auto"
@@ -320,8 +321,7 @@ const editColumns = [
     key: 'actions',
     align: 'center',
     width: 72,
-    render: (_, i) =>
-      h(NButton, { text: true, type: 'error', onClick: () => deleteRow(i) }, { default: () => '删除' }),
+    render: (_, i) => h(NButton, { text: true, type: 'error', onClick: () => deleteRow(i) }, { default: () => '删除' }),
   },
 ]
 

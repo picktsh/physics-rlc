@@ -7,6 +7,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NTabs, NTab, NIcon, NButton } from 'naive-ui'
 import { Construction } from '@vicons/carbon'
+import SimulationHistory from './components/SimulationHistory.vue'
 import { navRoutes, methodKeepAliveNames } from '@/config/nav'
 
 defineOptions({ name: 'DataAnalysisPage' })
@@ -31,6 +32,11 @@ function onTabChange(name) {
 
 <template>
   <div>
+    <!-- 仿真历史记录:三种判别法共用(加载即整体回填全局 store,联动下方当前 tab 的图表/面板),故置于 tabs 上方常驻 -->
+    <div class="mb-4 rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)]">
+      <SimulationHistory />
+    </div>
+
     <!-- tabs 行右侧常驻回跳入口:本页数据源在电路搭建页,常驻按钮不依赖瞬时提示 -->
     <div class="flex items-center justify-between gap-3">
       <NTabs :value="activeTab" type="card" class="min-w-0 flex-1" @update:value="onTabChange">

@@ -50,3 +50,29 @@ export function fmt(key, v) {
 
 // 取某量的固定小数位(输入框 :precision / toFixed 用);未登记量回落 fallback
 export const decimalsFor = (key, fallback = 4) => QUANTITY[key]?.decimals ?? fallback
+
+// ───── 仿真历史「配置签名」单一数据源 ─────
+// 口径:签名覆盖所有影响计算结果/曲线的参数(R/L/C/V + 频率窗口 fStart/fEnd),
+// 各量先按展示精度归一(消除元件值浮点噪声如 100.0001→100.0)再拼规范串,base64 存为去重键。
+// 归一粒度=展示粒度:两配置只要展示层完全相同即视为同一条,与去重「完全相同配置」语义一致。
+const normQty = (v, key) => (Number.isFinite(v) ? v.toFixed(QUANTITY[key].decimals) : '0')
+
+// 由 params 生成去重键(base64,可逆);空 params 兜底为空值键,避免旧/导入脏数据在 store 初始化回填时抛错致白屏
+export function buildConfigKey(params) {
+  const p = params || {}
+  const s =
+    `R=${normQty(p.R, 'R')}|L=${normQty(p.L, 'L')}|C=${normQty(p.C, 'C')}` +
+    `|V=${normQty(p.V, 'V')}|fs=${normQty(p.fStart, 'f')}|fe=${normQty(p.fEnd, 'f')}`
+  // 内容为 ASCII,encodeURIComponent 兜底防个别环境 btoa 报错
+  return btoa(unescape(encodeURIComponent(s)))
+}
+
+// 反解析去重键为人类可读的代表串(表内展示用);无法解析返回 '—'
+export function parseConfigKey(key) {
+  try {
+    const o = Object.fromEntries(decodeURIComponent(escape(atob(key))).split('|').map((kv) => kv.split('=')))
+    return `R${o.R}·L${o.L}·C${o.C}·V${o.V}·${o.fs}~${o.fe}kHz`
+  } catch {
+    return '—'
+  }
+}

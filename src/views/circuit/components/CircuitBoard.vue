@@ -30,7 +30,7 @@
 
       <!-- 中栏:2D 画布 + 3D 实体模型 -->
       <div class="min-w-0">
-        <div class="circuit-controls flex items-center gap-2 mb-2 flex-wrap">
+        <div class="circuit-controls flex items-center justify-end-safe gap-2 mb-2 flex-wrap">
           <NDropdown trigger="click" :options="presetOptions" @select="applyPreset">
             <NButton secondary>
               <template #icon><NIcon :component="Catalog" /></template>
@@ -49,16 +49,16 @@
             <template #icon><NIcon :component="isFullscreen ? Minimize : Maximize" /></template>
             {{ isFullscreen ? '退出全屏' : '全屏' }}
           </NButton>
-          <NButton class="ml-auto" secondary type="primary" @click="$emit('simulate')">
+          <NButton secondary type="primary" @click="$emit('simulate')">
             <template #icon><NIcon :component="Rocket" /></template>
             仿真
           </NButton>
           <!-- 常驻跳转:仿真结果都在「数据分析」页,不依赖会消失的轻提示 -->
-          <NButton secondary type="info" @click="$emit('analyze')">
+          <NButton secondary type="success" @click="$emit('analyze')">
             <template #icon><NIcon :component="Analytics" /></template>
             数据分析
           </NButton>
-          <NButton secondary type="error" @click="$emit('reset')">
+          <NButton secondary type="error" @click="confirmReset">
             <template #icon><NIcon :component="Reset" /></template>
             清空
           </NButton>
@@ -189,7 +189,18 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
-import { NIcon, NButton, NScrollbar, NDropdown, NForm, NFormItem, NInputNumber, NSlider, NSwitch } from 'naive-ui'
+import {
+  NIcon,
+  NButton,
+  NScrollbar,
+  NDropdown,
+  NForm,
+  NFormItem,
+  NInputNumber,
+  NSlider,
+  NSwitch,
+  useDialog,
+} from 'naive-ui'
 import { Link, TrashCan, Rocket, Reset, Maximize, Minimize, Catalog, Analytics } from '@vicons/carbon'
 import { CIRCUIT_PRESET_OPTIONS, findPreset } from '@/utils/circuitPresets'
 import { useRLCCalculatorStore } from '@/stores/rlcCalculator'
@@ -245,7 +256,28 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:components', 'update:wires', 'update:junctions', 'update:mode', 'simulate', 'reset', 'analyze'])
+const emit = defineEmits([
+  'update:components',
+  'update:wires',
+  'update:junctions',
+  'update:mode',
+  'simulate',
+  'reset',
+  'analyze',
+])
+
+// 破坏性操作(清空画布)走二次确认;无元件时直接不弹
+const dialog = useDialog()
+function confirmReset() {
+  if (props.components.length === 0) return
+  dialog.error({
+    title: '清空电路',
+    content: '确定清空当前画布上的所有元件与连线?此操作不可恢复。',
+    positiveText: '清空',
+    negativeText: '取消',
+    onPositiveClick: () => emit('reset'),
+  })
+}
 
 const canvasRef = ref(null)
 const circuitMode = ref(props.mode)

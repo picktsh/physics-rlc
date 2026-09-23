@@ -234,7 +234,7 @@
           <span class="text-xs font-semibold text-[color:var(--app-text)]">实时数据面板</span>
           <span class="text-xs text-[color:var(--app-text-muted)] hide-on-mobile">UL/UC 幅值 + 李萨如相位协同判定</span>
         </div>
-        <div class="p-4 space-y-2">
+        <div v-if="simulated" class="p-4 space-y-2">
           <template v-if="selectedPoint">
             <div class="text-xs text-[color:var(--app-brand)] font-semibold mb-2 flex items-center gap-2">
               📌 已选中采集点 f = {{ fmt('f', selectedPoint.f) }} {{ QUANTITY.f.unit }}
@@ -342,6 +342,10 @@
             🔹 本次扫频 Q（幅值法）= {{ sweepQ != null ? fmt('q', sweepQ) : '—' }}
           </div>
         </div>
+        <!-- 未仿真占位:面板实时值由 params 直接计算,未仿真会显示默认数据,故按 simulated 门控 -->
+        <div v-else class="p-4 text-center text-sm text-[color:var(--app-text-faint)]">
+          未仿真：请先到「电路搭建」点击「开始仿真」后查看实时数据
+        </div>
       </div>
     </div>
 
@@ -416,7 +420,7 @@ defineOptions({ name: 'LCVoltageMethod' })
 // ---- 参数状态 ----
 // 电路参数统一取自「电路搭建」store(单一数据源),本页只读引用,不再单独维护输入
 const calcStore = useRLCCalculatorStore()
-const { params } = storeToRefs(calcStore)
+const { params, simulated } = storeToRefs(calcStore)
 const R = computed(() => params.value.R)
 const L_H_par = computed(() => params.value.L) // params.L 已是 H(零换算)
 const C_uF = computed(() => params.value.C)

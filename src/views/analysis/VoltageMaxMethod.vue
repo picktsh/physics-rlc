@@ -8,7 +8,6 @@ import ResultCards from './components/ResultCards.vue'
 import ChartPanel from './components/ChartPanel.vue'
 import ErrorAnalysis from './components/ErrorAnalysis.vue'
 import MeasuredDataInput from './components/MeasuredDataInput.vue'
-import SimulationHistory from './components/SimulationHistory.vue'
 import { useRLCCalculatorStore, SIMULATE_HINT } from '@/stores/rlcCalculator'
 import { useHistoryStore } from '@/stores/historyDB'
 import { QUANTITY } from '@/utils/quantity'
@@ -18,7 +17,7 @@ const historyStore = useHistoryStore()
 const message = useMessage()
 
 const { params, results, ampCurveData, phaseCurveData, impedanceCurveData } = storeToRefs(calcStore)
-const { simulationHistory, measuredHistory } = storeToRefs(historyStore)
+const { measuredHistory } = storeToRefs(historyStore)
 
 const chartPanelRef = ref(null)
 
@@ -97,37 +96,11 @@ function handlePlotMeasured() {
   })
 }
 
-function handleLoadSimHistory(idx) {
-  const r = historyStore.simulationHistory[idx]
-  if (!r) return
-  calcStore.updateParams({
-    R: r.params.R,
-    L: r.params.L,
-    C: r.params.C,
-    V: r.params.V,
-    fStart: r.params.fStart,
-    fEnd: r.params.fEnd,
-  })
-  // 历史记录即一次已完成的仿真:补置 simulated 门控,否则 ChartPanel 永远停在占位图不画曲线
-  calcStore.simulated = true
-  message.success(`已加载 ${r.time} 的仿真参数`)
-}
-
 function handleLoadMeasHistory(idx) {
   const r = historyStore.measuredHistory[idx]
   if (!r) return
   calcStore.measuredData = JSON.parse(JSON.stringify(r.data))
   fitWindowToMeasured(calcStore.measuredData)
-}
-
-async function handleImportSimHistory(file) {
-  if (!file) return
-  try {
-    const count = await historyStore.importSimulationHistory(file)
-    message.success(`成功导入仿真记录（共 ${count} 条）`)
-  } catch (err) {
-    message.error('文件解析失败：' + err.message)
-  }
 }
 
 async function handleImportMeasHistory(file) {
@@ -149,14 +122,6 @@ async function handleImportMeasHistory(file) {
       计算结果
     </h2>
     <ResultCards :results="results" :simulated="calcStore.simulated" />
-    <SimulationHistory
-      :history="simulationHistory"
-      @export="historyStore.exportSimulationHistory()"
-      @import="handleImportSimHistory"
-      @clear="historyStore.clearSimulationHistory()"
-      @load="handleLoadSimHistory"
-      @delete="historyStore.deleteSimulationRecord"
-    />
   </section>
 
   <section class="rounded-lg bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow)] mb-4">

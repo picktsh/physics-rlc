@@ -1,9 +1,14 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { dateZhCN, darkTheme, NConfigProvider, NDialogProvider, NMessageProvider, zhCN } from 'naive-ui'
 import { useTheme } from './composables/useTheme'
+import { useHistoryStore } from './stores/historyDB'
 
 const { theme } = useTheme()
+
+// 启动时回填上次选中的仿真记录(含电路拓扑),使刷新后页面仍展示该数据
+const historyStore = useHistoryStore()
+onMounted(() => historyStore.restoreSelected())
 
 // 黑配色下启用 naive-ui 内置暗色主题,其余浅色配色(白/马卡龙/绿色)保持亮色
 const naiveTheme = computed(() => (theme.value === 'dark' ? darkTheme : undefined))
