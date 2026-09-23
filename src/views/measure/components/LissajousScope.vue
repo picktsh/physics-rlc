@@ -156,6 +156,12 @@
               <span class="text-[color:var(--app-text-muted)]">理论谐振频率 f₀</span>
               <span class="font-semibold text-[color:var(--app-text)]">{{ fmt('f', measures.f0) }} {{ QUANTITY.f.unit }}</span>
             </div>
+            <!-- Q(±45°法):串联RLC中 φ=±45° 即半功率点,由扫描数据插值 f2/f1 后 Q=f0/(f2-f1) -->
+            <div class="flex gap-4 py-1">
+              <span class="text-[color:var(--app-text-muted)]">Q（±45°法）</span>
+              <span v-if="qMeasured != null" class="font-semibold text-[color:var(--app-success)]">{{ fmt('q', qMeasured) }}</span>
+              <span v-else class="text-[color:var(--app-text-faint)]">—（完成自动扫描后按 ±45° 相位插值）</span>
+            </div>
           </div>
         </div>
       </section>
@@ -252,6 +258,29 @@ const resonanceIdx = computed(() => {
     }
   }
   return bestIdx
+})
+
+// Q(±45°法)实测:串联RLC中 φ=±45° 即半功率点,由扫描数据线性插值出 f1/f2 后 Q=f0/(f2-f1);
+// 扫描进行中不展现(与「带宽仅扫描结束后展现」口径一致),数据未覆盖 ±45° 时返回 null 显示「—」
+const qMeasured = computed(() => {
+  if (isSweeping.value || acquiredData.value.length < 2) return null
+  const f0 = measures.value.f0
+  if (!isFinite(f0) || f0 <= 0) return null
+  const sorted = [...acquiredData.value].sort((a, b) => a.freq - b.freq)
+  const cross = (target) => {
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const a = sorted[i]
+      const b = sorted[i + 1]
+      if ((a.phase - target) * (b.phase - target) <= 0 && a.phase !== b.phase) {
+        return a.freq + ((target - a.phase) / (b.phase - a.phase)) * (b.freq - a.freq)
+      }
+    }
+    return null
+  }
+  const f2 = cross(45)
+  const f1 = cross(-45)
+  if (f1 == null || f2 == null || f2 <= f1) return null
+  return f0 / (f2 - f1)
 })
 
 // 实验数据记录表(NDataTable:粘顶表头 + scroll-x 横向滚动适配移动端;数值列右对齐,精度走 quantity 总表)

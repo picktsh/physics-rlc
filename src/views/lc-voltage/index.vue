@@ -316,6 +316,23 @@
               <span :class="['font-semibold', ulucClass]">{{ ulucText }}</span>
             </div>
           </template>
+          <!-- Q(幅值法):谐振时 UL=UC=Q·Us,由实测幅值反求;失谐时 UL/Us 只是电压放大倍数,不给 Q -->
+          <div class="flex gap-4 py-1.5">
+            <span class="text-[color:var(--app-text-muted)] font-semibold">Q（幅值法）</span>
+            <span v-if="ampQ != null" class="font-semibold text-[color:var(--app-success)]">{{ fmt('q', ampQ) }}</span>
+            <span v-else class="font-semibold text-[color:var(--app-text-faint)]">—（仅谐振点满足 UL=UC=Q·Us）</span>
+          </div>
+          <!-- 本次扫频 Q 结果横条:扫描结束(扫满/手动停止)后由本轮采集数据中的谐振点算出;扫描中/清空后显示 — -->
+          <div
+            class="rounded-lg border px-3 py-2 text-center font-semibold"
+            :class="
+              sweepQ != null
+                ? 'border-[color:var(--app-success-border)] bg-[var(--app-success-bg)] text-[color:var(--app-success)]'
+                : 'border-[color:var(--app-border)] bg-[var(--app-surface-sunken)] text-[color:var(--app-text-faint)]'
+            "
+          >
+            🔹 本次扫频 Q（幅值法）= {{ sweepQ != null ? fmt('q', sweepQ) : '—' }}
+          </div>
         </div>
       </div>
     </div>
@@ -1571,6 +1588,40 @@ const selUlucClass = computed(() => {
   return selectedPoint.value.UL > selectedPoint.value.UC
     ? 'text-[color:var(--app-warning)]'
     : 'text-[color:var(--app-brand)]'
+})
+
+// Q(幅值法):谐振时 UL=UC=Q·Us,由实测幅值反求(Us 与 UL 同为峰值口径,比值即 Q);
+// 与 UL/UC 谐振判定同口径,仅谐振状态给出——失谐时 UL/Us 只是电压放大倍数,返回 null 显示「—」
+const ampQ = computed(() => {
+  if (selectedPoint.value) {
+    const p = selectedPoint.value
+    const pd = (p.phi * 180) / Math.PI
+    const isRes = Math.abs(p.UL - p.UC) < 0.001 || Math.abs(pd) < 3
+    return isRes && Us.value > 0 ? p.UL / Us.value : null
+  }
+  const pd = (phi.value * 180) / Math.PI
+  const isRes = Math.abs(UL_peak.value - UC_peak.value) < 0.001 || Math.abs(pd) < 3
+  return isRes && Us.value > 0 ? UL_peak.value / Us.value : null
+})
+
+// Q(本次扫频):扫描结束(扫满/手动停止)后,从本轮采集数据中找谐振点(判定与实时行同口径),
+// 取距 f0 最近点的 UL/Us(谐振时 UL=UC=Q·Us);扫频结束后工作频率停在窗口末端失谐点,实时行
+// 回退显示「—」,故扫频结果单独用此口径给出。扫描进行中/无数据/未覆盖谐振点返回 null
+const sweepQ = computed(() => {
+  if (isScanning.value || isNoiseScanning.value || Us.value <= 0 || !collected.value.length) return null
+  let best = null
+  for (const p of collected.value) {
+    if (!(p.UL > 0) || !(p.UC > 0)) continue
+    const pd = (p.phi * 180) / Math.PI
+    if (!(Math.abs(p.UL - p.UC) < 0.001 || Math.abs(pd) < 3)) continue
+    if (!best || Math.abs(p.f - f0.value) < Math.abs(best.f - f0.value)) best = p
+  }
+  return best ? best.UL / Us.value : null
+})
+
+// 扫频结果生成提示:仅在本轮「从无到有」时提示一次,停止/清理的重复路径不会重复弹
+watch(sweepQ, (val, prev) => {
+  if (val != null && prev == null) message.success('Q值已生成，可在数据面板查看')
 })
 
 // ---- 参数变化监听 ----
