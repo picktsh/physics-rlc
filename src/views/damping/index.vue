@@ -82,18 +82,13 @@
               </NButton>
             </template>
           </Circuit3DCanvas>
-          <!-- 仿真状态条:校验失败给出原因,成功展示提取的等效参数与阻尼特征 -->
+          <!-- 仿真状态条:仅成功时展示提取的等效参数与阻尼特征(失败改用 message 轻提示,不占页面高度) -->
           <div
-            v-if="simulation"
-            :class="[
-              'mt-3 border rounded-lg px-3 py-2 text-xs leading-relaxed',
-              simulation.success
-                ? 'bg-[var(--app-success-bg)] border-[color:var(--app-success-border)] text-[color:var(--app-success)]'
-                : 'bg-[var(--app-error-bg)] border-[color:var(--app-error-border)] text-[color:var(--app-error)]',
-            ]"
+            v-if="simulation?.success"
+            class="mt-3 border rounded-lg px-3 py-2 text-xs leading-relaxed bg-[var(--app-success-bg)] border-[color:var(--app-success-border)] text-[color:var(--app-success)]"
           >
-            <div class="font-semibold">{{ simulation.success ? '✅' : '⚠️' }} {{ simulation.message }}</div>
-            <div v-if="simulation.success" class="mt-1">
+            <div class="font-semibold">✅ {{ simulation.message }}</div>
+            <div class="mt-1">
               等效参数:R = {{ fmt(simulation.params.R, QUANTITY.R.decimals) }} {{ QUANTITY.R.unit }} · L =
               {{ fmt(simulation.params.L, QUANTITY.L.decimals) }} {{ QUANTITY.L.unit }} · C =
               {{ fmt(simulation.params.C, QUANTITY.C.decimals) }} {{ QUANTITY.C.unit }} ·
@@ -350,7 +345,7 @@
         电容电压时域放电波形
       </h2>
       <div
-        v-if="!simulation"
+        v-if="!dampingParams"
         class="mt-3 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-4 text-center leading-5"
       >
         ⚡ 请先完成电路搭建并点击「仿真」,仿真成功后点击导线查看波形
@@ -407,7 +402,7 @@
         计算模板
       </h2>
       <div
-        v-if="!simulation"
+        v-if="!dampingParams"
         class="mt-3 text-xs text-[color:var(--app-text-faint)] bg-[var(--app-surface-sunken)] rounded-lg px-3 py-3 text-center"
       >
         仿真后自动展示公式与计算结果
@@ -447,8 +442,8 @@
             1 过阻尼
           </div>
         </div>
-        <!-- 振荡周期 + 瞬时值 + 衰减系数 -->
-        <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-3 items-stretch">
+        <!-- 振荡周期 + 衰减系数 -->
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr] gap-3 items-stretch">
           <div class="flex-1 bg-[var(--app-surface)] rounded-lg p-2">
             <div class="font-semibold text-[color:var(--app-text)] mb-2">🔄 振荡周期</div>
             <div class="font-mono text-[color:var(--app-text-muted)]">T = 2π / ω<sub>d</sub></div>
@@ -460,19 +455,6 @@
               ω<sub>d</sub> = {{ fmt(dampingParams.omegaD) }} {{ QUANTITY.rate.unit }}
             </div>
             <div v-else class="text-xs text-[color:var(--app-warning)] mt-1">非欠阻尼状态,无振荡周期</div>
-          </div>
-          <div class="flex-1 flex flex-col items-center justify-center gap-2 p-2">
-            <div class="text-xs text-[color:var(--app-text-faint)] uppercase tracking-wider">瞬时值</div>
-            <div
-              class="bg-gradient-to-b from-[var(--app-success-bg)] to-[var(--app-success-bg)] rounded-lg px-3 py-2 border border-[color:var(--app-success-border)] min-w-[120px] text-center"
-            >
-              <div class="text-xs text-[color:var(--app-text-muted)]">u<sub>C</sub>(t)</div>
-              <div class="font-bold text-[color:var(--app-success)]">
-                {{ fmt(instVoltage, QUANTITY.u.decimals) }} <span class="text-xs font-normal">{{ QUANTITY.u.unit }}</span>
-              </div>
-              <div class="text-xs text-[color:var(--app-text-faint)] mt-0.5">t = {{ fmt(instTime * 1000, 2) }} {{ QUANTITY.period.unit }}</div>
-            </div>
-            <NSlider v-model:value="instSliderValue" :min="0" :max="1000" class="w-24 sm:w-20" />
           </div>
           <div class="flex-1 bg-[var(--app-surface)] rounded-lg p-2">
             <div class="text-xs font-semibold text-[color:var(--app-text)] mb-2">📉 衰减系数</div>
@@ -504,6 +486,7 @@ import {
   NSelect,
   NSlider,
   NSwitch,
+  useMessage,
 } from 'naive-ui'
 import { Flash, PaintBrush, Close, Reset, Play, Maximize, Minimize, Catalog } from '@vicons/carbon'
 import { CIRCUIT_PRESET_OPTIONS, findPreset } from '@/utils/circuitPresets'
@@ -518,6 +501,7 @@ import { COMPONENT_TYPES, getComponentLabel, ComponentThumb3D } from '@/componen
 // 08 tab 电路搭建:直接使用 03 tab 同款 3D 实体模型(共享 Circuit3DCanvas + circuit3d 建模模块),
 // 无 2D 画布;数据为独立一份(本页 store),与 03 tab 的电路互不影响
 const store = useDampingCircuitStore()
+const message = useMessage() // 仿真失败等轻提示,避免占用页面 UI 高度
 
 // 板块全屏:整块三栏工作区转 fixed 铺满视口,盖住页眉/侧栏,不受页面布局与菜单干扰(复用现有布局)
 const { isFullscreen, toggle } = useFullscreenSection()
@@ -569,7 +553,6 @@ const dampingTypeLabel = { under: '欠阻尼(衰减振荡)', critical: '临界�
 const dampingCanvasRef = ref(null)
 const capacitorCanvasRef = ref(null)
 const wireClicked = ref(false)
-const instSliderValue = ref(500)
 
 // LTspice 风格瞬态分析参数
 const simStopTime = ref(0.01) // Stop Time (s)
@@ -641,17 +624,6 @@ const dampingStateColor = computed(() => {
     : t === 'critical'
       ? 'text-[color:var(--app-warning)]'
       : 'text-[color:var(--app-error)]'
-})
-
-const instTime = computed(() => {
-  if (!dampingParams.value) return 0
-  const T = dampingParams.value.T
-  const tMax = isFinite(T) ? T * 3 : 0.01
-  return (instSliderValue.value / 1000) * tMax
-})
-const instVoltage = computed(() => {
-  if (!dampingParams.value) return 0
-  return calcCapacitorVoltage(dampingParams.value, instTime.value)
 })
 
 function calcCapacitorVoltage(dp, t) {
@@ -850,7 +822,8 @@ function onWireClick(wireIndex) {
 
 // ===== 仿真与清空 =====
 function onSimulate() {
-  store.simulate() // 结果写入 store.simulation,由状态条呈现
+  const res = store.simulate() // 成功结果写入 store.simulation 由状态条呈现;失败仅弹 message 轻提示
+  if (!res?.success) message.error(res?.message || '仿真失败')
 }
 function onReset() {
   store.resetCircuit()
@@ -1162,45 +1135,6 @@ function drawCapacitorWaveform() {
   ctx.stroke()
   ctx.shadowBlur = 0
 
-  // 瞬时值标记(红色十字 + 虚线)
-  const tInst = instTime.value
-  const vInst = calcCapacitorVoltage(dp, tInst)
-  const ix = toX(tInst),
-    iy = toY(vInst)
-  ctx.strokeStyle = '#ff4444'
-  ctx.lineWidth = 1
-  ctx.setLineDash([3, 3])
-  ctx.beginPath()
-  ctx.moveTo(ix, pad.top)
-  ctx.lineTo(ix, H - pad.bottom)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo(pad.left, iy)
-  ctx.lineTo(W - pad.right, iy)
-  ctx.stroke()
-  ctx.setLineDash([])
-  // 十字标记
-  ctx.strokeStyle = '#ff4444'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.moveTo(ix - 6, iy)
-  ctx.lineTo(ix + 6, iy)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.moveTo(ix, iy - 6)
-  ctx.lineTo(ix, iy + 6)
-  ctx.stroke()
-  // 读数
-  const instTxt = `(${formatTimeLabel(tInst)}, ${vInst.toFixed(QUANTITY.u.decimals)}${QUANTITY.u.unit})`
-  const itx = ix + 10 > W - pad.right - 120 ? ix - 120 : ix + 10
-  const ity = iy - 10 < pad.top + 16 ? iy + 20 : iy - 10
-  ctx.fillStyle = 'rgba(0,0,0,0.7)'
-  ctx.fillRect(itx - 2, ity - 11, ctx.measureText(instTxt).width + 6, 14)
-  ctx.fillStyle = '#ff4444'
-  ctx.font = '10px monospace'
-  ctx.textAlign = 'left'
-  ctx.fillText(instTxt, itx, ity)
-
   // 轴标签
   ctx.fillStyle = '#9999bb'
   ctx.font = '10px monospace'
@@ -1319,9 +1253,6 @@ watch(
     }
   },
 )
-watch(instSliderValue, () => {
-  if (dampingParams.value) nextTick(() => drawCapacitorWaveform())
-})
 watch([simStopTime, simTdelay], () => {
   redrawAll()
 })

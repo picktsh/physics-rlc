@@ -44,9 +44,9 @@
             </span>
           </NButton>
           <svg
-            viewBox="0 0 500 170"
+            viewBox="0 0 500 140"
             class="h-auto"
-            :class="isDiagramExpanded ? 'w-[92vw] max-w-[1500px] m-auto' : 'w-full'"
+            :class="isDiagramExpanded ? 'w-[92vw] max-w-[1500px]' : 'w-full'"
           >
             <!-- 标题 -->
             <text x="250" y="14" text-anchor="middle" font-size="13" fill="#334155" font-weight="600">
@@ -116,11 +116,21 @@
             <circle cx="450" cy="70" r="3.5" fill="#e94560" />
             <text x="450" y="90" text-anchor="middle" font-size="10" fill="#64748b">OUT</text>
             <text x="465" y="66" font-size="10" fill="#334155">Vout</text>
-            <!-- 参数标注 -->
-            <text x="250" y="158" text-anchor="middle" font-size="10" fill="#64748b">
-              高通 f_c = 1/(2πR₁C₁) ≈ 0.48 Hz · 低通 f_c = 1/(2πR₂C₂) ≈ 4.08 Hz · 通带 0.5 – 4 Hz
-            </text>
           </svg>
+          <!-- 参数标注:截止频率公式用 KaTeX 公式组件渲染(KaTeX 输出 HTML,不能放进 SVG <text>) -->
+          <div class="mt-1.5 overflow-x-auto overflow-y-hidden">
+            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-[color:var(--app-text-muted)]">
+              <span class="inline-flex items-center gap-1">高通
+                <span class="formula-k" v-html="K('f_c = \\dfrac{1}{2\\pi R_1 C_1} \\approx 0.48\\ \\text{Hz}')"></span
+              ></span>
+              <span aria-hidden="true">·</span>
+              <span class="inline-flex items-center gap-1">低通
+                <span class="formula-k" v-html="K('f_c = \\dfrac{1}{2\\pi R_2 C_2} \\approx 4.08\\ \\text{Hz}')"></span
+              ></span>
+              <span aria-hidden="true">·</span>
+              <span>通带 0.5 – 4 Hz</span>
+            </div>
+          </div>
           <NButton
             v-if="isDiagramExpanded"
             secondary
@@ -207,7 +217,14 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { NButton } from 'naive-ui'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import { useFullscreenSection } from '@/composables/useFullscreenSection'
+
+/** 渲染 LaTeX 为 KaTeX HTML(与调谐/收音机页同一封装) */
+function K(tex) {
+  return katex.renderToString(tex, { displayMode: false, throwOnError: false, strict: 'ignore' })
+}
 
 // ============ 状态 ============
 const connected = ref(false)
@@ -711,6 +728,10 @@ onUnmounted(() => {
   inset: 0;
   z-index: var(--z-overlay);
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   overflow: auto;
   padding: 24px;
   background: var(--app-bg);
