@@ -31,10 +31,16 @@
         @pointerdown.capture="onPointerDown"
         @pointermove="onPointerMove"
         @pointerup="onPointerUp"
+        @pointerleave="hideGhost"
+        @dragleave="hideGhost"
       />
       <div v-if="components.length === 0" class="c3d-empty">
         <span class="text-[color:var(--app-text-faint)] text-3xl leading-none">🧊</span>
         <span class="text-xs text-[color:var(--app-text-faint)]">{{ emptyText }}</span>
+      </div>
+      <!-- 拖放态提示:选中元件待放置时,在画布上叠一层可放置区(绝对定位、pointer-events-none,不挡交互、不引起布局位移);由 dropzone 开关控制 -->
+      <div v-if="pendingType && dropzone" class="c3d-dropzone" aria-hidden="true">
+        <span class="c3d-dropzone-pill">点击台面空白处放置元件</span>
       </div>
     </div>
   </div>
@@ -47,7 +53,8 @@ import { Pause, Play, Location } from '@vicons/carbon'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
-import { YWIRE, cmat, addBoard, addRoutes, addJunctions, addPads, buildComponentModel } from '@/utils/circuit3d'
+import { YWIRE, cmat, addBoard, addRoutes, addJunctions, addPads, buildComponentModel } from '@/components/circuit-elements/three/circuit3d.js'
+import { DEFAULT_VALUES } from '@/components/circuit-elements/parts/registry.js'
 import { canvasTheme } from '@/utils/canvasTheme'
 
 // 共享 3D 电路场景组件:
@@ -60,6 +67,8 @@ const props = defineProps({
   junctions: { type: Array, default: () => [] },
   interactive: { type: Boolean, default: false },
   pendingType: { type: String, default: null },
+  dragType: { type: String, default: null },
+  dropzone: { type: Boolean, default: false },
   headerTitle: { type: String, default: '' },
   headerTip: { type: String, default: '' },
   emptyText: { type: String, default: '' },
@@ -254,6 +263,7 @@ function onPointerDown(event) {
   clearWireSel()
 }
 function onPointerMove(event) {
+  if (ghost && props.pendingType) moveGhost(event)
   if (!drag) return
   const hit = intersectAt(event)
   if (!hit) return
@@ -297,6 +307,8 @@ function onDragOver(event) {
   if (!props.interactive) return
   event.preventDefault()
   event.dataTransfer.dropEffect = 'copy'
+  // HTML5 拖拽时 pointermove 不触发,由 dragover 驱动 ghost 跟随指针
+  if (ghost) moveGhost(event)
 }
 function onDrop(event) {
   if (!props.interactive) return
@@ -306,6 +318,66 @@ function onDrop(event) {
   const hit = intersectAt(event)
   if (!hit) return
   emit('place', { type, x: hit.x + midX3, y: hit.z + midZ3 })
+}
+
+// === 拖放态半透明预览(ghost):选中元件时一个 translucent 元件跟随指针落在台面投影,点击即放置 ===
+// 与 dropzone 同一开关门控;复用 buildComponentModel 保证与实元件同形,克隆材质做半透明(不污染共享 cmat)。
+let ghost = null
+let ghostType = null
+function disposeGhost() {
+  if (!ghost) return
+  scene3d.remove(ghost)
+  ghost.traverse((n) => {
+    if (n.isMesh) {
+      n.geometry?.dispose()
+      const mats = Array.isArray(n.material) ? n.material : [n.material]
+      mats.forEach((m) => m?.dispose())
+    }
+  })
+  ghost = null
+  ghostType = null
+}
+function ensureGhost(type) {
+  if (!ready3d || !scene3d) return
+  if (ghost && ghostType === type) return
+  disposeGhost()
+  const comp = { type, x: 0, y: 0, value: DEFAULT_VALUES[type] ?? 0, endpoints: [{ x: -30, y: 0 }, { x: 30, y: 0 }] }
+  const ctx = { wx: (v) => v, wz: (v) => v }
+  const g = new THREE.Group()
+  buildComponentModel(g, comp, ctx)
+  g.traverse((n) => {
+    if (!n.isMesh) return
+    const single = !Array.isArray(n.material)
+    const src = single ? [n.material] : n.material
+    const clones = src.map((m) => {
+      const c = m.clone()
+      c.transparent = true
+      c.opacity = 0.45
+      c.depthWrite = false
+      return c
+    })
+    n.material = single ? clones[0] : clones
+    n.castShadow = false
+    n.receiveShadow = false
+    n.renderOrder = 999
+  })
+  g.visible = false
+  scene3d.add(g)
+  ghost = g
+  ghostType = type
+}
+function moveGhost(event) {
+  if (!ghost) return
+  const hit = intersectAt(event)
+  if (!hit) {
+    ghost.visible = false
+    return
+  }
+  ghost.visible = true
+  ghost.position.set(hit.x, 0, hit.z)
+}
+function hideGhost() {
+  if (ghost) ghost.visible = false
 }
 
 // 整组重建:清理几何并移除旧组
@@ -538,6 +610,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('themechange', onThemeChange3D)
   drag = null
+  disposeGhost()
   dispose3D()
 })
 
@@ -547,6 +620,14 @@ watch([() => props.components, () => props.wires, () => props.junctions], () => 
   } catch (err) {
     console.error('[3D] 重建失败:', err)
   }
+})
+
+// 选中(点选 pendingType 或 HTML5 拖拽 dragType)且 dropzone 开启时创建 ghost,取消即销毁
+watch([() => props.pendingType, () => props.dragType, () => props.dropzone, () => props.interactive], () => {
+  const type = props.dragType || props.pendingType
+  const active = props.interactive && props.dropzone && type
+  if (active) ensureGhost(type)
+  else disposeGhost()
 })
 </script>
 
@@ -627,5 +708,41 @@ watch([() => props.components, () => props.wires, () => props.junctions], () => 
   gap: 4px;
   pointer-events: none;
   user-select: none;
+}
+/* 拖放态可放置区:虚线内嵌框 + 顶部胶囊提示;整层不拦截指针,点击穿透到画布完成放置 */
+.c3d-dropzone {
+  position: absolute;
+  inset: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border: 2px dashed color-mix(in srgb, var(--app-primary) 60%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--app-primary) 8%, transparent);
+  pointer-events: none;
+  user-select: none;
+  animation: c3d-dropzone-pulse 1.6s ease-in-out infinite;
+}
+.c3d-dropzone-pill {
+  margin-top: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--app-brand-strong);
+  background: color-mix(in srgb, var(--app-surface) 85%, transparent);
+}
+@keyframes c3d-dropzone-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .c3d-dropzone {
+    animation: none;
+  }
 }
 </style>

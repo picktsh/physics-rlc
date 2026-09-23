@@ -32,20 +32,10 @@
                   : 'bg-[var(--app-surface)] hover:bg-[var(--app-surface-muted)] hover:border-[color:var(--app-border-dark)]',
               ]"
               @dragstart="handleDragStart($event, comp.type)"
+              @dragend="dragType = null"
               @click="selectPaletteComponent(comp.type)"
             >
-              <img
-                v-if="thumbs && thumbs[comp.type]"
-                :src="thumbs[comp.type]"
-                draggable="false"
-                alt=""
-                class="w-16 h-16 object-contain pointer-events-none select-none"
-              />
-              <span
-                v-else
-                class="w-16 h-16 flex items-center justify-center text-xl font-bold text-[color:var(--app-text-faint)]"
-                >{{ comp.type }}</span
-              >
+              <ComponentThumb3D :type="comp.type" :src="thumbs && thumbs[comp.type]" />
               <span class="font-medium">{{ comp.name }}</span>
             </div>
           </div>
@@ -53,19 +43,14 @@
 
         <!-- 中栏:3D 实验台(拖入放置 / 拖动移动 / 点端点接线 / 右键删除 / 双击定位) -->
         <div class="min-w-0">
-          <!-- 触摸端点选元件后,提示到台面上放置(桌面端以拖拽为主) -->
-          <div
-            v-if="pendingPlaceType"
-            class="text-xs text-[color:var(--app-brand)] bg-[var(--app-surface-brand)] rounded px-2 py-1 mb-2"
-          >
-            📌 已选中「{{ typeName(pendingPlaceType) }}」:点击 3D 实验台空白处放置(再次点击库项取消)
-          </div>
           <Circuit3DCanvas
             :components="store.components"
             :wires="store.wires"
             :junctions="store.junctions"
             interactive
+            dropzone
             :pending-type="pendingPlaceType"
+            :drag-type="dragType"
             empty-text="从左侧拖入元件,直接在 3D 实验台上搭建电路"
             @place="onPlace"
             @move="onMove"
@@ -526,8 +511,9 @@ import { useDampingCircuitStore } from '@/stores/dampingCircuit'
 import { useFullscreenSection } from '@/composables/useFullscreenSection'
 import { useMediaQuery } from '@vueuse/core'
 import Circuit3DCanvas from '@/components/Circuit3DCanvas.vue'
-import { renderComponentThumbs } from '@/utils/circuit3d'
+import { renderComponentThumbs } from '@/components/circuit-elements/three/circuit3d.js'
 import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG, QUANTITY } from '@/utils/quantity'
+import { COMPONENT_TYPES, getComponentLabel, ComponentThumb3D } from '@/components/circuit-elements'
 
 // 08 tab 电路搭建:直接使用 03 tab 同款 3D 实体模型(共享 Circuit3DCanvas + circuit3d 建模模块),
 // 无 2D 画布;数据为独立一份(本页 store),与 03 tab 的电路互不影响
@@ -561,24 +547,15 @@ function applyPreset(id) {
 }
 
 // 元件库(货架式:3D 缩略图 + 名称;拖入 3D 实验台,触摸端可点选后点台面放置)
-const componentTypes = [
-  { type: 'R', name: '电阻' },
-  { type: 'RV', name: '变阻器' },
-  { type: 'L', name: '电感' },
-  { type: 'C', name: '电容' },
-  { type: 'CV', name: '可调电容' },
-  { type: 'V', name: '信号源' },
-]
-const typeNameMap = { R: '电阻', RV: '变阻器', L: '电感', C: '电容', CV: '可调电容', V: '信号源' }
-function typeName(type) {
-  return typeNameMap[type] || type
-}
+// 元数据单一源(circuit-elements),与电路搭建页共用
+const componentTypes = COMPONENT_TYPES
 
 // 3D 缩略图(离屏一次性渲染,模块级缓存;失败时降级显示类型字样)
 const thumbs = ref(null)
 let thumbTimer = null
 
 const pendingPlaceType = ref(null) // 触摸端:点选元件后等待点台面放置
+const dragType = ref(null) // PC:HTML5 拖拽中的元件类型(驱动 3D ghost)
 const focusedCompIndex = ref(null) // 双击 3D 元件定位的参数项高亮
 
 // 公差(独立一份,直写本页 store)
@@ -821,6 +798,7 @@ function fmt(v, d = 2) {
 // ===== 元件库:HTML5 拖拽 / 触摸点选 =====
 function handleDragStart(event, type) {
   event.dataTransfer.setData('componentType', type)
+  dragType.value = type // 供 3D 画布实时预览 ghost(拖拽阶段 dataTransfer 读不到值,需显式下传)
 }
 function selectPaletteComponent(type) {
   pendingPlaceType.value = pendingPlaceType.value === type ? null : type
@@ -904,11 +882,7 @@ function onToleranceChange(val) {
   store.tolerancePercent = val
 }
 
-// ===== 元件文案(与 03 tab 一致) =====
-function getComponentLabel(type) {
-  const labels = { R: '电阻 R', RV: '变阻器 RV', L: '电感 L', C: '电容 C', CV: '可调电容 CV', V: '信号源 V' }
-  return labels[type] || type
-}
+// ===== 元件文案:中文名/标题由 circuit-elements 提供,单位口径由 quantity.js 提供 =====
 function getComponentUnit(type) {
   return VALUE_CONFIG[type]?.unit || ''
 }

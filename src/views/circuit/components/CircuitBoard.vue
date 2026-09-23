@@ -12,6 +12,7 @@
             :key="comp.type"
             draggable="true"
             @dragstart="handleDragStart($event, comp.type)"
+            @dragend="dragType = null"
             @click="selectPaletteComponent(comp.type)"
             :class="[
               'component-item flex flex-col items-center justify-center gap-2 p-2 border border-[color:var(--app-border)] rounded-lg cursor-pointer text-xs text-[color:var(--app-text-muted)] transition-all lg:flex-1',
@@ -20,96 +21,8 @@
                 : 'bg-[var(--app-surface)] hover:bg-[var(--app-surface-muted)] hover:border-[color:var(--app-border-dark)]',
             ]"
           >
-            <!-- 2D 平面元件符号(教科书电路图样式) -->
-            <svg
-              v-if="comp.type === 'R'"
-              viewBox="0 0 48 32"
-              class="w-14 h-10"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="4" y1="16" x2="10" y2="16" />
-              <rect x="10" y="6" width="28" height="20" />
-              <line x1="38" y1="16" x2="44" y2="16" />
-            </svg>
-            <svg
-              v-else-if="comp.type === 'L'"
-              viewBox="0 0 48 32"
-              class="w-14 h-10"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="4" y1="16" x2="10" y2="16" />
-              <path d="M10 16a4 4 0 0 1 8 0a4 4 0 0 1 8 0a4 4 0 0 1 8 0" />
-              <line x1="34" y1="16" x2="44" y2="16" />
-            </svg>
-            <svg
-              v-else-if="comp.type === 'C'"
-              viewBox="0 0 48 32"
-              class="w-14 h-10"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="2"
-              stroke-linecap="round"
-            >
-              <line x1="4" y1="16" x2="22" y2="16" />
-              <line x1="22" y1="6" x2="22" y2="26" />
-              <line x1="26" y1="6" x2="26" y2="26" />
-              <line x1="26" y1="16" x2="44" y2="16" />
-            </svg>
-            <svg
-              v-else-if="comp.type === 'RV'"
-              viewBox="0 0 48 32"
-              class="w-14 h-10"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="4" y1="16" x2="10" y2="16" />
-              <rect x="10" y="6" width="28" height="20" />
-              <line x1="16" y1="22" x2="30.5" y2="11" />
-              <path d="M26.2 8.9 L30.5 11 L27.5 15" />
-              <line x1="38" y1="16" x2="44" y2="16" />
-            </svg>
-            <svg
-              v-else-if="comp.type === 'CV'"
-              viewBox="0 0 48 32"
-              class="w-14 h-10"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="2"
-              stroke-linecap="round"
-            >
-              <line x1="4" y1="16" x2="13" y2="16" />
-              <line x1="13" y1="9" x2="13" y2="23" />
-              <line x1="22" y1="9" x2="22" y2="23" />
-              <line x1="22" y1="16" x2="44" y2="16" />
-              <line x1="15" y1="21" x2="20.5" y2="10" />
-              <path d="M17 8.8 L20.5 10 L18.6 13.9" />
-            </svg>
-            <svg
-              v-else
-              viewBox="0 0 48 32"
-              class="w-14 h-10"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <line x1="4" y1="16" x2="12" y2="16" />
-              <circle cx="24" cy="16" r="12" />
-              <path d="M17 16q3.5-8 7 0t7 0" />
-              <line x1="36" y1="16" x2="44" y2="16" />
-            </svg>
+            <!-- 2D 平面元件符号(教科书电路图样式),视觉资产统一由 circuit-elements 提供 -->
+            <ComponentGlyph :type="comp.type" />
             <span>{{ comp.name }}</span>
           </div>
         </div>
@@ -191,7 +104,9 @@
             :wires="wires"
             :junctions="junctions"
             interactive
+            dropzone
             :pending-type="pendingPlaceType"
+            :drag-type="dragType"
             header-title="🧊 3D 实体模型"
             header-tip="🖱 拖拽旋转 · 滚轮缩放 · 与 2D 电路实时同步,也可直接在 3D 台面搭建"
             empty-text="从左侧拖入元件,在 2D 画布或 3D 台面均可搭建电路"
@@ -283,11 +198,17 @@ import { useMediaQuery } from '@vueuse/core'
 import Circuit3DCanvas from '@/components/Circuit3DCanvas.vue'
 import { canvasTheme } from '@/utils/canvasTheme'
 import { COMPONENT_VALUE_CONFIG as VALUE_CONFIG } from '@/utils/quantity'
+import {
+  COMPONENT_TYPES,
+  getComponentLabel,
+  DEFAULT_VALUES,
+  drawComponentSymbol,
+  ComponentGlyph,
+} from '@/components/circuit-elements'
 
 const calcStore = useRLCCalculatorStore()
 
-// 元件默认值与可调量程(滑线变阻器/可调电容仿真语义同 R/C,带下限防呆避免除零/Q 发散)
-const DEFAULT_VALUES = { R: 100, RV: 100, L: 0.1, C: 0.05, CV: 0.05, V: 0.9 }
+// 元件默认值经 circuit-elements registry 单一源导入;可调量程属编辑层,本页保留
 const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
 
 const toleranceEnabled = ref(calcStore.toleranceEnabled)
@@ -332,6 +253,7 @@ const selectedEndpoint = ref(null) // { compIndex, epIndex } or { junctionIndex 
 const wireIntermediatePoints = ref([])
 const selectedComponentIndex = ref(null)
 const pendingPlaceType = ref(null) // 移动端：点击元件面板后等待放置的类型
+const dragType = ref(null) // PC:HTML5 拖拽中的元件类型(驱动 3D ghost)
 
 // 板块全屏:整块三栏工作区转 fixed 铺满视口,盖住页眉/侧栏,不受页面布局与菜单干扰(复用现有布局)
 const { isFullscreen, toggle } = useFullscreenSection()
@@ -380,17 +302,12 @@ function onCompValueChange(idx, num) {
   emit('update:components', newComponents)
 }
 
-const componentTypes = [
-  { type: 'R', name: '电阻' },
-  { type: 'RV', name: '变阻器' },
-  { type: 'L', name: '电感' },
-  { type: 'C', name: '电容' },
-  { type: 'CV', name: '可调电容' },
-  { type: 'V', name: '信号源' },
-]
+// 元件库元数据单一源(circuit-elements),与阻尼页共用
+const componentTypes = COMPONENT_TYPES
 
 function handleDragStart(event, type) {
   event.dataTransfer.setData('componentType', type)
+  dragType.value = type // 供 3D 画布实时预览 ghost(拖拽阶段 dataTransfer 读不到值,需显式下传)
 }
 
 // 移动端：点击元件面板选中，再点击画布放置
@@ -844,21 +761,7 @@ function getWireEnd(wire) {
   return { x: wire.x2, y: wire.y2 }
 }
 
-// 斜箭头头部(GB 可变符号):沿起点→终点方向在末端补出小三角
-function arrowHead(ctx, x1, y1, x2, y2, size = 4) {
-  const dx = x2 - x1
-  const dy = y2 - y1
-  const len = Math.hypot(dx, dy) || 1
-  const ux = dx / len
-  const uy = dy / len
-  const px = -uy
-  const py = ux
-  ctx.beginPath()
-  ctx.moveTo(x2 - ux * size + px * size * 0.62, y2 - uy * size + py * size * 0.62)
-  ctx.lineTo(x2, y2)
-  ctx.lineTo(x2 - ux * size - px * size * 0.62, y2 - uy * size - py * size * 0.62)
-  ctx.stroke()
-}
+// 斜箭头头部/元件本体绘制已迁至 circuit-elements/canvas/drawSymbol.js(经 drawComponentSymbol 分派)
 
 function drawCircuit() {
   const canvas = canvasRef.value
@@ -897,137 +800,8 @@ function drawCircuit() {
     ctx.strokeStyle = ct.wire
     ctx.lineWidth = 2
 
-    if (comp.type === 'R') {
-      // 电阻:两端引线 + 平面矩形
-      ctx.beginPath()
-      ctx.moveTo(-30, 0)
-      ctx.lineTo(-18, 0)
-      ctx.moveTo(18, 0)
-      ctx.lineTo(30, 0)
-      ctx.stroke()
-      ctx.strokeRect(-18, -9, 36, 18)
-      ctx.fillStyle = ct.ink
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('R', 0, 4)
-    } else if (comp.type === 'L') {
-      // 电感:两端引线 + 拱形线圈
-      ctx.beginPath()
-      ctx.moveTo(-30, 0)
-      ctx.lineTo(-16, 0)
-      for (let b = 0; b < 4; b++) {
-        const bx = -16 + b * 8
-        ctx.arc(bx, 0, 4, Math.PI, 0, false)
-      }
-      ctx.lineTo(30, 0)
-      ctx.stroke()
-      ctx.fillStyle = ct.ink
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('L', 0, -10)
-    } else if (comp.type === 'C') {
-      // 电容:两端引线 + 平行板
-      ctx.beginPath()
-      ctx.moveTo(-30, 0)
-      ctx.lineTo(-4, 0)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(-4, -12)
-      ctx.lineTo(-4, 12)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(4, -12)
-      ctx.lineTo(4, 12)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(4, 0)
-      ctx.lineTo(30, 0)
-      ctx.stroke()
-      ctx.fillStyle = ct.ink
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('C', 0, -19)
-    } else if (comp.type === 'RV') {
-      // 滑线变阻器:两端引线 + 矩形 + 斜箭头(GB 可变电阻符号)
-      ctx.beginPath()
-      ctx.moveTo(-30, 0)
-      ctx.lineTo(-18, 0)
-      ctx.moveTo(18, 0)
-      ctx.lineTo(30, 0)
-      ctx.stroke()
-      ctx.strokeRect(-18, -9, 36, 18)
-      ctx.beginPath()
-      ctx.moveTo(-8.5, 6.5)
-      ctx.lineTo(8.5, -6.5)
-      ctx.stroke()
-      arrowHead(ctx, -8.5, 6.5, 8.5, -6.5, 3.4)
-      ctx.fillStyle = ct.ink
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('RV', 0, -16)
-    } else if (comp.type === 'CV') {
-      // 可调电容:两端引线 + 平行板 + 板间斜箭头(GB 可变电容符号)
-      ctx.beginPath()
-      ctx.moveTo(-30, 0)
-      ctx.lineTo(-4, 0)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(-4, -11)
-      ctx.lineTo(-4, 11)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(4, -11)
-      ctx.lineTo(4, 11)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(4, 0)
-      ctx.lineTo(30, 0)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(-3.2, 8.6)
-      ctx.lineTo(3.2, -8.6)
-      ctx.stroke()
-      arrowHead(ctx, -3.2, 8.6, 3.2, -8.6, 3)
-      ctx.fillStyle = ct.ink
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('CV', 0, -19)
-    } else if (comp.type === 'V') {
-      // 交流电压源:两端引线 + 圆环内波形(随信号源波形参数动态切换)
-      ctx.beginPath()
-      ctx.moveTo(-30, 0)
-      ctx.lineTo(-16, 0)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.arc(0, 0, 16, 0, 2 * Math.PI)
-      ctx.stroke()
-      if (comp.signalWaveform === 'square') {
-        // 方波符号
-        ctx.beginPath()
-        ctx.moveTo(-8, 4)
-        ctx.lineTo(-8, -4)
-        ctx.lineTo(0, -4)
-        ctx.lineTo(0, 4)
-        ctx.lineTo(8, 4)
-        ctx.lineTo(8, -4)
-        ctx.stroke()
-      } else {
-        // 正弦波符号(默认)
-        ctx.beginPath()
-        ctx.moveTo(-8, 0)
-        ctx.quadraticCurveTo(-4, -8, 0, 0)
-        ctx.quadraticCurveTo(4, 8, 8, 0)
-        ctx.stroke()
-      }
-      ctx.beginPath()
-      ctx.moveTo(16, 0)
-      ctx.lineTo(30, 0)
-      ctx.stroke()
-      ctx.fillStyle = ct.ink
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('V', 0, -24)
-    }
+    // 元件本体绘制逐型分派给 parts.drawSymbol(已按原坐标/样式 1:1 迁移)
+    drawComponentSymbol(ctx, comp, ct)
 
     ctx.restore()
 
@@ -1217,11 +991,6 @@ function updateComponentValue(index, value) {
   const newComponents = [...props.components]
   newComponents[index].value = parseFloat(value) || 0
   emit('update:components', newComponents)
-}
-
-function getComponentLabel(type) {
-  const labels = { R: '电阻 R', RV: '变阻器 RV', L: '电感 L', C: '电容 C', CV: '可调电容 CV', V: '信号源 V' }
-  return labels[type] || type
 }
 
 function getComponentUnit(type) {

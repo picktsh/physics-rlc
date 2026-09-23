@@ -421,14 +421,16 @@ export function addBoard(g, boardR3) {
   g.add(e4)
 }
 
-// 按元件类型派发建模(与 CircuitBoard 原 drawCircuit3D 的派发逻辑一致)
+// 按元件类型派发建模(与 CircuitBoard 原 drawCircuit3D 的派发逻辑一致)。
+// parts/*.js 的 build3d 与本映射同源(R 经 addResistor 统一 CFG.R 特例为 3 参签名)。
+export const addResistor = (g, comp, ctx) => addAxial(g, comp, CFG.R, ctx)
 export function buildComponentModel(g, comp, ctx) {
   if (comp.type === 'V') addSource(g, comp, ctx)
   else if (comp.type === 'C') addFilmCap(g, comp, ctx)
   else if (comp.type === 'CV') addVarCap(g, comp, ctx)
   else if (comp.type === 'L') addInductor(g, comp, ctx)
   else if (comp.type === 'RV') addRheostat(g, comp, ctx)
-  else addAxial(g, comp, CFG.R, ctx)
+  else addResistor(g, comp, ctx)
 }
 
 // ===== 元件库 3D 缩略图:离屏渲染每个元件的商品图(与台面模型同源同质感) =====

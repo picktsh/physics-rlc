@@ -30,11 +30,21 @@ const flattenNav = (list) =>
 
 const children = flattenNav(navRoutes)
 
+// 隐藏路由:不在 config/nav 菜单中(与业务无关),仿 /lock 直注册;仍在 DefaultLayout 内以获得页眉/侧栏/主题切换。
+const hiddenRoutes = [
+  {
+    path: '/playground',
+    name: 'playground',
+    component: () => import('@/views/playground/index.vue'),
+    meta: { title: '元器件演练场', hidden: true },
+  },
+]
+
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/lock', name: 'lock', component: () => import('@/views/home/lock.vue') },
-    { path: '/', component: DefaultLayout, redirect: '/home', children },
+    { path: '/', component: DefaultLayout, redirect: '/home', children: [...children, ...hiddenRoutes] },
     { path: '/:pathMatch(.*)*', redirect: '/home' },
   ],
   scrollBehavior: () => ({ top: 0 }),

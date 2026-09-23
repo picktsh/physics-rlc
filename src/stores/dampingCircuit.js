@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { calculateRLC } from '../utils/physics'
+import { DEFAULT_VALUES } from '@/components/circuit-elements/parts/registry.js'
 
 /**
  * 阻尼振荡实验(08 tab)电路搭建 Store —— 独立电路数据与仿真
@@ -14,8 +15,7 @@ export const useDampingCircuitStore = defineStore('dampingCircuit', () => {
   const wires = ref([])
   const junctions = ref([]) // 3D 直接搭建不产生中间节点,保留字段以复用校验与渲染逻辑
 
-  // 元件默认值与可调量程(与 03 tab 一致;存储单位=展示单位:R Ω/L H/C μF;滑线变阻器/可调电容仿真语义同 R/C)
-  const DEFAULT_VALUES = { R: 100, RV: 100, L: 0.1, C: 0.05, CV: 0.05, V: 0.9 }
+  // 元件默认值经 circuit-elements registry 单一源导入(与 03 tab 一致);可调量程属编辑层,本页保留
   const VALUE_RANGE = { RV: { min: 10, max: 1000 }, CV: { min: 0.005, max: 0.2 } }
 
   // 信号源默认参数(波形/频率kHz/占空比/周期ms/脉宽ms)与量程;频率与周期互为倒数(T_ms = 1/f_kHz)

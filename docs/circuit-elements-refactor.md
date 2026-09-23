@@ -1,7 +1,7 @@
 # 元器件视觉资产与电路数据层架构演进规划
 
-> 状态：方案已确认，待执行（下次开工从 §6 Phase 0 开始）
-> 创建：2026-09-19 · 末次更新：2026-09-19
+> 状态：**Phase 0 / 1a / 1b 均已完成（2026-09-23，`pnpm build` 绿 + 无 lint）；隐藏路由 `/playground` 演练场已上线；拖放 ghost 预览已同步三页（演练场/电路/阻尼）；`useCircuitEditor` builder 种子已落**。**未完成**：四主题视觉走查验收、Phase 2（数据层）、Phase 3（统一编辑器/自动排列）、§11 交互优化待办、Phase 4 发包（延后）。下次开工：先推 §11 交互优化（不依赖数据层、收益高），再进 Phase 2（需先对 ID/schema 口径 grill）。
+> 创建：2026-09-19 · 末次更新：2026-09-23（**1b**：circuit3d.js 经 `git mv` 迁入 `three/circuit3d.js`，两个消费方（Circuit3DCanvas/damping）改路径；新增 `addResistor` 统一 R 的 CFG.R 特例；6 个 part 补齐 `build3d`，registry 新增 `buildModel3D`。**演练场**：`/playground` 隐藏路由（router 直注册、不进 nav）+ `views/playground/index.vue`（2D/3D 图库 + 3D 搭建沙盒）。**builder 种子**：`composables/useCircuitEditor.js` 纯结构编辑工厂，暂供演练场用，两页尚未并入）
 > 背景任务：电路搭建页（/circuit）与阻尼实验页（/damping）左侧元件库重复代码抽离，
 > 延伸为整个"元件视觉 + 电路数据 + 编辑器"的分层架构规划。
 
@@ -16,7 +16,7 @@
 | 核心组织模式 | Part Registry：一个元件一份自包含定义（元数据+2D+canvas+3D） | §5.2 |
 | 数据要不要独立？ | 要。版本化 JSON schema + 稳定 ID 引用 + 导出/导入，分析/渲染只消费数据 | §5.4 |
 | 依赖策略 | three = peerDependency；core 零 Vue（符号即数据）；ID 用原生 crypto.randomUUID；zod 仅候选需确认 | §9 |
-| 下一步 | Phase 0（~半天）：抽 componentTypes.js + ComponentGlyph.vue，两页改引用，视觉零回归 | §6 |
+| 下一步 | ~~Phase 0~~ **已完成**；下次开工 Phase 1（Part Registry：drawCircuit 拆 `canvas/drawSymbol.js`、circuit3d.js 迁入 `three/`、元数据并入 parts） | §6 |
 | 发现的潜伏 bug | 删除元件时导线数组下标不 remap（circuit 页）；Phase 2 修 | §2.3 |
 | 自动排列？ | 规划编辑层一键「整理布局」：仅改几何不改拓扑，分 P0 网格吸附 / P1 正交布线 / P2 拓扑布局 三档 | §5.5 |
 
@@ -216,8 +216,8 @@ src/utils/circuit-data/       ← Phase 2: 数据层（框架无关）
 
 | 轮次 | 内容 | 规模 | 验收 |
 | --- | --- | --- | --- |
-| **Phase 0（下次开工）** | `metadata/componentTypes.js` + `glyphs/ComponentGlyph.vue`；两页 palette 改为引用；damping 3D 图抽 `ComponentThumb3D.vue`（纯展示） | ~半天 | 两页视觉零回归；palette 内联 SVG 清空 |
-| Phase 1 | Part Registry 落地：`drawCircuit()` 元件段拆 `canvas/drawSymbol.js`；`circuit3d.js` 按元件重组进 `three/`；元数据并入 parts | ~1 天 | 三层视觉同源于 parts/；仿真行为不变 |
+| **Phase 0 ✅** | `metadata/componentTypes.js` + `glyphs/ComponentGlyph.vue`；两页 palette 改为引用；damping 3D 图抽 `ComponentThumb3D.vue`（纯展示）——**已完成** | ~半天 | 两页视觉零回归；palette 内联 SVG 清空 |
+| Phase 1 ✅ | **1a。已完成**：`drawCircuit()` 元件段拆 `canvas/drawSymbol.js`；`parts/` 6 元件定义 + `parts/registry.js` 单一源（派生 COMPONENT_TYPES/DEFAULT_VALUES/drawComponentSymbol）；metadata 并入。**1b。已完成**：`circuit3d.js` 经 git mv 迁入 `three/`；6 part 补 `build3d`；registry 加 `buildModel3D` | 1b ~半天 | 三层视觉同源于 parts/；仿真行为不变 |
 | Phase 2 | 数据层：schema + ID 引用改造 + 导出/导入 + v1→v2 迁移 | ~2-3 天 | 导出文件可回读；历史记录兼容；删除元件无下标漂移 |
 | Phase 3 | 统一编辑器：palette 容器 + Circuit3DCanvas 交互收敛为 builder 模块，两页共用一份；并入 §5.5 自动排列 P0（网格吸附 + 对齐） | 单独排期 | 两页电路编辑行为一致，页面只留业务差异；一键整理布局不改变拓扑 |
 | Phase 4 | npm 包（如 `@picktsh/circuit-elements`）：core 框架无关 + vue-adapter；Storybook + 文档 | **触发条件：出现第二个消费项目** | — |
@@ -292,3 +292,30 @@ Canvas 绘制器与 Three.js builder 本身就是纯函数，天然框架无关�
 - SchemDraw（Python，符号造型参考）：https://bitbucket.org/cdelker/schemdraw
 - Inkscape Electric Symbols：https://github.com/piksel/Inkscape_electric_Symbols
 - 本项目关键文件：`src/views/circuit/components/CircuitBoard.vue`、`src/views/damping/index.vue`、`src/utils/circuit3d.js`、`src/stores/rlcCalculator.js`、`src/stores/dampingCircuit.js`
+
+## 11. 交互优化待办（下次继续，需逐条审核）
+
+> 目标：把电路编辑的交互从「顶部模式按钮 + 盲操作」升级为「就地、有反馈、移动可用」。
+> 归属：编辑层（builder / Phase 3 收敛后统一落到 `useCircuitEditor` + Circuit3DCanvas/CircuitBoard），**不进 elements 视觉层、不进 data schema**。
+> 硬约束：**每条都要同时给 PC 与移动端方案**；触屏无 hover，一切“悬停反馈”在移动端都要有“点选/长按”等价物（参 memory：触屏用 `@media (hover: none)` 而非宽度断点）。
+
+### 11.1 用户已明确记录的两条
+1. **就地上下文菜单取代顶部 [连线]/[删除] 模式按钮**：在画布里点元件/端点/连线 → 在命中位置弹出该对象的操作菜单（连线 / 改值 / 删除 / 加节点…），不再先去顶部切模式再点。
+   - PC：右键或左键命中即弹 `NPopover`/`NDropdown`（锚在命中点）；ESC 关闭。
+   - 移动端：单击命中即弹**底部动作条**（`NDrawer` 底部或 `NPopover` 锚在对象上），拇指可达；避免依赖右键。
+2. **可操作对象的悬停 UI 反馈**：鼠标移入元件/连接点/连线时给描边/高亮/光标变化，明确“可点”。
+   - PC：2D canvas 命中测试重绘高亮（描边/加粗/端点放大）+ `cursor:pointer`；3D 用 Raycaster hover 改 `emissive`/描边。
+   - 移动端：无 hover → 改为“点选=选中并常驻高亮 + 显示操作手柄/浮层”，命中半径沿用现有 `hitScale≈1.6` 放大。
+
+### 11.2 建议追加的交互优化（供审核，按需勾选）
+1. **接线橡皮筋预览**：从端点拖出/点选端点后，跟随指针画一条预览线到候选终点，可吸附的邻近端点高亮；再点落点成线、ESC/点空白取消（替代现在“点两端、中间无反馈”）。
+2. **选中态可视化统一**：选中元件/连线有持续高亮（3D 目前无选中框，2D 有虚线框）；为多选/框选打基础（服务 §5.5 自动排列 P0）。
+3. **破坏性操作可撤销**：删除元件/清空改用 undo 轻提示（naive notification 带“撤销”），替代确认弹窗，降误触。
+4. **放置合法性反馈**：拖放 ghost 落点重叠/越界/未吸附时变红，合法时变主色（现有 ghost 只做位置预览，未判合法性）。
+5. **仿真失败定位**：校验不通过时把问题元件红描边 + 点击滚动定位（现仅文字提示）。
+6. **参数面板联动**：选中/双击元件时右栏参数项自动滚动并高亮（damping 已有 focus 定位，circuit 对齐补上）。
+7. **手势一致性**：移动端 3D 台面“单指旋转视角 / 双指缩放”与“点选放置/拖动元件”的手势分区要清晰，避免旋转误触成移动元件。
+
+### 11.3 落地建议
+- 优先做 11.1-1（就地菜单）+ 11.1-2（悬停/选中反馈）：收益最直接，且是 Phase 3 编辑器合并的前置体验基线。
+- 上下文菜单与反馈的“命中判定”应沉到 builder 层统一实现（2D/3D 共用一套 hit-test 语义），避免两页各写一份。
