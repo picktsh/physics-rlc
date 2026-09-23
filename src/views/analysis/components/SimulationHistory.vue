@@ -182,8 +182,9 @@ async function handleImportFile({ file }) {
 </script>
 
 <style scoped>
-/* 选中行高亮:仅命中当前 selectedSimId 的行(经 row-class-name 打上) */
-:deep(.sim-row-selected td) {
-  background: var(--app-surface-muted);
+/* 选中行高亮:用专用 --app-selection(区别于悬停 muted/隔行 sunken);
+   选择器带上 .n-data-table-tr 提高特异性,稳过 naive 的 striped 单元格背景 */
+:deep(.n-data-table-tr.sim-row-selected .n-data-table-td) {
+  background: var(--app-selection);
 }
 </style>

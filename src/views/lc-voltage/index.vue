@@ -168,6 +168,18 @@
             <template #icon><NIcon :component="isScanning ? Stop : Reset" /></template>
             {{ isScanning ? '停止' : '自动扫频' }}
           </NButton>
+          <!-- 扫频间隔:紧接「自动扫频」按钮,值越小扫得越快(谐振点仍按分档放慢以便观察) -->
+          <NInputNumber
+            v-model:value="scanIntervalMs"
+            :show-button="false"
+            :min="50"
+            :max="2000"
+            :step="50"
+            class="w-36"
+          >
+            <template #prefix>扫频间隔:</template>
+            <template #suffix>ms</template>
+          </NInputNumber>
           <NButton secondary @click="exportCSV">
             <template #icon><NIcon :component="Download" /></template>
             导出CSV
@@ -427,6 +439,8 @@ const C_uF = computed(() => params.value.C)
 const Us = computed(() => params.value.V)
 const f = ref(2.2507) // 工作频率 kHz(默认对准 f₀≈2.2508kHz)
 const threshold = ref(10)
+// 扫频每点基准间隔(ms):越小越快,整体时间线按此相对基准 200ms 等比缩放(默认 200=原有行为)
+const scanIntervalMs = ref(200)
 const isScanning = ref(false)
 const isNoiseScanning = ref(false)
 const noiseEnabled = ref(false)
@@ -1364,6 +1378,22 @@ function buildScanFreqs(f0KHz) {
   return freqs
 }
 
+// 扫频每点延时:按频率比 r 分档(谐振点最慢便于观察),再按 scanIntervalMs 相对基准 200ms 等比缩放。
+// autoScan 与噪声扫频共用,消除两处重复的分档常量。
+function sweepDelay(r) {
+  const base =
+    Math.abs(r - 1) < 1e-9
+      ? 1500
+      : r >= 0.9 && r <= 1.1
+        ? 700
+        : r >= 0.8 && r <= 1.2
+          ? 450
+          : r >= 0.6 && r <= 1.4
+            ? 300
+            : 200
+  return Math.round(base * (scanIntervalMs.value / 200))
+}
+
 function autoScan() {
   if (isScanning.value) {
     isScanning.value = false
@@ -1399,18 +1429,7 @@ function autoScan() {
     collectPoint()
     refreshAll()
     step++
-    const r = freq / f0_val
-    const delay =
-      Math.abs(r - 1) < 1e-9
-        ? 1500
-        : r >= 0.9 && r <= 1.1
-          ? 700
-          : r >= 0.8 && r <= 1.2
-            ? 450
-            : r >= 0.6 && r <= 1.4
-              ? 300
-              : 200
-    setTimeout(stepFunc, delay)
+    setTimeout(stepFunc, sweepDelay(freq / f0_val))
   }
   stepFunc()
 }
@@ -1496,18 +1515,7 @@ function autoScanWithNoise() {
     refreshAll()
     step++
     if (step < freqs.length) {
-      const r = freq / f0_val
-      const delay =
-        Math.abs(r - 1) < 1e-9
-          ? 1500
-          : r >= 0.9 && r <= 1.1
-            ? 700
-            : r >= 0.8 && r <= 1.2
-              ? 450
-              : r >= 0.6 && r <= 1.4
-                ? 300
-                : 200
-      setTimeout(stepFunc, delay)
+      setTimeout(stepFunc, sweepDelay(freq / f0_val))
     } else {
       isNoiseScanning.value = false
       drawAmpChart() // 扫满一轮才展现实测带宽

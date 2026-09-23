@@ -49,6 +49,19 @@ const themeOverrides = computed(() => {
     Button: {
       fontWeight: '600',
     },
+    // 数据表全站统一:表头/行/隔行/悬停/边框/文字均从 --app-* token 取色,
+    // 与卡片面/描边同源,消除 naive 默认色在深色主题下与站点色板不协调的问题。
+    // 三档色阶:行=base surface,表头与隔行=sunken,悬停=muted(反馈更明显);选中行另用 --app-selection。
+    DataTable: {
+      thColor: readVar('--app-surface-sunken', '#f6f8fb'),
+      thTextColor: readVar('--app-text', '#1c2534'),
+      thFontWeight: '600',
+      tdColor: readVar('--app-surface', '#ffffff'),
+      tdColorStriped: readVar('--app-surface-sunken', '#f6f8fb'),
+      tdColorHover: readVar('--app-surface-muted', '#eef1f7'),
+      tdTextColor: readVar('--app-text', '#1c2534'),
+      borderColor: readVar('--app-border-light', '#eef1f7'),
+    },
   }
 })
 </script>
