@@ -256,11 +256,12 @@ export const useDocsStore = defineStore('docs', () => {
   // store 首次实例化即恢复 sessionStorage 快照 + 挂 push/splice 自动 persist 的 watcher
   // （store 为应用级单例，watcher 与 store 同生命期，无需手动 stop）
   hydrate()
-  // 校验持久化的激活 tab:local tab 可能未落盘(transient/zip)或已被关闭,失配时回退首篇内置,避免空白页
-  if (
-    activeKey.value.startsWith('local:') &&
-    !localTabs.value.some((t) => t.key === activeKey.value)
-  ) {
+  // 校验持久化的激活 tab:local tab 可能未落盘(transient/zip)或已被关闭,内置条目也可能随版本增删,
+  // 失配时回退首篇内置,避免空白页 / 卡在加载中
+  const ak = activeKey.value
+  const localValid = ak.startsWith('local:') && localTabs.value.some((t) => t.key === ak)
+  const builtinValid = DOCS_BUILTIN.some((b) => `builtin:${b.file}` === ak)
+  if (!localValid && !builtinValid) {
     activeKey.value = `builtin:${DOCS_BUILTIN[0].file}`
   }
   watch(

@@ -4,7 +4,7 @@
 // 本地拖入 tab 的会话快照 key：sessionStorage，刷新保留、× 手动关闭清除
 // （命名沿用全站 rlc_ 前缀惯例，见 stores/historyDB.js）
 export const DOCS_TABS_KEY = 'rlc_docs_tabs'
-// 当前激活 tab key 的会话记忆：刷新后停在原阅读位置；指向已消失的 local tab 时回退首篇内置
+// 当前激活 tab key 的会话记忆：刷新后停在原阅读位置；指向已消失的 local tab / 已下线内置文档时回退首篇内置
 export const DOCS_ACTIVE_KEY = 'rlc_docs_active'
 // 单个本地 md tab 允许进 sessionStorage 的字节上限；超过则 tab 转 transient（能预览但不落盘）
 export const DOCS_TAB_PERSIST_MAX_BYTES = 1 * 1024 * 1024
@@ -16,7 +16,4 @@ export const DOCS_ZIP_MAX_BYTES = 50 * 1024 * 1024
 // 来源两种形态：默认从 public/docs/ 静态 fetch（大文档不进 bundle）；
 // 带 getRaw 的条目为 ?raw 构建期内联（适合仓库根文件，单一来源不必拷进 public，dev 改文件热更新）。
 // 动态 import 仅在文档页 chunk 加载后才执行，不增加首页体积。
-export const DOCS_BUILTIN = [
-  { file: '操作指南.md', title: '操作指南' },
-  { file: 'CHANGELOG.md', title: '更新日志', getRaw: () => import('../../CHANGELOG.md?raw').then((m) => m.default) },
-]
+export const DOCS_BUILTIN = [{ file: '操作指南.md', title: '操作指南' }]
